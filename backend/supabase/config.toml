@@ -1,5 +1,5 @@
 # Supabase local/project configuration (Stage 1). Verify against your installed CLI version with `supabase start`.
-project_id = "personal-fitness-system"
+project_id = "shaktikram"
 
 [api]
 enabled = true
@@ -9,7 +9,7 @@ extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
 [db]
-port = 54322
+port = 54325
 major_version = 17
 
 [db.seed]
@@ -26,7 +26,7 @@ enable_signup = false                  # decision D3: the single owner account i
 enable_anonymous_sign_ins = false
 
 [auth.email]
-enable_signup = false
+enable_signup = true
 enable_confirmations = false
 
 [storage]
