@@ -1,0 +1,25 @@
+# secrets
+.env
+.env.*
+!.env.example
+*.pem
+supabase/.temp/
+backend/supabase/.temp/
+backend/supabase/.branches/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+
+# flutter (added later)
+mobile_web/build/
+mobile_web/.dart_tool/
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/
+
+backups/
+*.dump

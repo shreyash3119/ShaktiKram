@@ -1,0 +1,70 @@
+{
+  "_comment": "Numeric scales. 'proposed' marks values the specification leaves open; confirm at review.",
+  "version": 1,
+  "muscle_development_level": {
+    "source": "Feature spec 17. The user's own manual rating. Never calculated.",
+    "min": 1,
+    "max": 5,
+    "step": 1,
+    "labels": {
+      "1": "Underdeveloped",
+      "2": "Below average",
+      "3": "Average",
+      "4": "Above average",
+      "5": "Well developed"
+    },
+    "categories_from_latest_level": {
+      "1": "high_priority",
+      "2": "needs_improvement",
+      "3": "average_maintenance",
+      "4": "above_average",
+      "5": "well_developed"
+    },
+    "category_status": "confirmed at Stage 1: one category per level, matching the spec examples (level 4 = above average)"
+  },
+  "muscle_priority": {
+    "source": "Feature spec 17",
+    "min": 1,
+    "max": 3,
+    "labels": { "1": "Weak point / high priority", "2": "Maintenance", "3": "Lower priority" }
+  },
+  "pain_level": {
+    "source": "Feature spec 18",
+    "min": 0,
+    "max": 10,
+    "step": 1
+  },
+  "checkin_scale": {
+    "source": "Feature spec 20 says 'simple scales'",
+    "status": "proposed: 1 to 5 for all fields",
+    "min": 1,
+    "max": 5,
+    "step": 1,
+    "fields": ["energy", "sleep_quality", "soreness", "fatigue", "motivation", "stress"],
+    "directions": { "energy": "higher_is_better", "sleep_quality": "higher_is_better", "motivation": "higher_is_better", "soreness": "higher_is_worse", "fatigue": "higher_is_worse", "stress": "higher_is_worse" },
+    "direction_note": "For energy, sleep_quality and motivation, higher is better. For soreness, fatigue and stress, higher is worse. Stored as entered; interpretation is done in calculation specs."
+  },
+  "rir": {
+    "source": "Feature spec 3 and 4",
+    "min": 0,
+    "max": 10,
+    "step": 1
+  },
+  "rpe": {
+    "source": "Feature spec 3 and 4",
+    "min": 1,
+    "max": 10,
+    "step": 0.5
+  },
+  "personal_difficulty": {
+    "source": "Feature spec 23. Personal difficulty rating of an exercise",
+    "status": "proposed: 1 to 5",
+    "min": 1,
+    "max": 5,
+    "step": 1
+  },
+  "injury_severity": {
+    "source": "Feature spec 18",
+    "status": "proposed: mild, moderate, severe (text values, listed in statuses.json)"
+  }
+}

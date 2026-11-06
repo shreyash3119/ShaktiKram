@@ -1,0 +1,22 @@
+{
+  "_comment": "Error codes returned in error.code. Clients branch on code, not message.",
+  "version": 1,
+  "errors": [
+    { "code": "validation_failed", "http": 422, "retry": false, "meaning": "Request or field failed validation. details[] lists each field." },
+    { "code": "unauthorized", "http": 401, "retry": false, "meaning": "Device token missing, invalid or expired." },
+    { "code": "device_revoked", "http": 403, "retry": false, "meaning": "This device was revoked by the owner. Pairing is needed again." },
+    { "code": "not_found", "http": 404, "retry": false, "meaning": "Record does not exist." },
+    { "code": "conflict_stale_rev", "http": 409, "retry": false, "meaning": "Record changed on the server after base_rev. Pull, then decide." },
+    { "code": "version_conflict", "http": 409, "retry": false, "meaning": "A new plan version would start before or overlap the current one. Ask the user to review." },
+    { "code": "reference_missing", "http": 422, "retry": true, "meaning": "A referenced record is not on the server yet. Retry after earlier operations are applied." },
+    { "code": "immutable_record", "http": 422, "retry": false, "meaning": "Attempt to edit a version row or audit entry in place." },
+    { "code": "payload_too_large", "http": 413, "retry": false, "meaning": "Batch or file exceeds the allowed size." },
+    { "code": "rate_limited", "http": 429, "retry": true, "meaning": "Too many requests. Retry after the Retry-After seconds." },
+    { "code": "unavailable", "http": 503, "retry": true, "meaning": "Service temporarily unavailable. Retry with backoff." },
+    { "code": "internal_error", "http": 500, "retry": true, "meaning": "Unexpected server error. request_id is logged for investigation." }
+  ],
+  "notes": [
+    "A replayed op_id is not an error: it returns result 'duplicate' with the original outcome.",
+    "A planned exercise that conflicts with an injury restriction is a warning in the response, not an error."
+  ]
+}

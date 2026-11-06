@@ -1,0 +1,22 @@
+{
+  "_comment": "Canonical storage units. Convert only for display. Column suffix shows the unit.",
+  "version": 1,
+  "canonical": {
+    "weight": { "unit": "kg", "suffix": "_kg", "db_type": "numeric(6,2)" },
+    "length": { "unit": "cm", "suffix": "_cm", "db_type": "numeric(5,1)" },
+    "distance": { "unit": "m", "suffix": "_m", "db_type": "numeric(9,1)" },
+    "duration": { "unit": "s", "suffix": "_s", "db_type": "integer" },
+    "volume_liquid": { "unit": "ml", "suffix": "_ml", "db_type": "integer" },
+    "mass_nutrition": { "unit": "g", "suffix": "_g", "db_type": "numeric(7,1)" },
+    "energy": { "unit": "kcal", "suffix": "_kcal", "db_type": "numeric(7,1)" },
+    "speed": { "unit": "m/s", "suffix": "_mps", "db_type": "numeric(5,2)" },
+    "heart_rate": { "unit": "bpm", "suffix": "_bpm", "db_type": "smallint" },
+    "percentage": { "unit": "%", "suffix": "_pct", "db_type": "numeric(4,1)" }
+  },
+  "display_options": {
+    "weight": { "kg": 1, "lb": 2.2046226218 },
+    "length": { "cm": 1, "in": 0.3937007874 },
+    "distance": { "km": 0.001, "mi": 0.0006213712, "m": 1 },
+    "volume_liquid": { "ml": 1, "l": 0.001, "fl_oz": 0.0338140227 }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "_comment": "Body regions for injuries and pain (feature 18). Side is stored on the record, not here.",
+  "version": 1,
+  "sides": ["left", "right", "both", "not_applicable"],
+  "body_regions": [
+    { "key": "neck", "label": "Neck" },
+    { "key": "shoulder", "label": "Shoulder" },
+    { "key": "upper_back", "label": "Upper back" },
+    { "key": "lower_back", "label": "Lower back" },
+    { "key": "chest", "label": "Chest" },
+    { "key": "upper_arm", "label": "Upper arm" },
+    { "key": "elbow", "label": "Elbow" },
+    { "key": "forearm", "label": "Forearm" },
+    { "key": "wrist_hand", "label": "Wrist / hand" },
+    { "key": "abdomen", "label": "Abdomen / core" },
+    { "key": "hip", "label": "Hip" },
+    { "key": "thigh", "label": "Thigh" },
+    { "key": "knee", "label": "Knee" },
+    { "key": "lower_leg", "label": "Lower leg / calf" },
+    { "key": "ankle_foot", "label": "Ankle / foot" },
+    { "key": "other", "label": "Other" }
+  ]
+}

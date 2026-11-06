@@ -1,0 +1,41 @@
+{
+  "_comment": "Seeded muscle regions. Source: Feature Specification, feature 17. Custom regions are added at runtime with is_custom = true.",
+  "version": 1,
+  "groups": ["chest", "shoulders", "back", "arms", "legs", "core"],
+  "muscles": [
+    { "key": "upper_chest", "group": "chest", "label": "Upper chest" },
+    { "key": "middle_chest", "group": "chest", "label": "Middle chest" },
+    { "key": "lower_chest", "group": "chest", "label": "Lower chest" },
+
+    { "key": "front_delts", "group": "shoulders", "label": "Front delts" },
+    { "key": "side_delts", "group": "shoulders", "label": "Side delts" },
+    { "key": "rear_delts", "group": "shoulders", "label": "Rear delts" },
+
+    { "key": "upper_traps", "group": "back", "label": "Upper traps" },
+    { "key": "middle_traps", "group": "back", "label": "Middle traps" },
+    { "key": "lower_traps", "group": "back", "label": "Lower traps" },
+    { "key": "lats", "group": "back", "label": "Lats" },
+    { "key": "rhomboids", "group": "back", "label": "Rhomboids" },
+    { "key": "spinal_erectors", "group": "back", "label": "Spinal erectors" },
+
+    { "key": "biceps", "group": "arms", "label": "Biceps" },
+    { "key": "brachialis", "group": "arms", "label": "Brachialis" },
+    { "key": "triceps_long_head", "group": "arms", "label": "Triceps (long head)" },
+    { "key": "triceps_lateral_head", "group": "arms", "label": "Triceps (lateral head)" },
+    { "key": "triceps_medial_head", "group": "arms", "label": "Triceps (medial head)" },
+    { "key": "forearms", "group": "arms", "label": "Forearms" },
+
+    { "key": "quadriceps", "group": "legs", "label": "Quadriceps" },
+    { "key": "hamstrings", "group": "legs", "label": "Hamstrings" },
+    { "key": "glutes", "group": "legs", "label": "Glutes" },
+    { "key": "calves", "group": "legs", "label": "Calves" },
+    { "key": "adductors", "group": "legs", "label": "Adductors" },
+    { "key": "abductors", "group": "legs", "label": "Abductors" },
+
+    { "key": "upper_abs", "group": "core", "label": "Upper abs (rectus abdominis)" },
+    { "key": "lower_abs", "group": "core", "label": "Lower abs (rectus abdominis)" },
+    { "key": "external_obliques", "group": "core", "label": "External obliques" },
+    { "key": "internal_obliques", "group": "core", "label": "Internal obliques" },
+    { "key": "transverse_abdominis", "group": "core", "label": "Transverse abdominis (deep core)" }
+  ]
+}
