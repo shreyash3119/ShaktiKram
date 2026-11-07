@@ -1,0 +1,27 @@
+name: shaktikram
+description: ShaktiKram personal fitness management app (Android).
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.7.0
+
+# Version numbers are minimum floors: run `flutter pub upgrade` for the newest compatible ones.
+# Later steps add: drift, local_auth, flutter_local_notifications.
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.6.1
+  go_router: ^14.6.2
+  supabase_flutter: ^2.8.0
+  shared_preferences: ^2.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/
