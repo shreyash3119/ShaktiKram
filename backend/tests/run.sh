@@ -3,7 +3,7 @@
 # Needs: psql, pg_dump, pg_restore, python3, and a role allowed to create databases/roles (local dev only).
 set -euo pipefail
 export PGHOST="${PGHOST:-127.0.0.1}"
-export PGPORT="${PGPORT:-54325}"
+export PGPORT="${PGPORT:-55432}"
 export PGUSER="${PGUSER:-postgres}"
 export PGPASSWORD="${PGPASSWORD:-postgres}"
 cd "$(dirname "$0")/../.."

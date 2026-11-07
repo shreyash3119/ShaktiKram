@@ -3,13 +3,13 @@ project_id = "shaktikram"
 
 [api]
 enabled = true
-port = 54321
+port = 55431
 schemas = ["public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
 [db]
-port = 54325
+port = 55432
 major_version = 17
 
 [db.seed]
@@ -39,3 +39,11 @@ file_size_limit = "50MiB"
 
 [storage.buckets.backups]
 public = false
+
+[studio]
+enabled = true
+port = 55433
+
+[local_smtp]
+enabled = true
+port = 55434

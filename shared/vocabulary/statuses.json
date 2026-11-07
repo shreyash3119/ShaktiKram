@@ -48,5 +48,6 @@
   "display_distance_unit": ["km", "mi"],
   "experience_level": ["beginner", "intermediate", "advanced"],
   "record_class": ["append_only", "editable", "versioned"],
-  "split_status": ["draft", "active", "inactive", "archived"]
+  "split_status": ["draft", "active", "inactive", "archived"],
+  "body_side": ["left", "right", "both", "not_applicable"]
 }

@@ -250,3 +250,12 @@ A module is done when it has: migrations, constraints and indexes; RLS; operatio
 - **Views** use `security_invoker`, so row level security applies to the caller. Grant select on a new view explicitly.
 - **Functions** are closed by default. A new function a client needs must be granted `execute` in its migration.
 - **Weeks** in attendance and volume views start on Monday.
+
+## 16. Stage 3 conventions
+
+- **Labelled values.** A view that calculates something says what it is: `value_kind` is `estimated` (body composition, nutrition) or `user_assessment` (muscle ratings). Nothing calculated is called `measured`.
+- **Observation flags.** `suggest_professional_review`, `exceeds_recorded_limit` and restriction warnings describe what the user recorded. They never diagnose, prescribe, or tell the user to start, stop or change anything.
+- **Ratings versus exposure.** Muscle ratings come only from assessments the user entered. Training exposure (sets, frequency, effort) is a separate view and is shown beside a rating, never merged into it.
+- **Versioned targets and phases.** `personal_targets`, `supplement_phases` and `muscle_priorities` are versioned. A day is compared with the version that applied on that local day.
+- **Reminder rules.** `schedule` is `{}` or `{"type":"daily|weekly|once","time":"HH:MM","days":[1..7],"date":"YYYY-MM-DD"}`. The database rejects any other shape. `api_due_reminders` answers what fires in a window; the device delivers it.
+- **Weeks** in the new weekly views start on Monday, like Stage 2.

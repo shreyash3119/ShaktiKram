@@ -32,7 +32,8 @@ Personal-Fitness-System/
 - Stage 0 (preparation and technical contracts): done, contributor sign-off pending
 - Stage 1 (infrastructure and database foundation): done and tested (`backend/tests/run.sh`)
 - Stage 2 (core training backend): done and tested
-- Stages 3-7: not started
+- Stage 3 (body and lifestyle backend): done and tested
+- Stages 4-7: not started
 
 ## Ground rules
 

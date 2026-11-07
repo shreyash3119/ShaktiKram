@@ -34,6 +34,7 @@ for g in groups:
 # body regions
 b = load("body_regions.json")
 bk = [x["key"] for x in b["body_regions"]]
+check(b["sides"] == load("statuses.json")["body_side"], "body_regions sides must equal statuses body_side")
 check(len(bk) == len(set(bk)), "body_regions: duplicate keys")
 for k in bk:
     check(bool(SNAKE.match(k)), f"body_regions: bad key {k}")

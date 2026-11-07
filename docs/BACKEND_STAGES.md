@@ -82,6 +82,23 @@ Not verified: the REST smoke test (`backend/scripts/smoke_rest.sh`) has only bee
 
 Left for later stages: muscle exposure per week and progression (Stage 4), attendance reminders (Stage 3 reminder queries), reports (Stage 5).
 
+## Stage 3: done (8 Nov 2026)
+
+All of Stage 3 is built and tested on PostgreSQL 16 (`backend/tests/run.sh`, 12 test files):
+
+- [x] Daily check-in, sleep, steps, cardio (`daily_checkins`, `sleep_logs`, `daily_steps`, `cardio_sessions`)
+- [x] Body measurements with method stored per reading; body composition view (fat and lean mass only from a body-fat reading plus a same-day weight)
+- [x] Injuries, recovery updates, pain entries, exercise restrictions; restriction warnings and an injury review flag
+- [x] Muscle assessment: append-only ratings, categories per level, versioned priorities, weak-point events, reassessment due, training exposure kept separate
+- [x] Supplements: versioned phases, dose log, adherence, summary, recorded-limit flag
+- [x] Meals, ingredients, combinations, weekly plan entries, versioned personal targets, water log, daily nutrition and hydration views
+- [x] Reminder rule validation and `api_due_reminders` (D10)
+- [x] Every table writable through `api_apply_operations`; every view and function closed to anon and to non-owners
+
+Not verified: Postgres 17 and the hosted project (tests use PostgreSQL 16 with stand-ins for `auth` and `storage`).
+
+Left for later stages: progression, readiness, deload and goal progress (Stage 4), reports and export (Stage 5).
+
 ## Backend completion criteria
 
 All tables and relationships implemented; all 26 modules have working operations;
