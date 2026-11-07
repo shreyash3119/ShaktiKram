@@ -6,7 +6,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 VOC = ROOT / "shared" / "vocabulary"
 sys.path.insert(0, str(VOC))
-from generate_sql import CHECKS  # noqa: E402
+from generate_sql import CHECKS as CHECKS_1, CHECKS_2  # noqa: E402
+CHECKS = CHECKS_1 + CHECKS_2
 
 db = sys.argv[1]
 load = lambda n: json.load(open(VOC / n, encoding="utf-8"))

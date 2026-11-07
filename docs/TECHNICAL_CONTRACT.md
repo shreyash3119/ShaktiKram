@@ -241,3 +241,12 @@ Rules:
 ## 14. Definition of done for a module
 
 A module is done when it has: migrations, constraints and indexes; RLS; operations through `api_apply_operations`; read views; tests (including history preservation and audit); API contract entries in `shared/api_contracts/`; seed examples; and a reviewed pull request from a second contributor.
+
+## 15. Stage 2 conventions
+
+- **Plans with children.** A template or split is an identity row plus immutable versions. The child rows of a version (`template_exercises`, `split_days`, `split_day_muscles`) may change only while their version is open and unused. After a session or schedule entry uses it, or after it is closed, the database refuses changes (`immutable_record`) and the client creates a new version and new child rows.
+- **Creating a version through the API.** Send a `new_version` operation. Put the id the client wants for the new version row in `payload.id`, and send child rows in later operations of the same request (operations run in `seq` order).
+- **Session snapshots.** A session exercise created from a template row gets a copy of its prescription (`prescription_snapshot`). The snapshot never changes afterwards.
+- **Views** use `security_invoker`, so row level security applies to the caller. Grant select on a new view explicitly.
+- **Functions** are closed by default. A new function a client needs must be granted `execute` in its migration.
+- **Weeks** in attendance and volume views start on Monday.

@@ -64,6 +64,24 @@ All of Stage 1 is built and tested on PostgreSQL 16 (`backend/tests/run.sh`):
 
 Not verified in this environment: `config.toml` against the Supabase CLI, and a run on a real Supabase project (tests use plain PostgreSQL with stand-ins for `auth` and `storage`).
 
+## Stage 2: done (7 Nov 2026)
+
+All of Stage 2 is built and tested on PostgreSQL 16 (`backend/tests/run.sh`, 8 test files):
+
+- [x] Exercises (extended), `exercise_muscles`, `exercise_alternatives`
+- [x] Templates: `workout_templates`, `template_versions`, `template_exercises` (the prescription), sealed once used
+- [x] Splits: `splits` (one active), `split_versions`, `split_days`, `split_day_muscles`, `split_status_events`
+- [x] Schedule and breaks: `schedule_entries`, `gym_decisions`, `planned_breaks`, `break_events`
+- [x] Sessions: `workout_sessions`, `session_exercises` (prescription snapshot kept automatically), `sets`
+- [x] Views: session summary, exercise comparison with previous session, weekly volume, exercise usage, split periods, daily attendance, weekly consistency, current streak
+- [x] `api_compare_template_versions`; every table is writable through `api_apply_operations`
+- [x] Hardening: `btree_gist` moved out of `public`; global default of no execute on new functions (D23)
+- [x] Stage 1 follow-ups: safer `run.sh`, FastAPI defaults, REST smoke test script
+
+Not verified: the REST smoke test (`backend/scripts/smoke_rest.sh`) has only been syntax-checked. Run it against local Supabase.
+
+Left for later stages: muscle exposure per week and progression (Stage 4), attendance reminders (Stage 3 reminder queries), reports (Stage 5).
+
 ## Backend completion criteria
 
 All tables and relationships implemented; all 26 modules have working operations;

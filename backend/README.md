@@ -20,7 +20,7 @@ The tests use plain PostgreSQL with small stand-ins for Supabase's `auth` and `s
 ## First-time setup of a Supabase project
 
 1. Apply the migrations (`supabase db push`, or `supabase start` locally, which also runs `seed.sql`). Do not run `seed.sql` in production.
-2. In the Supabase dashboard (Authentication, Users), create the one owner user. Sign-ups are disabled in `config.toml`; also turn them off in the hosted project's Auth settings.
+2. In the Supabase dashboard (Authentication, Users), create the one owner user. In `config.toml`, `[auth] enable_signup = false` blocks all sign-ups while `[auth.email] enable_signup = true` keeps the email provider on, which password sign-in needs. On the hosted project switch off "Allow new users to sign up" and keep the Email provider enabled. Create the owner before anyone else could: the first signed-in user to call `api_claim_owner()` becomes the owner.
 3. Sign in on the first device and call `api_claim_owner()` once. It succeeds only for the first caller.
 4. On each device: sign in once, generate a device UUID, and call `api_register_device(device_id, label, platform)`.
 5. Lost device: call `api_revoke_device(device_id)`, then sign out all sessions in the dashboard and change the owner password.
