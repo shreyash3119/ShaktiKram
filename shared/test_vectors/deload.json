@@ -1,0 +1,118 @@
+{
+  "function": "calc_deload_signal",
+  "cases": [
+    {
+      "name": "nothing unusual",
+      "input": {
+        "weeks_since_deload": 3,
+        "fatigue_entries": 6,
+        "fatigue_high_count": 1,
+        "soreness_entries": 6,
+        "soreness_high_count": 1,
+        "declining_exercises": 0,
+        "sleep_nights": 7,
+        "avg_sleep_h": 7.5
+      },
+      "expect": {
+        "level": "none",
+        "reason_codes": []
+      }
+    },
+    {
+      "name": "long block only: watch",
+      "input": {
+        "weeks_since_deload": 8,
+        "fatigue_entries": 6,
+        "fatigue_high_count": 1,
+        "soreness_entries": 6,
+        "soreness_high_count": 1,
+        "declining_exercises": 0,
+        "sleep_nights": 7,
+        "avg_sleep_h": 7.5
+      },
+      "expect": {
+        "level": "watch",
+        "reason_codes": [
+          "long_block"
+        ]
+      }
+    },
+    {
+      "name": "fatigue and decline: consider reviewing",
+      "input": {
+        "weeks_since_deload": 3,
+        "fatigue_entries": 6,
+        "fatigue_high_count": 4,
+        "soreness_entries": 6,
+        "soreness_high_count": 1,
+        "declining_exercises": 2,
+        "sleep_nights": 7,
+        "avg_sleep_h": 7.5
+      },
+      "expect": {
+        "level": "consider_reviewing_deload",
+        "reason_codes": [
+          "persistent_fatigue",
+          "performance_decline"
+        ]
+      }
+    },
+    {
+      "name": "too few check-ins to call it persistent",
+      "input": {
+        "weeks_since_deload": 3,
+        "fatigue_entries": 4,
+        "fatigue_high_count": 4,
+        "soreness_entries": 6,
+        "soreness_high_count": 1,
+        "declining_exercises": 0,
+        "sleep_nights": 7,
+        "avg_sleep_h": 7.5
+      },
+      "expect": {
+        "level": "none",
+        "reason_codes": []
+      }
+    },
+    {
+      "name": "short sleep: watch",
+      "input": {
+        "weeks_since_deload": 3,
+        "fatigue_entries": 6,
+        "fatigue_high_count": 1,
+        "soreness_entries": 6,
+        "soreness_high_count": 1,
+        "declining_exercises": 0,
+        "sleep_nights": 5,
+        "avg_sleep_h": 5.5
+      },
+      "expect": {
+        "level": "watch",
+        "reason_codes": [
+          "short_sleep"
+        ]
+      }
+    },
+    {
+      "name": "three signals",
+      "input": {
+        "weeks_since_deload": 7,
+        "fatigue_entries": 6,
+        "fatigue_high_count": 5,
+        "soreness_entries": 6,
+        "soreness_high_count": 5,
+        "declining_exercises": 0,
+        "sleep_nights": 7,
+        "avg_sleep_h": 7.5
+      },
+      "expect": {
+        "level": "consider_reviewing_deload",
+        "reason_codes": [
+          "long_block",
+          "persistent_fatigue",
+          "persistent_soreness"
+        ]
+      }
+    }
+  ]
+}

@@ -31,7 +31,7 @@
   "data_source": ["manual", "device_import", "estimate"],
   "deload_status": ["planned", "completed", "cancelled"],
   "equipment_status": ["available", "occupied", "unavailable"],
-  "pr_kind": ["max_weight", "best_reps_at_weight", "est_1rm", "session_volume"],
+  "pr_kind": ["max_weight", "best_reps_at_weight", "est_1rm", "session_volume", "workout_volume"],
   "weak_point_event": ["identified", "exercise_added", "reassessed"],
   "reminder_kind": ["workout", "leave_for_gym", "rest_day", "supplement", "water", "reassessment", "break_end"],
   "report_period": ["monthly", "quarterly", "half_yearly", "yearly", "custom", "complete"],
@@ -49,5 +49,7 @@
   "experience_level": ["beginner", "intermediate", "advanced"],
   "record_class": ["append_only", "editable", "versioned"],
   "split_status": ["draft", "active", "inactive", "archived"],
-  "body_side": ["left", "right", "both", "not_applicable"]
+  "body_side": ["left", "right", "both", "not_applicable"],
+  "achievement_kind": ["workouts_completed", "streak"],
+  "media_type": ["image", "video"]
 }

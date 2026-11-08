@@ -1,0 +1,65 @@
+{
+  "function": "calc_e1rm",
+  "cases": [
+    {
+      "name": "five reps",
+      "input": {
+        "weight_kg": 100,
+        "reps": 5
+      },
+      "expect": {
+        "e1rm_kg": 116.67
+      }
+    },
+    {
+      "name": "one rep is the weight itself",
+      "input": {
+        "weight_kg": 100,
+        "reps": 1
+      },
+      "expect": {
+        "e1rm_kg": 100
+      }
+    },
+    {
+      "name": "more than 12 reps: no estimate",
+      "input": {
+        "weight_kg": 100,
+        "reps": 13
+      },
+      "expect": {
+        "e1rm_kg": null
+      }
+    },
+    {
+      "name": "ten reps",
+      "input": {
+        "weight_kg": 60,
+        "reps": 10
+      },
+      "expect": {
+        "e1rm_kg": 80
+      }
+    },
+    {
+      "name": "zero weight: no estimate",
+      "input": {
+        "weight_kg": 0,
+        "reps": 5
+      },
+      "expect": {
+        "e1rm_kg": null
+      }
+    },
+    {
+      "name": "plates",
+      "input": {
+        "weight_kg": 102.5,
+        "reps": 3
+      },
+      "expect": {
+        "e1rm_kg": 112.75
+      }
+    }
+  ]
+}

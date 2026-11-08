@@ -1,0 +1,85 @@
+{
+  "function": "calc_trend",
+  "cases": [
+    {
+      "name": "flat",
+      "input": {
+        "series": [
+          100,
+          100.5,
+          100.2,
+          100.8
+        ]
+      },
+      "expect": {
+        "signal": "plateau",
+        "change_pct": 0.8
+      }
+    },
+    {
+      "name": "steady gain",
+      "input": {
+        "series": [
+          100,
+          102,
+          104,
+          106
+        ]
+      },
+      "expect": {
+        "signal": "improving",
+        "change_pct": 6.0
+      }
+    },
+    {
+      "name": "latest well below the best",
+      "input": {
+        "series": [
+          100,
+          104,
+          106,
+          98
+        ]
+      },
+      "expect": {
+        "signal": "declining",
+        "change_pct": -2.0
+      }
+    },
+    {
+      "name": "too few sessions",
+      "input": {
+        "series": [
+          100,
+          101
+        ]
+      },
+      "expect": {
+        "signal": "insufficient_data",
+        "change_pct": null
+      }
+    },
+    {
+      "name": "exactly one percent counts as improving",
+      "input": {
+        "series": [
+          100,
+          101,
+          102,
+          101
+        ]
+      },
+      "expect": {
+        "signal": "improving",
+        "change_pct": 1.0
+      }
+    },
+    {
+      "name": "no series",
+      "input": {},
+      "expect": {
+        "signal": "insufficient_data"
+      }
+    }
+  ]
+}

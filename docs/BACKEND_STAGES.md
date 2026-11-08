@@ -99,6 +99,23 @@ Not verified: Postgres 17 and the hosted project (tests use PostgreSQL 16 with s
 
 Left for later stages: progression, readiness, deload and goal progress (Stage 4), reports and export (Stage 5).
 
+## Stage 4: done (9 Nov 2026)
+
+All of Stage 4 is built and tested on PostgreSQL 16 (`backend/tests/run.sh`, 15 SQL test files plus 50 shared rule cases):
+
+- [x] Calculation rules written once in `shared/calculation_specs/`, with shared test cases in `shared/test_vectors/` and a runner (`backend/tests/run_vectors.py`)
+- [x] Estimated 1RM, next-session suggestion with reasons (`api_next_targets`), trend and plateau signals (`v_exercise_trends`)
+- [x] Personal records (5 kinds) and achievements, written by the database at commit
+- [x] Readiness (`api_readiness`) and deload signals (`api_deload_signals`), plus deload records and a before, during and after comparison
+- [x] Goal progress and milestones for body, strength, consistency and manual goals
+- [x] Alternatives ranking, weak-point suggestions, equipment status, muscle recovery context
+- [x] Technique library and media records, `weight_increment_kg` per exercise
+- [x] `api_daily_briefing`: one call for the Today screen (feature 15 data)
+
+Not verified: Postgres 17 and the hosted project. Personal-record test cases for the phone code come with the Dart implementation.
+
+Left for later stages: monthly recommendations and report text (Stage 5), caching of insights if needed (Stage 5), offline behaviour (Stage 6).
+
 ## Backend completion criteria
 
 All tables and relationships implemented; all 26 modules have working operations;

@@ -259,3 +259,11 @@ A module is done when it has: migrations, constraints and indexes; RLS; operatio
 - **Versioned targets and phases.** `personal_targets`, `supplement_phases` and `muscle_priorities` are versioned. A day is compared with the version that applied on that local day.
 - **Reminder rules.** `schedule` is `{}` or `{"type":"daily|weekly|once","time":"HH:MM","days":[1..7],"date":"YYYY-MM-DD"}`. The database rejects any other shape. `api_due_reminders` answers what fires in a window; the device delivers it.
 - **Weeks** in the new weekly views start on Monday, like Stage 2.
+
+## 17. Stage 4 conventions
+
+- **One implementation per rule.** A rule is a plain-language spec, a SQL `calc_*` function (one JSON object in, one out) and shared test cases. The phone implements only what it needs offline and must pass the same cases.
+- **Results say what they are.** `value_kind` is `suggestion`, `observation` or `estimated`. Suggestions carry `reason_codes` (for machines) and `reasoning` (for people). Nothing is applied automatically.
+- **Written by the database.** `personal_records` and `achievements` are filled by deferred triggers at commit and are read-only for clients. Re-running detection is safe.
+- **Internal functions stay closed.** `pfs_*` and `calc_*` functions are not granted to clients; only `api_*` functions are, and each checks the owner.
+- **Views that call functions.** A `security_invoker` view runs its functions as the caller, so the functions it needs are granted explicitly.

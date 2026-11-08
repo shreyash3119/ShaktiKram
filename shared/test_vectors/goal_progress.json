@@ -1,0 +1,137 @@
+{
+  "function": "calc_goal_progress",
+  "cases": [
+    {
+      "name": "cutting, on track",
+      "input": {
+        "start_value": 80,
+        "target_value": 76,
+        "start_date": "2026-09-01",
+        "target_date": "2026-11-01",
+        "today": "2026-10-01",
+        "current_value": 78
+      },
+      "expect": {
+        "progress_pct": 50.0,
+        "status": "on_track",
+        "reached": false
+      }
+    },
+    {
+      "name": "cutting, behind",
+      "input": {
+        "start_value": 80,
+        "target_value": 76,
+        "start_date": "2026-09-01",
+        "target_date": "2026-11-01",
+        "today": "2026-10-01",
+        "current_value": 79
+      },
+      "expect": {
+        "progress_pct": 25.0,
+        "status": "behind"
+      }
+    },
+    {
+      "name": "cutting, ahead",
+      "input": {
+        "start_value": 80,
+        "target_value": 76,
+        "start_date": "2026-09-01",
+        "target_date": "2026-11-01",
+        "today": "2026-10-01",
+        "current_value": 76.8
+      },
+      "expect": {
+        "progress_pct": 80.0,
+        "status": "ahead"
+      }
+    },
+    {
+      "name": "target passed",
+      "input": {
+        "start_value": 80,
+        "target_value": 76,
+        "start_date": "2026-09-01",
+        "target_date": "2026-11-01",
+        "today": "2026-10-01",
+        "current_value": 75.5
+      },
+      "expect": {
+        "progress_pct": 112.5,
+        "status": "reached",
+        "reached": true
+      }
+    },
+    {
+      "name": "no deadline",
+      "input": {
+        "start_value": 80,
+        "target_value": 76,
+        "start_date": "2026-09-01",
+        "target_date": null,
+        "today": "2026-10-01",
+        "current_value": 78
+      },
+      "expect": {
+        "progress_pct": 50.0,
+        "status": "no_deadline"
+      }
+    },
+    {
+      "name": "past the date and not reached",
+      "input": {
+        "start_value": 80,
+        "target_value": 76,
+        "start_date": "2026-09-01",
+        "target_date": "2026-11-01",
+        "today": "2026-11-15",
+        "current_value": 78
+      },
+      "expect": {
+        "status": "overdue"
+      }
+    },
+    {
+      "name": "gaining, on track",
+      "input": {
+        "start_value": 60,
+        "current_value": 70,
+        "target_value": 80,
+        "start_date": "2026-09-01",
+        "target_date": "2026-11-01",
+        "today": "2026-10-01"
+      },
+      "expect": {
+        "progress_pct": 50.0,
+        "status": "on_track"
+      }
+    },
+    {
+      "name": "no current value",
+      "input": {
+        "start_value": 80,
+        "target_value": 76,
+        "start_date": "2026-09-01",
+        "target_date": "2026-11-01",
+        "today": "2026-10-01",
+        "current_value": null
+      },
+      "expect": {
+        "status": "insufficient_data",
+        "progress_pct": null
+      }
+    },
+    {
+      "name": "start equals target",
+      "input": {
+        "start_value": 80,
+        "current_value": 80,
+        "target_value": 80
+      },
+      "expect": {
+        "status": "insufficient_data"
+      }
+    }
+  ]
+}

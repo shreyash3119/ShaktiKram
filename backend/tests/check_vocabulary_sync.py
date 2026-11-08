@@ -6,8 +6,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 VOC = ROOT / "shared" / "vocabulary"
 sys.path.insert(0, str(VOC))
-from generate_sql import CHECKS as CHECKS_1, CHECKS_2, CHECKS_3  # noqa: E402
-CHECKS = CHECKS_1 + CHECKS_2 + CHECKS_3
+from generate_sql import CHECKS as CHECKS_1, CHECKS_2, CHECKS_3, CHECKS_4  # noqa: E402
+CHECKS = CHECKS_1 + CHECKS_2 + CHECKS_3 + CHECKS_4
 
 db = sys.argv[1]
 load = lambda n: json.load(open(VOC / n, encoding="utf-8"))
@@ -32,7 +32,7 @@ for t, c, l in CHECKS:
 # numeric scales: the CHECK bounds must match shared/vocabulary/scales.json
 sc = load("scales.json")
 dev, pri, pain, ci = sc["muscle_development_level"], sc["muscle_priority"], sc["pain_level"], sc["checkin_scale"]
-bounds = [("ck_muscle_assessment_items_level", dev["min"], dev["max"]), ("ck_muscle_priorities_priority", pri["min"], pri["max"]),
+bounds = [("ck_exercise_reference_personal_difficulty", sc["personal_difficulty"]["min"], sc["personal_difficulty"]["max"]), ("ck_muscle_assessment_items_level", dev["min"], dev["max"]), ("ck_muscle_priorities_priority", pri["min"], pri["max"]),
           ("ck_pain_entries_level", pain["min"], pain["max"])] + [(f"ck_daily_checkins_{f}", ci["min"], ci["max"]) for f in ci["fields"]]
 for name, lo, hi in bounds:
     d = " ".join(q(f"select pg_get_constraintdef(oid) from pg_constraint where conname = '{name}'"))

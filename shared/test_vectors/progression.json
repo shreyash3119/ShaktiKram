@@ -1,0 +1,401 @@
+{
+  "function": "calc_progression",
+  "cases": [
+    {
+      "name": "all sets at the top of the range: small increase",
+      "input": {
+        "rep_min": 8,
+        "rep_max": 12,
+        "target_sets": 3,
+        "increment_kg": 2.5,
+        "sets": [
+          {
+            "weight_kg": 60,
+            "reps": 12,
+            "rir": 2
+          },
+          {
+            "weight_kg": 60,
+            "reps": 12,
+            "rir": 2
+          },
+          {
+            "weight_kg": 60,
+            "reps": 12,
+            "rir": 2
+          }
+        ]
+      },
+      "expect": {
+        "action": "increase",
+        "suggested_weight_kg": 62.5,
+        "target_reps": 8,
+        "reason_codes": [
+          "top_of_range_all_sets"
+        ]
+      }
+    },
+    {
+      "name": "zero reps in reserve on a set: repeat",
+      "input": {
+        "rep_min": 8,
+        "rep_max": 12,
+        "target_sets": 3,
+        "increment_kg": 2.5,
+        "sets": [
+          {
+            "weight_kg": 60,
+            "reps": 12,
+            "rir": 2
+          },
+          {
+            "weight_kg": 60,
+            "reps": 12,
+            "rir": 1
+          },
+          {
+            "weight_kg": 60,
+            "reps": 12,
+            "rir": 0
+          }
+        ]
+      },
+      "expect": {
+        "action": "repeat",
+        "suggested_weight_kg": 60,
+        "target_reps": 12,
+        "reason_codes": [
+          "effort_very_high"
+        ]
+      }
+    },
+    {
+      "name": "inside the range: add a rep",
+      "input": {
+        "rep_min": 8,
+        "rep_max": 12,
+        "target_sets": 3,
+        "increment_kg": 2.5,
+        "sets": [
+          {
+            "weight_kg": 60,
+            "reps": 10
+          },
+          {
+            "weight_kg": 60,
+            "reps": 9
+          },
+          {
+            "weight_kg": 60,
+            "reps": 9
+          }
+        ]
+      },
+      "expect": {
+        "action": "add_reps",
+        "suggested_weight_kg": 60,
+        "target_reps": 10,
+        "reason_codes": [
+          "within_range"
+        ]
+      }
+    },
+    {
+      "name": "reps fell below the range: repeat",
+      "input": {
+        "rep_min": 8,
+        "rep_max": 12,
+        "target_sets": 3,
+        "increment_kg": 2.5,
+        "sets": [
+          {
+            "weight_kg": 60,
+            "reps": 8
+          },
+          {
+            "weight_kg": 60,
+            "reps": 7
+          },
+          {
+            "weight_kg": 60,
+            "reps": 6
+          }
+        ]
+      },
+      "expect": {
+        "action": "repeat",
+        "suggested_weight_kg": 60,
+        "target_reps": 8,
+        "reason_codes": [
+          "below_rep_range"
+        ]
+      }
+    },
+    {
+      "name": "fewer sets than prescribed: repeat",
+      "input": {
+        "rep_min": 8,
+        "rep_max": 12,
+        "target_sets": 3,
+        "increment_kg": 2.5,
+        "sets": [
+          {
+            "weight_kg": 60,
+            "reps": 12
+          },
+          {
+            "weight_kg": 60,
+            "reps": 12
+          }
+        ]
+      },
+      "expect": {
+        "action": "repeat",
+        "suggested_weight_kg": 60,
+        "target_reps": 12,
+        "reason_codes": [
+          "incomplete_sets"
+        ]
+      }
+    },
+    {
+      "name": "no history",
+      "input": {
+        "rep_min": 8,
+        "rep_max": 12,
+        "target_sets": 3,
+        "increment_kg": 2.5,
+        "sets": []
+      },
+      "expect": {
+        "action": "no_history",
+        "suggested_weight_kg": null,
+        "reason_codes": [
+          "no_history"
+        ]
+      }
+    },
+    {
+      "name": "restriction applies: review, no number",
+      "input": {
+        "rep_min": 8,
+        "rep_max": 12,
+        "target_sets": 3,
+        "increment_kg": 2.5,
+        "sets": [
+          {
+            "weight_kg": 60,
+            "reps": 12
+          },
+          {
+            "weight_kg": 60,
+            "reps": 12
+          },
+          {
+            "weight_kg": 60,
+            "reps": 12
+          }
+        ],
+        "restricted": true
+      },
+      "expect": {
+        "action": "review",
+        "suggested_weight_kg": null,
+        "reason_codes": [
+          "restriction_active"
+        ]
+      }
+    },
+    {
+      "name": "deload today: 90 percent, rounded to the step",
+      "input": {
+        "rep_min": 8,
+        "rep_max": 12,
+        "target_sets": 3,
+        "increment_kg": 2.5,
+        "sets": [
+          {
+            "weight_kg": 60,
+            "reps": 12
+          },
+          {
+            "weight_kg": 60,
+            "reps": 12
+          },
+          {
+            "weight_kg": 60,
+            "reps": 12
+          }
+        ],
+        "deload_active": true
+      },
+      "expect": {
+        "action": "deload",
+        "suggested_weight_kg": 55,
+        "target_reps": 8,
+        "reason_codes": [
+          "deload_period"
+        ]
+      }
+    },
+    {
+      "name": "back-off sets: the heavier tied weight counts",
+      "input": {
+        "rep_min": 8,
+        "rep_max": 12,
+        "target_sets": 3,
+        "increment_kg": 2.5,
+        "sets": [
+          {
+            "weight_kg": 80,
+            "reps": 10
+          },
+          {
+            "weight_kg": 80,
+            "reps": 10
+          },
+          {
+            "weight_kg": 70,
+            "reps": 12
+          },
+          {
+            "weight_kg": 70,
+            "reps": 12
+          }
+        ]
+      },
+      "expect": {
+        "action": "repeat",
+        "suggested_weight_kg": 80,
+        "target_reps": 10,
+        "reason_codes": [
+          "incomplete_sets"
+        ]
+      }
+    },
+    {
+      "name": "bodyweight work: a weight step is added",
+      "input": {
+        "rep_min": 8,
+        "rep_max": 12,
+        "target_sets": 3,
+        "increment_kg": 2.5,
+        "sets": [
+          {
+            "weight_kg": 0,
+            "reps": 12
+          },
+          {
+            "weight_kg": 0,
+            "reps": 12
+          },
+          {
+            "weight_kg": 0,
+            "reps": 12
+          }
+        ]
+      },
+      "expect": {
+        "action": "increase",
+        "suggested_weight_kg": 2.5,
+        "target_reps": 8,
+        "reason_codes": [
+          "top_of_range_all_sets"
+        ]
+      }
+    },
+    {
+      "name": "RPE 9.5 counts as very high effort",
+      "input": {
+        "rep_min": 8,
+        "rep_max": 12,
+        "target_sets": 3,
+        "increment_kg": 2.5,
+        "sets": [
+          {
+            "weight_kg": 60,
+            "reps": 12,
+            "rpe": 9.5
+          },
+          {
+            "weight_kg": 60,
+            "reps": 12,
+            "rpe": 9.5
+          },
+          {
+            "weight_kg": 60,
+            "reps": 12,
+            "rpe": 9.5
+          }
+        ]
+      },
+      "expect": {
+        "action": "repeat",
+        "suggested_weight_kg": 60,
+        "target_reps": 12,
+        "reason_codes": [
+          "effort_very_high"
+        ]
+      }
+    },
+    {
+      "name": "bottom of the range on every set: add a rep",
+      "input": {
+        "rep_min": 8,
+        "rep_max": 12,
+        "target_sets": 3,
+        "increment_kg": 2.5,
+        "sets": [
+          {
+            "weight_kg": 60,
+            "reps": 8
+          },
+          {
+            "weight_kg": 60,
+            "reps": 8
+          },
+          {
+            "weight_kg": 60,
+            "reps": 8
+          }
+        ]
+      },
+      "expect": {
+        "action": "add_reps",
+        "suggested_weight_kg": 60,
+        "target_reps": 9,
+        "reason_codes": [
+          "within_range"
+        ]
+      }
+    },
+    {
+      "name": "smaller weight step",
+      "input": {
+        "sets": [
+          {
+            "weight_kg": 20,
+            "reps": 15
+          },
+          {
+            "weight_kg": 20,
+            "reps": 15
+          },
+          {
+            "weight_kg": 20,
+            "reps": 15
+          }
+        ],
+        "rep_min": 12,
+        "rep_max": 15,
+        "target_sets": 3,
+        "increment_kg": 1.25
+      },
+      "expect": {
+        "action": "increase",
+        "suggested_weight_kg": 21.25,
+        "target_reps": 12
+      }
+    }
+  ]
+}

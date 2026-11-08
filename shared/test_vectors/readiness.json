@@ -1,0 +1,181 @@
+{
+  "function": "calc_readiness",
+  "cases": [
+    {
+      "name": "good answers: proceed",
+      "input": {
+        "has_checkin": true,
+        "energy": 4,
+        "sleep_quality": 4,
+        "soreness": 2,
+        "fatigue": 2,
+        "motivation": 4,
+        "stress": 2,
+        "sleep_hours": 7.5
+      },
+      "expect": {
+        "level": "proceed",
+        "wellness_score": 4.0,
+        "reason_codes": []
+      }
+    },
+    {
+      "name": "high fatigue: lighter",
+      "input": {
+        "has_checkin": true,
+        "energy": 3,
+        "sleep_quality": 3,
+        "soreness": 2,
+        "fatigue": 4,
+        "motivation": 3,
+        "stress": 2,
+        "sleep_hours": 7
+      },
+      "expect": {
+        "level": "lighter",
+        "reason_codes": [
+          "high_fatigue"
+        ]
+      }
+    },
+    {
+      "name": "high pain: review",
+      "input": {
+        "has_checkin": true,
+        "energy": 4,
+        "sleep_quality": 4,
+        "soreness": 2,
+        "fatigue": 2,
+        "motivation": 4,
+        "stress": 2,
+        "pain_flag": true,
+        "max_pain_level": 8
+      },
+      "expect": {
+        "level": "review",
+        "reason_codes": [
+          "high_pain"
+        ]
+      }
+    },
+    {
+      "name": "injury flagged: review",
+      "input": {
+        "has_checkin": true,
+        "energy": 4,
+        "sleep_quality": 4,
+        "soreness": 2,
+        "fatigue": 2,
+        "motivation": 4,
+        "stress": 2,
+        "suggest_professional_review": true
+      },
+      "expect": {
+        "level": "review",
+        "reason_codes": [
+          "injury_review_flag"
+        ]
+      }
+    },
+    {
+      "name": "short sleep: lighter",
+      "input": {
+        "has_checkin": true,
+        "energy": 4,
+        "sleep_quality": 4,
+        "soreness": 2,
+        "fatigue": 2,
+        "motivation": 4,
+        "stress": 2,
+        "sleep_hours": 4.5
+      },
+      "expect": {
+        "level": "lighter",
+        "reason_codes": [
+          "short_sleep"
+        ]
+      }
+    },
+    {
+      "name": "no check-in",
+      "input": {
+        "has_checkin": false
+      },
+      "expect": {
+        "level": "no_checkin",
+        "wellness_score": null,
+        "reason_codes": []
+      }
+    },
+    {
+      "name": "low wellness and soreness: lighter",
+      "input": {
+        "has_checkin": true,
+        "energy": 1,
+        "sleep_quality": 2,
+        "motivation": 2,
+        "soreness": 4,
+        "fatigue": 3,
+        "stress": 4,
+        "sleep_hours": 6
+      },
+      "expect": {
+        "level": "lighter",
+        "wellness_score": 2.0,
+        "reason_codes": [
+          "low_wellness",
+          "high_soreness"
+        ]
+      }
+    },
+    {
+      "name": "pain flagged at 5: review",
+      "input": {
+        "has_checkin": true,
+        "energy": 4,
+        "sleep_quality": 4,
+        "soreness": 2,
+        "fatigue": 2,
+        "motivation": 4,
+        "stress": 2,
+        "pain_flag": true,
+        "max_pain_level": 5
+      },
+      "expect": {
+        "level": "review",
+        "reason_codes": [
+          "pain_reported"
+        ]
+      }
+    },
+    {
+      "name": "too few answers",
+      "input": {
+        "has_checkin": true,
+        "energy": 4,
+        "motivation": 4
+      },
+      "expect": {
+        "level": "limited_data",
+        "wellness_score": null
+      }
+    },
+    {
+      "name": "pain of 5 without the pain flag is not a review",
+      "input": {
+        "has_checkin": true,
+        "energy": 4,
+        "sleep_quality": 4,
+        "soreness": 2,
+        "fatigue": 2,
+        "motivation": 4,
+        "stress": 2,
+        "max_pain_level": 5
+      },
+      "expect": {
+        "level": "proceed",
+        "reason_codes": []
+      }
+    }
+  ]
+}
