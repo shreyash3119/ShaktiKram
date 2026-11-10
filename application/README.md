@@ -51,7 +51,10 @@ Removing a device blocks its writes and pulls at once, but its sign-in stays val
 
 ## What works
 
-- Step 1: six-section navigation, placeholder theme, sync indicator (stub), dashboard skeleton, shared state views.
+- Step 1: six-section navigation, sync indicator (stub), shared state views.
+- Step 3: the dark design from the owner's screenshots on all six tabs and the workout session screen.
+  Sub-tabs, charts, toggles and the session (sets, rest timer, finish and leave dialogs) work on screen only.
+  Sections that have no backend data yet show amber "Sample values" badges.
 - Step 2: owner sign-in, session kept across launches, offline start, device registration, devices list and removal,
   sign out, startup screens for a missing or unsafe configuration.
 
@@ -66,7 +69,8 @@ lib/
     auth/      sign-in service, device store, session controller (the sign-in state machine)
     routing/   routes, bottom navigation, redirect by session state
     sync/      sync status (stub until step 3)
-    theme/, widgets/
+    theme/     palette (AppPalette), dark and light themes, theme mode
+    widgets/   cards, pills, buttons, toggles, meters and charts shared by every tab
   features/    one folder per section, plus auth/ for the sign-in screens
 test/
   support/fakes.dart   fake auth, fake gateway, in-memory device store

@@ -11,6 +11,7 @@ import '../../features/lifestyle/presentation/lifestyle_screen.dart';
 import '../../features/progress/presentation/progress_screen.dart';
 import '../../features/reports/presentation/reports_screen.dart';
 import '../../features/settings/presentation/devices_screen.dart';
+import '../../features/training/presentation/workout_session_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/training/presentation/training_screen.dart';
 import '../auth/session_controller.dart';
@@ -26,6 +27,7 @@ class AppRoutes {
   static const reports = '/reports';
   static const settings = '/settings';
   static const devices = '/settings/devices';
+  static const session = '/workout'; // full screen, outside the bottom bar
 
   // Outside the main navigation: shown while there is no usable session.
   static const splash = '/splash';
@@ -71,6 +73,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: AppRoutes.signIn, builder: (context, state) => const SignInScreen()),
       GoRoute(path: AppRoutes.connecting, builder: (context, state) => const ConnectingScreen()),
       GoRoute(path: AppRoutes.revoked, builder: (context, state) => const RevokedScreen()),
+      GoRoute(path: AppRoutes.session, builder: (context, state) => const WorkoutSessionScreen()),
       StatefulShellRoute.indexedStack(
         builder: (BuildContext context, GoRouterState state, StatefulNavigationShell shell) =>
             AppShell(navigationShell: shell),

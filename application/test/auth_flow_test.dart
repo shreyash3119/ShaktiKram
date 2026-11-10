@@ -5,6 +5,8 @@ import 'package:shaktikram/app.dart';
 import 'package:shaktikram/core/auth/auth_service.dart';
 import 'package:shaktikram/core/backend/backend_error.dart';
 import 'package:shaktikram/core/backend/backend_gateway.dart';
+import 'package:shaktikram/core/routing/app_shell.dart';
+import 'package:shaktikram/features/home/presentation/home_screen.dart';
 
 import 'support/fakes.dart';
 
@@ -13,8 +15,16 @@ Future<void> _pump(WidgetTester tester, Harness h) async {
   await tester.pumpAndSettle();
 }
 
-Finder _navLabel(String label) => find.descendant(of: find.byType(NavigationBar), matching: find.text(label));
-Finder _appBarTitle(String title) => find.descendant(of: find.byType(AppBar), matching: find.text(title));
+Finder _navLabel(String label) => find.descendant(of: find.byType(AppBottomBar), matching: find.text(label));
+
+/// Home has its greeting; the Devices screen still uses an app bar.
+Finder _appBarTitle(String title) =>
+    title == 'Home' ? find.text(greetingFor(DateTime.now())) : find.descendant(of: find.byType(AppBar), matching: find.text(title));
+
+Future<void> _scrollTo(WidgetTester tester, Finder target) async {
+  await tester.scrollUntilVisible(target, 300, scrollable: find.byType(Scrollable).first);
+  await tester.pumpAndSettle();
+}
 
 Future<void> _fillAndSubmit(WidgetTester tester, {String email = 'owner@example.com', String password = 'secret'}) async {
   await tester.enterText(find.byKey(const Key('email-field')), email);
@@ -28,7 +38,7 @@ void main() {
     await _pump(tester, Harness.signedOut());
 
     expect(find.byKey(const Key('sign-in-button')), findsOneWidget);
-    expect(find.byType(NavigationBar), findsNothing);
+    expect(find.byType(AppBottomBar), findsNothing);
     expect(find.textContaining('Create account'), findsNothing);
     expect(find.textContaining('Sign up'), findsNothing);
     expect(find.textContaining('Register'), findsNothing);
@@ -90,7 +100,7 @@ void main() {
 
     await _fillAndSubmit(tester);
     expect(find.text('This device was removed'), findsOneWidget);
-    expect(find.byType(NavigationBar), findsNothing);
+    expect(find.byType(AppBottomBar), findsNothing);
   });
 
   testWidgets('a registered phone opens straight to Home with no sign-in and no server call', (tester) async {
@@ -108,6 +118,7 @@ void main() {
 
     await tester.tap(_navLabel('Settings'));
     await tester.pumpAndSettle();
+    await _scrollTo(tester, find.byKey(const Key('sign-out-tile')));
     expect(find.text('owner@example.com'), findsOneWidget);
     expect(find.text('Test phone'), findsOneWidget);
 
@@ -130,6 +141,7 @@ void main() {
 
     await tester.tap(_navLabel('Settings'));
     await tester.pumpAndSettle();
+    await _scrollTo(tester, find.text('Manage devices'));
     await tester.tap(find.text('Manage devices'));
     await tester.pumpAndSettle();
 
@@ -154,6 +166,7 @@ void main() {
 
     await tester.tap(_navLabel('Settings'));
     await tester.pumpAndSettle();
+    await _scrollTo(tester, find.text('Manage devices'));
     await tester.tap(find.text('Manage devices'));
     await tester.pumpAndSettle();
 

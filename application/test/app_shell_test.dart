@@ -1,8 +1,11 @@
-import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shaktikram/app.dart';
+import 'package:shaktikram/core/routing/app_shell.dart';
 import 'package:shaktikram/core/sync/sync_status.dart';
+import 'package:shaktikram/core/widgets/controls.dart';
+import 'package:shaktikram/features/home/presentation/home_screen.dart';
 
 import 'support/fakes.dart';
 
@@ -13,17 +16,29 @@ Future<void> _pumpApp(WidgetTester tester, {List<Override> extra = const []}) as
   await tester.pumpAndSettle();
 }
 
-Finder _navLabel(String label) =>
-    find.descendant(of: find.byType(NavigationBar), matching: find.text(label));
+Finder _navLabel(String label) => find.descendant(of: find.byType(AppBottomBar), matching: find.text(label));
 
-Finder _appBarTitle(String title) =>
-    find.descendant(of: find.byType(AppBar), matching: find.text(title));
+/// A line that only that screen shows (its subtitle).
+Map<String, String> _subtitles() => {
+      'Home': dateLine(DateTime.now()),
+      'Training': 'Splits, exercises and workouts',
+      'Progress': 'Your history and change over time',
+      'Lifestyle': 'Recovery, nutrition and daily activity',
+      'Reports': 'Analyze history and export',
+      'Settings': 'Profile, sync, preferences and data',
+    };
+
+Future<void> _tapPill(WidgetTester tester, String label) async {
+  await tester.tap(find.descendant(of: find.byType(PillTabs).first, matching: find.text(label)));
+  await tester.pumpAndSettle();
+}
 
 void main() {
   testWidgets('opens on Home and shows the six sections', (tester) async {
     await _pumpApp(tester);
 
-    expect(_appBarTitle('Home'), findsOneWidget);
+    expect(find.text(_subtitles()['Home']!), findsOneWidget);
+    expect(find.text(greetingFor(DateTime.now())), findsOneWidget);
     for (final label in ['Home', 'Training', 'Progress', 'Lifestyle', 'Reports', 'Settings']) {
       expect(_navLabel(label), findsOneWidget, reason: 'missing section $label');
     }
@@ -35,16 +50,12 @@ void main() {
     for (final label in ['Training', 'Progress', 'Lifestyle', 'Reports', 'Settings', 'Home']) {
       await tester.tap(_navLabel(label));
       await tester.pumpAndSettle();
-      expect(_appBarTitle(label), findsOneWidget, reason: 'screen for $label did not open');
+      expect(find.text(_subtitles()[label]!), findsOneWidget, reason: 'screen for $label did not open');
     }
   });
 
-  testWidgets('the sync indicator shows a status on every screen', (tester) async {
+  testWidgets('the Home header shows the sync status', (tester) async {
     await _pumpApp(tester);
-
-    expect(find.text('Synced'), findsOneWidget);
-    await tester.tap(_navLabel('Training'));
-    await tester.pumpAndSettle();
     expect(find.text('Synced'), findsOneWidget);
   });
 
@@ -56,14 +67,48 @@ void main() {
     expect(find.text('3 waiting'), findsOneWidget);
   });
 
-  testWidgets('Home shows today card, check-in card and metric placeholders', (tester) async {
+  testWidgets('Home shows today card, readiness, and marks placeholder data', (tester) async {
     await _pumpApp(tester);
 
-    expect(find.text('Today'), findsOneWidget);
-    expect(find.text('Daily check-in'), findsOneWidget);
-    expect(find.text('Workout streak'), findsOneWidget);
-    expect(find.text('Current weight'), findsOneWidget);
-    expect(find.text('Steps today'), findsOneWidget);
+    expect(find.text('Today · Day 1 of 4'), findsOneWidget);
+    expect(find.text('Chest + Shoulders'), findsWidgets);
+    expect(find.text('Start workout'), findsOneWidget);
+    expect(find.text('Readiness check-in'), findsOneWidget);
+    expect(find.text('Sample values'), findsWidgets);
+  });
+
+  testWidgets('Training sub-tabs switch the content', (tester) async {
+    await _pumpApp(tester);
+    await tester.tap(_navLabel('Training'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Quick actions'), findsOneWidget);
+    await _tapPill(tester, 'Splits');
+    expect(find.text('Your splits'), findsOneWidget);
+    await _tapPill(tester, 'Exercises');
+    expect(find.text('Exercise library'), findsOneWidget);
+    await _tapPill(tester, 'History');
+    expect(find.text('Compare sessions'), findsWidgets);
+    await _tapPill(tester, 'Schedule');
+    expect(find.text('Schedule · this week'), findsOneWidget);
+  });
+
+  testWidgets('Progress, Lifestyle and Reports sub-tabs switch the content', (tester) async {
+    await _pumpApp(tester);
+
+    await tester.tap(_navLabel('Progress'));
+    await tester.pumpAndSettle();
+    await _tapPill(tester, 'Goals');
+    expect(find.text('Goal milestones'), findsOneWidget);
+
+    await tester.tap(_navLabel('Lifestyle'));
+    await tester.pumpAndSettle();
+    await _tapPill(tester, 'Nutrition');
+    expect(find.text('Nutrition today'), findsOneWidget);
+
+    await tester.tap(_navLabel('Reports'));
+    await tester.pumpAndSettle();
+    expect(find.text('Performance overview'), findsOneWidget);
   });
 }
 

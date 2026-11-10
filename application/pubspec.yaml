@@ -7,7 +7,7 @@ environment:
   sdk: ^3.7.0
 
 # Version numbers are minimum floors: run `flutter pub upgrade` for the newest compatible ones.
-# Later steps add: drift, local_auth, flutter_local_notifications.
+# Later steps add: local_auth, flutter_local_notifications.
 dependencies:
   flutter:
     sdk: flutter
@@ -15,6 +15,8 @@ dependencies:
   go_router: ^14.6.2
   supabase_flutter: ^2.8.0
   shared_preferences: ^2.3.0
+  sqflite: ^2.4.1
+  path: ^1.9.0
 
 dev_dependencies:
   flutter_test:

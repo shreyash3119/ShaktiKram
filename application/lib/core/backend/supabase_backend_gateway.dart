@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../db/sync_models.dart';
 import 'backend_error.dart';
 import 'backend_gateway.dart';
 
@@ -45,5 +46,26 @@ class SupabaseBackendGateway implements BackendGateway {
   Future<DeviceRecord> revokeDevice(String id) async {
     final data = await _rpc('api_revoke_device', {'p_device_id': id});
     return DeviceRecord.fromJson(Map<String, dynamic>.from(data as Map));
+  }
+
+  @override
+  Future<List<OpResult>> applyOperations({
+    required String deviceId,
+    required String requestId,
+    required List<OutboxOp> operations,
+  }) async {
+    final data = await _rpc('api_apply_operations', {
+      'p_device_id': deviceId,
+      'p_request_id': requestId,
+      'p_operations': [for (final op in operations) op.toWire()],
+    });
+    final results = (data as Map)['results'] as List;
+    return [for (final r in results) OpResult.fromJson(Map<String, dynamic>.from(r as Map))];
+  }
+
+  @override
+  Future<PullPage> pullChanges({required String deviceId, required int sinceRev, int limit = 200}) async {
+    final data = await _rpc('api_pull_changes', {'p_device_id': deviceId, 'p_since_rev': sinceRev, 'p_limit': limit});
+    return PullPage.fromJson(Map<String, dynamic>.from(data as Map));
   }
 }

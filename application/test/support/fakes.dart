@@ -5,6 +5,10 @@ import 'package:shaktikram/core/auth/auth_service.dart';
 import 'package:shaktikram/core/auth/device_store.dart';
 import 'package:shaktikram/core/backend/backend_error.dart';
 import 'package:shaktikram/core/backend/backend_gateway.dart';
+import 'package:shaktikram/core/db/local_store.dart';
+import 'package:shaktikram/core/db/sync_models.dart';
+
+import 'memory_local_store.dart';
 
 class FakeAuthService implements AuthService {
   FakeAuthService({this.hasSession = false, this.email});
@@ -61,6 +65,18 @@ class FakeGateway implements BackendGateway {
   BackendError? listError;
   List<DeviceRecord> devices = [];
 
+  /// Sync: errors to throw, answers to give, and a record of what was sent.
+  BackendError? applyError;
+  BackendError? pullError;
+  final List<List<OutboxOp>> sentBatches = [];
+  final List<int> pullSince = [];
+
+  /// Answer for an operation id. Default is applied with rev 1.
+  OpResult Function(OutboxOp op) onApply = (op) => OpResult(opId: op.opId, result: 'applied', rev: 1);
+
+  /// Pages handed out by [pullChanges], in order. When empty, an empty final page is returned.
+  final List<PullPage> pullPages = [];
+
   @override
   Future<void> claimOwner() async {
     calls.add('claimOwner');
@@ -98,6 +114,29 @@ class FakeGateway implements BackendGateway {
     );
     devices[index] = revoked;
     return revoked;
+  }
+
+  @override
+  Future<List<OpResult>> applyOperations({
+    required String deviceId,
+    required String requestId,
+    required List<OutboxOp> operations,
+  }) async {
+    calls.add('apply:${operations.length}');
+    final error = applyError;
+    if (error != null) throw error;
+    sentBatches.add(List.of(operations));
+    return [for (final op in operations) onApply(op)];
+  }
+
+  @override
+  Future<PullPage> pullChanges({required String deviceId, required int sinceRev, int limit = 200}) async {
+    calls.add('pull:$sinceRev');
+    final error = pullError;
+    if (error != null) throw error;
+    pullSince.add(sinceRev);
+    if (pullPages.isEmpty) return PullPage(rows: const [], nextRev: sinceRev, hasMore: false);
+    return pullPages.removeAt(0);
   }
 }
 
@@ -149,8 +188,10 @@ class Harness {
   final FakeAuthService auth;
   final FakeGateway gateway;
   final InMemoryDeviceStore store;
+  final MemoryLocalStore local = MemoryLocalStore();
 
   List<Override> get overrides => [
+        localStoreProvider.overrideWithValue(local),
         authServiceProvider.overrideWithValue(auth),
         backendGatewayProvider.overrideWithValue(gateway),
         deviceStoreProvider.overrideWithValue(store),

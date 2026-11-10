@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../db/sync_models.dart';
+
 /// One row of the server's `devices` table.
 class DeviceRecord {
   const DeviceRecord({
@@ -47,6 +49,17 @@ abstract class BackendGateway {
 
   /// `api_revoke_device`.
   Future<DeviceRecord> revokeDevice(String id);
+
+  /// `api_apply_operations`: sends queued changes (at most 500). One result per operation.
+  /// [requestId] is new for each call.
+  Future<List<OpResult>> applyOperations({
+    required String deviceId,
+    required String requestId,
+    required List<OutboxOp> operations,
+  });
+
+  /// `api_pull_changes`: changed rows after [sinceRev], at most [limit] (1 to 500).
+  Future<PullPage> pullChanges({required String deviceId, required int sinceRev, int limit = 200});
 }
 
 /// Replaced in `main.dart` (and in tests).
