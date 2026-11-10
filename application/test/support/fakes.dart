@@ -67,9 +67,16 @@ class FakeGateway implements BackendGateway {
 
   /// Sync: errors to throw, answers to give, and a record of what was sent.
   BackendError? applyError;
+
+  /// Simulates a server that accepts sync again once the device is registered.
+  bool clearApplyErrorOnRegister = false;
   BackendError? pullError;
   final List<List<OutboxOp>> sentBatches = [];
   final List<int> pullSince = [];
+
+  /// Makes the Nth call to [pullChanges] fail as if the network dropped (1 is the first call).
+  int? failPullAtCall;
+  int _pullCalls = 0;
 
   /// Answer for an operation id. Default is applied with rev 1.
   OpResult Function(OutboxOp op) onApply = (op) => OpResult(opId: op.opId, result: 'applied', rev: 1);
@@ -87,6 +94,7 @@ class FakeGateway implements BackendGateway {
   @override
   Future<DeviceRecord> registerDevice({required String id, required String label, required String platform}) async {
     calls.add('registerDevice:$id:$label');
+    if (clearApplyErrorOnRegister) applyError = null;
     final error = registerError;
     if (error != null) throw error;
     return DeviceRecord(id: id, label: label, platform: platform);
@@ -134,6 +142,7 @@ class FakeGateway implements BackendGateway {
     calls.add('pull:$sinceRev');
     final error = pullError;
     if (error != null) throw error;
+    if (failPullAtCall == ++_pullCalls) throw const BackendError.unreachable();
     pullSince.add(sinceRev);
     if (pullPages.isEmpty) return PullPage(rows: const [], nextRev: sinceRev, hasMore: false);
     return pullPages.removeAt(0);

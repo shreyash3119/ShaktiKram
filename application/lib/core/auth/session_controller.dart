@@ -141,12 +141,38 @@ class SessionController extends Notifier<SessionState> {
     }
   }
 
-  /// Signs out of this device. The device id is kept so signing in again reuses it.
+  /// Signs out of this device. The device id is kept so signing in again reuses it,
+  /// except after the owner removed this device: the server never accepts a removed id again, so a new one is made.
   Future<void> signOut() => _toSignedOut();
+
+  /// Registers this device again without leaving the app, for when the server does not know it
+  /// (for example after the server data was reset). Returns true when the device is registered.
+  Future<bool> reRegisterDevice() async {
+    final id = await _loadDeviceId();
+    final label = state.deviceLabel ?? await _store.label() ?? defaultDeviceLabel;
+    try {
+      await _gateway.claimOwner();
+      await _gateway.registerDevice(id: id, label: label, platform: 'mobile');
+      await _store.setRegistered(true);
+      return true;
+    } on BackendError catch (e) {
+      if (e.isNotOwner) {
+        await _toSignedOut(message: 'This account is not the owner of this app.');
+      } else if (e.isDeviceRevoked) {
+        markRevoked();
+      }
+      return false;
+    }
+  }
 
   Future<void> _toSignedOut({String? message}) async {
     _signingOut = true;
     try {
+      if (state.phase == SessionPhase.revoked) {
+        final fresh = newUuidV4();
+        await _store.saveDeviceId(fresh);
+        _deviceId = fresh;
+      }
       try {
         await _auth.signOut();
       } catch (_) {

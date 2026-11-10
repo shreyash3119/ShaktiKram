@@ -17,6 +17,9 @@ enum SyncOutcome {
   /// The server answered with an error. Changes stay queued.
   error,
 
+  /// The server does not know this device. The app registers it again and tries once more.
+  notRegistered,
+
   /// A sync is already running.
   busy,
 }
@@ -57,7 +60,8 @@ class SyncEngine {
 
   bool _busy = false;
 
-  Future<SyncReport> syncOnce() async {
+  /// [onProgress] is told how many rows this round has received so far (useful for the first, large pull).
+  Future<SyncReport> syncOnce({void Function(int pulled)? onProgress}) async {
     if (_busy) return const SyncReport(SyncOutcome.busy);
     _busy = true;
     var pushed = 0;
@@ -102,6 +106,7 @@ class SyncEngine {
         if (page.nextRev <= since && page.rows.isEmpty) break;
         pulled += page.rows.length;
         await store.applyPulled(page.rows, page.nextRev > since ? page.nextRev : since);
+        onProgress?.call(pulled);
         if (!page.hasMore || page.nextRev <= since) break;
         since = page.nextRev;
       }
@@ -110,6 +115,7 @@ class SyncEngine {
       return SyncReport(SyncOutcome.ok, pushed: pushed, pulled: pulled);
     } on BackendError catch (e) {
       if (e.isDeviceRevoked) return SyncReport(SyncOutcome.revoked, pushed: pushed, pulled: pulled, message: e.userMessage);
+      if (e.isDeviceNotRegistered) return SyncReport(SyncOutcome.notRegistered, pushed: pushed, pulled: pulled, message: e.userMessage);
       if (e.isUnreachable) return SyncReport(SyncOutcome.offline, pushed: pushed, pulled: pulled);
       return SyncReport(SyncOutcome.error, pushed: pushed, pulled: pulled, message: e.userMessage);
     } catch (_) {

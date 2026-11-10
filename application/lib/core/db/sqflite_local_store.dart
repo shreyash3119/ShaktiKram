@@ -4,6 +4,7 @@ import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
 import 'local_store.dart';
+import 'schema.dart';
 import 'store_logic.dart';
 import 'sync_models.dart';
 
@@ -15,42 +16,41 @@ class SqfliteLocalStore implements LocalStore {
 
   static Future<SqfliteLocalStore> open({String? path}) async {
     final target = path ?? p.join(await getDatabasesPath(), 'shaktikram.db');
-    final db = await openDatabase(target, version: 1, onCreate: _create);
+    final db = await openDatabase(
+      target,
+      version: databaseVersion,
+      onCreate: (db, version) async {
+        for (final statement in [...schemaV1, ...migrationV2]) {
+          await db.execute(statement);
+        }
+      },
+      onUpgrade: _upgrade,
+    );
     return SqfliteLocalStore._(db);
   }
 
-  static Future<void> _create(Database db, int version) async {
-    await db.execute('''
-      CREATE TABLE records (
-        entity TEXT NOT NULL,
-        id TEXT NOT NULL,
-        server_rev INTEGER,
-        server_data TEXT,
-        data TEXT NOT NULL,
-        dirty INTEGER NOT NULL DEFAULT 0,
-        deleted INTEGER NOT NULL DEFAULT 0,
-        local_date TEXT,
-        PRIMARY KEY (entity, id)
-      )''');
-    await db.execute('CREATE INDEX records_by_date ON records (entity, deleted, local_date)');
-    await db.execute('''
-      CREATE TABLE outbox (
-        seq INTEGER PRIMARY KEY AUTOINCREMENT,
-        op_id TEXT NOT NULL UNIQUE,
-        entity TEXT NOT NULL,
-        action TEXT NOT NULL,
-        record_id TEXT,
-        base_rev INTEGER,
-        client_updated_at TEXT NOT NULL,
-        reason TEXT,
-        payload TEXT NOT NULL,
-        state TEXT NOT NULL DEFAULT 'pending',
-        attempts INTEGER NOT NULL DEFAULT 0,
-        error_code TEXT,
-        message TEXT
-      )''');
-    await db.execute('CREATE TABLE sync_state (key TEXT PRIMARY KEY, value TEXT)');
+  /// Moves an existing database to [databaseVersion] one step at a time. Never deletes records.
+  static Future<void> _upgrade(Database db, int from, int to) async {
+    if (from < 2) {
+      for (final statement in migrationV2) {
+        await db.execute(statement);
+      }
+      // Fill the new columns for the records already on the phone.
+      final rows = await db.query('records', columns: ['entity', 'id', 'data']);
+      final batch = db.batch();
+      for (final row in rows) {
+        final data = Map<String, dynamic>.from(jsonDecode(row['data'] as String) as Map);
+        batch.update('records', {'occurred_at': occurredAtOf(data)}, where: 'entity = ? AND id = ?', whereArgs: [row['entity'], row['id']]);
+        for (final ref in extractRefs(data).entries) {
+          batch.insert('record_refs', {'entity': row['entity'], 'id': row['id'], 'field': ref.key, 'ref': ref.value},
+              conflictAlgorithm: ConflictAlgorithm.replace);
+        }
+      }
+      await batch.commit(noResult: true);
+    }
   }
+
+  Future<void> close() => _db.close();
 
   // ---- helpers ----
 
@@ -85,8 +85,8 @@ class SqfliteLocalStore implements LocalStore {
     required String? serverData,
     required Map<String, dynamic> data,
     required bool dirty,
-  }) {
-    return db.insert(
+  }) async {
+    await db.insert(
       'records',
       {
         'entity': entity,
@@ -97,9 +97,14 @@ class SqfliteLocalStore implements LocalStore {
         'dirty': dirty ? 1 : 0,
         'deleted': isDeleted(data) ? 1 : 0,
         'local_date': localDateOf(data),
+        'occurred_at': occurredAtOf(data),
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+    await db.delete('record_refs', where: 'entity = ? AND id = ?', whereArgs: [entity, id]);
+    for (final ref in extractRefs(data).entries) {
+      await db.insert('record_refs', {'entity': entity, 'id': id, 'field': ref.key, 'ref': ref.value});
+    }
   }
 
   // ---- reading ----
@@ -119,9 +124,27 @@ class SqfliteLocalStore implements LocalStore {
       where.write(' AND local_date = ?');
       args.add(localDate);
     }
-    final rows = await _db.query('records', where: where.toString(), whereArgs: args);
-    final records = [for (final r in rows) _decode(r['data'])]..sort(compareNewestFirst);
-    return limit == null || records.length <= limit ? records : records.sublist(0, limit);
+    final rows = await _db.query(
+      'records',
+      columns: ['data'],
+      where: where.toString(),
+      whereArgs: args,
+      orderBy: "COALESCE(occurred_at, '') DESC, id DESC",
+      limit: limit,
+    );
+    return [for (final r in rows) _decode(r['data'])];
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> listByRef(String entity, String field, String refId, {bool includeDeleted = false}) async {
+    final rows = await _db.rawQuery(
+      'SELECT r.data AS data FROM record_refs f '
+      'JOIN records r ON r.entity = f.entity AND r.id = f.id '
+      'WHERE f.entity = ? AND f.field = ? AND f.ref = ?${includeDeleted ? '' : ' AND r.deleted = 0'} '
+      "ORDER BY COALESCE(r.occurred_at, '') DESC, r.id DESC",
+      [entity, field, refId],
+    );
+    return [for (final r in rows) _decode(r['data'])];
   }
 
   @override
@@ -198,6 +221,7 @@ class SqfliteLocalStore implements LocalStore {
         final serverData = row['server_data'] as String?;
         if (serverData == null) {
           await txn.delete('records', where: 'entity = ? AND id = ?', whereArgs: [op.entity, id]);
+          await txn.delete('record_refs', where: 'entity = ? AND id = ?', whereArgs: [op.entity, id]);
         } else {
           await _putRecord(txn, op.entity, id,
               serverRev: row['server_rev'] as int?, serverData: serverData, data: _decode(serverData), dirty: false);

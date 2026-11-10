@@ -37,6 +37,18 @@ class MemoryLocalStore implements LocalStore {
   }
 
   @override
+  Future<List<Map<String, dynamic>>> listByRef(String entity, String field, String refId, {bool includeDeleted = false}) async {
+    final out = <Map<String, dynamic>>[];
+    _records.forEach((key, rec) {
+      if (!key.startsWith('$entity/')) return;
+      if (!includeDeleted && isDeleted(rec.data)) return;
+      if (rec.data[field] == refId) out.add(rec.data);
+    });
+    out.sort(compareNewestFirst);
+    return out;
+  }
+
+  @override
   Future<int> recordCount() async => _records.values.where((r) => !isDeleted(r.data)).length;
 
   @override

@@ -90,12 +90,7 @@ void main() {
   test('a replay of an operation that was applied counts as applied', () async {
     await store.saveLocal(_create('a'));
     gateway.onApply =
-        (op) => OpResult(
-          opId: op.opId,
-          result: 'duplicate',
-          originalResult: 'applied',
-          rev: 4,
-        );
+        (op) => OpResult(opId: op.opId, result: 'duplicate', originalResult: 'applied', rev: 4);
     await engine.syncOnce();
     expect(await store.pendingCount(), 0);
     expect(await store.issueCount(), 0);
@@ -103,68 +98,46 @@ void main() {
 
   test('a replay of an operation that was rejected stays rejected', () async {
     await store.saveLocal(_create('a'));
-    gateway.onApply =
-        (op) => OpResult(
-          opId: op.opId,
-          result: 'duplicate',
-          originalResult: 'rejected',
-          errorCode: 'validation_failed',
-        );
+    gateway.onApply = (op) => OpResult(
+      opId: op.opId,
+      result: 'duplicate',
+      originalResult: 'rejected',
+      errorCode: 'validation_failed',
+    );
     await engine.syncOnce();
     expect(await store.pendingCount(), 0);
     expect((await store.issues()).single.errorCode, 'validation_failed');
   });
 
-  test(
-    'a duplicate that changed nothing is not success: it is kept as an issue',
-    () async {
-      await store.applyPulled([
-        const PulledRow(
-          entity: 'body_measurements',
-          rev: 5,
-          record: {'id': 'a', 'value': 80.0},
-        ),
-      ], 5);
-      await store.saveLocal(_edit('a', 'op-a2', 70.0));
-      gateway.onApply =
-          (op) => OpResult(opId: op.opId, result: 'duplicate', rev: 5);
-      await engine.syncOnce();
-      final issue = (await store.issues()).single;
-      expect(issue.errorCode, 'duplicate_ignored');
-      expect(issue.state, OpState.rejected);
-      expect((await store.get('body_measurements', 'a'))!['value'], 80.0);
-    },
-  );
+  test('a duplicate that changed nothing is not success: it is kept as an issue', () async {
+    await store.applyPulled([
+      const PulledRow(entity: 'body_measurements', rev: 5, record: {'id': 'a', 'value': 80.0}),
+    ], 5);
+    await store.saveLocal(_edit('a', 'op-a2', 70.0));
+    gateway.onApply = (op) => OpResult(opId: op.opId, result: 'duplicate', rev: 5);
+    await engine.syncOnce();
+    final issue = (await store.issues()).single;
+    expect(issue.errorCode, 'duplicate_ignored');
+    expect(issue.state, OpState.rejected);
+    expect((await store.get('body_measurements', 'a'))!['value'], 80.0);
+  });
 
-  test(
-    'create then edit before the first sync: the edit goes out after the create, with its revision',
-    () async {
-      await store.saveLocal(_create('a'));
-      await store.saveLocal(_edit('a', 'op-a2', 79.0));
-      gateway.onApply =
-          (op) => OpResult(
-            opId: op.opId,
-            result: 'applied',
-            rev: op.opId == 'op-a' ? 3 : 4,
-          );
-      await engine.syncOnce();
-      expect(gateway.sentBatches.length, 2);
-      expect(gateway.sentBatches[0].map((o) => o.opId), ['op-a']);
-      expect(gateway.sentBatches[1].single.opId, 'op-a2');
-      expect(gateway.sentBatches[1].single.baseRev, 3);
-      expect(await store.pendingCount(), 0);
-    },
-  );
+  test('create then edit before the first sync: the edit goes out after the create, with its revision', () async {
+    await store.saveLocal(_create('a'));
+    await store.saveLocal(_edit('a', 'op-a2', 79.0));
+    gateway.onApply = (op) => OpResult(opId: op.opId, result: 'applied', rev: op.opId == 'op-a' ? 3 : 4);
+    await engine.syncOnce();
+    expect(gateway.sentBatches.length, 2);
+    expect(gateway.sentBatches[0].map((o) => o.opId), ['op-a']);
+    expect(gateway.sentBatches[1].single.opId, 'op-a2');
+    expect(gateway.sentBatches[1].single.baseRev, 3);
+    expect(await store.pendingCount(), 0);
+  });
 
   test('an edit waits while the create before it is being retried', () async {
     await store.saveLocal(_create('a'));
     await store.saveLocal(_edit('a', 'op-a2', 79.0));
-    gateway.onApply =
-        (op) => OpResult(
-          opId: op.opId,
-          result: 'rejected',
-          errorCode: 'reference_missing',
-        );
+    gateway.onApply = (op) => OpResult(opId: op.opId, result: 'rejected', errorCode: 'reference_missing');
     await engine.syncOnce();
     expect(gateway.sentBatches.expand((b) => b).map((o) => o.opId), ['op-a']);
     expect(await store.pendingCount(), 2);
@@ -362,20 +335,75 @@ void main() {
     );
   });
 
-  test(
-    'an unreadable server answer is a sync problem, not a crash, and keeps the queue',
-    () async {
-      await store.saveLocal(_create('a'));
-      gateway.onApply = (op) => throw StateError('bad answer');
-      final report = await engine.syncOnce();
-      expect(report.outcome, SyncOutcome.error);
-      expect(await store.pendingCount(), 1);
-      gateway.onApply =
-          (op) => OpResult(opId: op.opId, result: 'applied', rev: 2);
-      expect((await engine.syncOnce()).outcome, SyncOutcome.ok);
-      expect(await store.pendingCount(), 0);
-    },
-  );
+  test('an unreadable server answer is a sync problem, not a crash, and keeps the queue', () async {
+    await store.saveLocal(_create('a'));
+    gateway.onApply = (op) => throw StateError('bad answer');
+    final report = await engine.syncOnce();
+    expect(report.outcome, SyncOutcome.error);
+    expect(await store.pendingCount(), 1);
+    gateway.onApply = (op) => OpResult(opId: op.opId, result: 'applied', rev: 2);
+    expect((await engine.syncOnce()).outcome, SyncOutcome.ok);
+    expect(await store.pendingCount(), 0);
+  });
+
+  test('a device the server does not know is reported so it can be registered again', () async {
+    await store.saveLocal(_create('a'));
+    gateway.applyError = const BackendError('unauthorized', 'device is not registered');
+    final report = await engine.syncOnce();
+    expect(report.outcome, SyncOutcome.notRegistered);
+    expect(await store.pendingCount(), 1);
+  });
+
+  test('a plain unauthorized answer is an error, not a re-registration', () async {
+    await store.saveLocal(_create('a'));
+    gateway.applyError = const BackendError('unauthorized', 'sign in first');
+    expect((await engine.syncOnce()).outcome, SyncOutcome.error);
+  });
+
+  test('first download: every page is stored, and progress is reported page by page', () async {
+    gateway.pullPages.addAll([
+      const PullPage(rows: [
+        PulledRow(entity: 'muscles', rev: 1, record: {'id': 'm1'}),
+        PulledRow(entity: 'exercises', rev: 2, record: {'id': 'e1'}),
+      ], nextRev: 2, hasMore: true),
+      const PullPage(rows: [
+        PulledRow(entity: 'goals', rev: 3, record: {'id': 'g1'}),
+      ], nextRev: 3, hasMore: false),
+    ]);
+    final progress = <int>[];
+    final report = await engine.syncOnce(onProgress: progress.add);
+    expect(report.outcome, SyncOutcome.ok);
+    expect(progress, [2, 3]);
+    expect(await store.get('muscles', 'm1'), isNotNull);
+    expect(await store.get('exercises', 'e1'), isNotNull);
+    expect(await store.get('goals', 'g1'), isNotNull);
+  });
+
+  test('first download interrupted halfway: finished pages are kept and the next sync continues after them', () async {
+    gateway.pullPages.addAll([
+      const PullPage(rows: [PulledRow(entity: 'muscles', rev: 1, record: {'id': 'm1'})], nextRev: 1, hasMore: true),
+      const PullPage(rows: [PulledRow(entity: 'goals', rev: 2, record: {'id': 'g1'})], nextRev: 2, hasMore: false),
+    ]);
+    gateway.failPullAtCall = 2;
+    expect((await engine.syncOnce()).outcome, SyncOutcome.offline);
+    expect(await store.lastRev(), 1);
+    expect(await store.get('muscles', 'm1'), isNotNull);
+    expect(await store.get('goals', 'g1'), isNull);
+
+    gateway.failPullAtCall = null;
+    expect((await engine.syncOnce()).outcome, SyncOutcome.ok);
+    expect(gateway.pullSince, [0, 1]);
+    expect(await store.get('goals', 'g1'), isNotNull);
+    expect(await store.lastRev(), 2);
+  });
+
+  test('a pull with nothing new leaves the cursor where it was', () async {
+    await store.applyPulled([const PulledRow(entity: 'goals', rev: 9, record: {'id': 'g1'})], 9);
+    gateway.pullPages.add(const PullPage(rows: [], nextRev: 9, hasMore: false));
+    await engine.syncOnce();
+    expect(await store.lastRev(), 9);
+    expect(gateway.pullSince, [9]);
+  });
 
   test('without a device id the round reports an error', () async {
     final noDevice = SyncEngine(

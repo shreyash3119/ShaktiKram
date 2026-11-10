@@ -36,6 +36,8 @@ class BackendError implements Exception {
 
   bool get isUnreachable => code == 'unavailable';
   bool get isDeviceRevoked => code == 'device_revoked';
+  /// The server has no record of this device (for example after the server data was reset).
+  bool get isDeviceNotRegistered => code == 'unauthorized' && message.contains('not registered');
   bool get isNotOwner => code == 'unauthorized' && message.contains('already has an owner');
 
   /// Wording for the screen.

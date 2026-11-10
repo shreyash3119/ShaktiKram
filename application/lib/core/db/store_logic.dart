@@ -31,3 +31,24 @@ int compareNewestFirst(Map<String, dynamic> a, Map<String, dynamic> b) {
   if (byTime != 0) return byTime;
   return ((b['id'] as String?) ?? '').compareTo((a['id'] as String?) ?? '');
 }
+
+/// When an event record happened (UTC text), used to order and index event tables.
+String? occurredAtOf(Map<String, dynamic> record) {
+  final value = record['occurred_at'];
+  return value is String ? value : null;
+}
+
+final _uuidPattern = RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
+
+/// Fields that hold ids which are not links to another record.
+const _notRecordLinks = {'id', 'device_id', 'op_id', 'request_id', 'auth_user_id'};
+
+/// The links from a record to other records: every `*_id` field holding a uuid (`session_id`, `exercise_id`,
+/// `entity_id`, `previous_version_id`, ...). Indexed so child records can be found quickly.
+Map<String, String> extractRefs(Map<String, dynamic> record) {
+  return {
+    for (final e in record.entries)
+      if (e.key.endsWith('_id') && !_notRecordLinks.contains(e.key) && e.value is String && _uuidPattern.hasMatch(e.value as String))
+        e.key: e.value as String,
+  };
+}

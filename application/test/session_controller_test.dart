@@ -132,6 +132,46 @@ void main() {
     expect(_state(c).message, contains('signed out'));
   });
 
+  test('signing out of a removed device makes a new device id, so signing in again can work', () async {
+    final h = Harness.ready();
+    final c = await _start(h);
+
+    _controller(c).markRevoked();
+    await _controller(c).signOut();
+    expect(_state(c).phase, SessionPhase.signedOut);
+    expect(h.store.id, isNotNull);
+    expect(h.store.id, isNot('device-1'));
+
+    await _controller(c).signIn(email: 'owner@example.com', password: 'secret');
+    expect(_state(c).phase, SessionPhase.ready);
+    expect(_state(c).deviceId, h.store.id);
+    expect(h.gateway.calls.last, startsWith('registerDevice:${h.store.id}'));
+  });
+
+  test('reRegisterDevice: registers quietly and stays ready', () async {
+    final h = Harness.ready();
+    final c = await _start(h);
+
+    expect(await _controller(c).reRegisterDevice(), isTrue);
+    expect(_state(c).phase, SessionPhase.ready);
+    expect(h.gateway.calls, ['claimOwner', 'registerDevice:device-1:Test phone']);
+  });
+
+  test('reRegisterDevice: a removed device ends in revoked, and a failure is reported', () async {
+    final h = Harness.ready();
+    final c = await _start(h);
+
+    h.gateway.registerError = const BackendError('device_revoked', 'this device was revoked');
+    expect(await _controller(c).reRegisterDevice(), isFalse);
+    expect(_state(c).phase, SessionPhase.revoked);
+
+    final h2 = Harness.ready();
+    final c2 = await _start(h2);
+    h2.gateway.registerError = const BackendError.unreachable();
+    expect(await _controller(c2).reRegisterDevice(), isFalse);
+    expect(_state(c2).phase, SessionPhase.ready);
+  });
+
   test('markRevoked moves a ready session to revoked', () async {
     final c = await _start(Harness.ready());
 

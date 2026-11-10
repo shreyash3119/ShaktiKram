@@ -9,7 +9,7 @@ import 'sync_engine.dart';
 enum SyncPhase { synced, syncing, pending, offline, error }
 
 class SyncStatus {
-  const SyncStatus(this.phase, {this.pendingCount = 0, this.issueCount = 0, this.lastSyncAt, this.message});
+  const SyncStatus(this.phase, {this.pendingCount = 0, this.issueCount = 0, this.lastSyncAt, this.message, this.pulledCount = 0});
 
   final SyncPhase phase;
 
@@ -20,16 +20,20 @@ class SyncStatus {
   final int issueCount;
   final DateTime? lastSyncAt;
 
+  /// Rows received so far in the sync that is running (shown during the first download).
+  final int pulledCount;
+
   /// The last problem, in plain words.
   final String? message;
 
-  SyncStatus copyWith({SyncPhase? phase, int? pendingCount, int? issueCount, DateTime? lastSyncAt, String? message, bool clearMessage = false}) {
+  SyncStatus copyWith({SyncPhase? phase, int? pendingCount, int? issueCount, DateTime? lastSyncAt, String? message, bool clearMessage = false, int? pulledCount}) {
     return SyncStatus(
       phase ?? this.phase,
       pendingCount: pendingCount ?? this.pendingCount,
       issueCount: issueCount ?? this.issueCount,
       lastSyncAt: lastSyncAt ?? this.lastSyncAt,
       message: clearMessage ? null : (message ?? this.message),
+      pulledCount: pulledCount ?? this.pulledCount,
     );
   }
 }
@@ -91,12 +95,15 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
       return;
     }
     _running = true;
+    var reRegistered = false;
     try {
       do {
         _again = false;
         if (!_alive) return;
-        state = state.copyWith(phase: SyncPhase.syncing, clearMessage: true);
-        final report = await ref.read(syncEngineProvider).syncOnce();
+        state = state.copyWith(phase: SyncPhase.syncing, clearMessage: true, pulledCount: 0);
+        final report = await ref.read(syncEngineProvider).syncOnce(onProgress: (n) {
+          if (_alive) state = state.copyWith(pulledCount: n);
+        });
         if (!_alive) return;
         final store = ref.read(localStoreProvider);
         final pending = await store.pendingCount();
@@ -107,9 +114,15 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
         final phase = switch (report.outcome) {
           SyncOutcome.ok || SyncOutcome.busy => pending > 0 ? SyncPhase.pending : _idlePhase(issues),
           SyncOutcome.offline => SyncPhase.offline,
-          SyncOutcome.error || SyncOutcome.revoked => SyncPhase.error,
+          SyncOutcome.error || SyncOutcome.revoked || SyncOutcome.notRegistered => SyncPhase.error,
         };
         state = SyncStatus(phase, pendingCount: pending, issueCount: issues, lastSyncAt: last, message: report.message);
+        if (report.outcome == SyncOutcome.notRegistered && !reRegistered) {
+          reRegistered = true;
+          final registered = await ref.read(sessionControllerProvider.notifier).reRegisterDevice();
+          if (!_alive) return;
+          if (registered) _again = true;
+        }
         if (report.outcome == SyncOutcome.revoked) {
           ref.read(sessionControllerProvider.notifier).markRevoked();
           return;

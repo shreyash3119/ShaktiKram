@@ -102,7 +102,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       String? syncProblem,
     ) = switch (sync.phase) {
       SyncPhase.synced => ('Synced', lastSync, null),
-      SyncPhase.syncing => ('Syncing', 'In progress', null),
+      SyncPhase.syncing => ('Syncing', sync.pulledCount > 0 ? 'Downloaded ${sync.pulledCount} records' : 'In progress', null),
       SyncPhase.pending => (
         '${sync.pendingCount} waiting',
         'Will send when online',
