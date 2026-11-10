@@ -105,13 +105,29 @@ class OpResult {
     );
   }
 
-  /// What to treat the operation as. A `duplicate` means the server already handled it:
-  /// a replay of an earlier operation, or a re-sent create. Unless the first time failed, that counts as applied.
+  /// What to treat the operation as: `applied`, `rejected`, `conflict` or `ignored`.
+  ///
+  /// A `duplicate` is not success by itself. It comes in two kinds:
+  /// - A replay of an operation the server recorded earlier (`original_result` is set). The answer is whatever
+  ///   happened the first time, so only a first-time `applied` counts as applied.
+  /// - The server already has that record id but this operation changed nothing (a re-sent create, or an edit without
+  ///   `base_rev`). The change was not applied, so it is `ignored` and shown to the owner, never dropped silently.
   String get outcome {
     if (result != 'duplicate') return result;
-    final first = originalResult;
-    return (first == 'rejected' || first == 'conflict') ? first! : 'applied';
+    return switch (originalResult) {
+      'applied' => 'applied',
+      'rejected' => 'rejected',
+      'conflict' => 'conflict',
+      _ => 'ignored',
+    };
   }
+
+  /// Error code to keep with a change that was not applied.
+  String? get issueCode => errorCode ?? (outcome == 'ignored' ? 'duplicate_ignored' : null);
+
+  /// Explanation to keep with a change that was not applied.
+  String? get issueMessage =>
+      message ?? (outcome == 'ignored' ? 'The server already had a record with this id, so this change was not applied.' : null);
 }
 
 /// One changed row from `api_pull_changes`.

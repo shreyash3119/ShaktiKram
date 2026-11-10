@@ -99,13 +99,13 @@ class MemoryLocalStore implements LocalStore {
         if (!left) _records[_key(op.entity, id)]?.dirty = false;
       }
     } else if (outcome == 'conflict') {
-      _outbox[index] = _outbox[index].copyWith(state: OpState.conflict, errorCode: result.errorCode ?? 'conflict_stale_rev', message: result.message);
+      _outbox[index] = _outbox[index].copyWith(state: OpState.conflict, errorCode: result.issueCode ?? 'conflict_stale_rev', message: result.issueMessage);
       _revert(op);
-    } else if (shouldRetry(result.errorCode, op.attempts)) {
-      _outbox[index] = _outbox[index].copyWith(attempts: op.attempts + 1, errorCode: result.errorCode, message: result.message);
+    } else if (shouldRetry(result.issueCode, op.attempts)) {
+      _outbox[index] = _outbox[index].copyWith(attempts: op.attempts + 1, errorCode: result.issueCode, message: result.issueMessage);
     } else {
       _outbox[index] = _outbox[index]
-          .copyWith(state: OpState.rejected, attempts: op.attempts + 1, errorCode: result.errorCode, message: result.message);
+          .copyWith(state: OpState.rejected, attempts: op.attempts + 1, errorCode: result.issueCode, message: result.issueMessage);
       _revert(op);
     }
   }

@@ -29,7 +29,7 @@ A feature never imports another feature's `presentation/`. Shared pieces move to
 - First sign-in calls `api_claim_owner` and `api_register_device`. After that the app opens `ready` from local facts alone, so it starts offline.
 - Server calls go through `BackendGateway`. Errors arrive as `BackendError` with the contract code. The server puts the code as a message prefix (`device_revoked: ...`), and `BackendError.fromRaw` reads it.
 - When the sync client (step 3) receives `device_revoked`, it calls `SessionController.markRevoked()`.
-- Build settings come from `--dart-define-from-file`. A service-role key in `SUPABASE_ANON_KEY` stops the app at start.
+- Build settings come from `--dart-define-from-file`. A secret or service-role key in `SUPABASE_PUBLISHABLE_KEY` stops the app at start.
 
 ## Layout change from the original plan
 The plan named the app folder `mobile_web/`. The owner chose `application/` (decision F12). Update the layout block in the root `README.md` accordingly.

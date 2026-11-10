@@ -232,18 +232,18 @@ class SqfliteLocalStore implements LocalStore {
         }
         await clearDirtyIfDone();
       } else if (outcome == 'conflict') {
-        await txn.update('outbox', {'state': OpState.conflict.name, 'error_code': result.errorCode ?? 'conflict_stale_rev', 'message': result.message},
+        await txn.update('outbox', {'state': OpState.conflict.name, 'error_code': result.issueCode ?? 'conflict_stale_rev', 'message': result.issueMessage},
             where: 'op_id = ?', whereArgs: [op.opId]);
         await revertToServer();
       } else {
-        final code = result.errorCode;
+        final code = result.issueCode;
         if (shouldRetry(code, op.attempts)) {
-          await txn.update('outbox', {'attempts': op.attempts + 1, 'error_code': code, 'message': result.message},
+          await txn.update('outbox', {'attempts': op.attempts + 1, 'error_code': code, 'message': result.issueMessage},
               where: 'op_id = ?', whereArgs: [op.opId]);
         } else {
           await txn.update(
               'outbox',
-              {'state': OpState.rejected.name, 'attempts': op.attempts + 1, 'error_code': code, 'message': result.message},
+              {'state': OpState.rejected.name, 'attempts': op.attempts + 1, 'error_code': code, 'message': result.issueMessage},
               where: 'op_id = ?', whereArgs: [op.opId]);
           await revertToServer();
         }

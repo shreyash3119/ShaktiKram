@@ -16,7 +16,7 @@ If it replaces any Dart file from this repo, restore that file from git. Delete 
 
 ### Connect the app to your Supabase project (step 2)
 
-1. In the Supabase dashboard, open Project Settings, then API. Copy the **Project URL** and the **anon / publishable key**.
+1. In the Supabase dashboard, open Project Settings, then API. Copy the **Project URL** and the **publishable key** (never the secret or service-role key).
    Never use the `service_role` or `sb_secret_` key. The app refuses to start if it finds one.
 2. Copy `dart_defines.example.json` to `dart_defines.json` and fill in the two values.
    Add `application/dart_defines.json` to the root `.gitignore` so it is never committed.

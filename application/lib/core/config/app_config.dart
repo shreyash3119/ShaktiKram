@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 /// Build-time settings, passed with `--dart-define-from-file=dart_defines.json`.
-/// The file is never committed. Only the public publishable (publishable) key belongs here.
+/// The file is never committed. Only the public publishable key belongs here.
 class AppConfig {
   AppConfig._();
 
@@ -29,7 +29,7 @@ class AppConfig {
   /// Refuses a privileged key. The service-role key must never be inside the app.
   static String? checkPublishableKey(String key) {
     const refusal = 'SUPABASE_PUBLISHABLE_KEY holds a secret (service-role) key. '
-        'Use the public publishable or publishable key. The secret key must never be put in the app.';
+        'Use the public publishable key. The secret key must never be put in the app.';
     if (key.startsWith('sb_secret_')) return refusal;
     final parts = key.split('.');
     if (parts.length == 3) {

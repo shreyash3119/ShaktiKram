@@ -2,6 +2,7 @@ import '../auth/uuid.dart';
 import '../backend/backend_error.dart';
 import '../backend/backend_gateway.dart';
 import '../db/local_store.dart';
+import '../db/sync_models.dart';
 
 enum SyncOutcome {
   /// Everything sent and pulled.
@@ -65,12 +66,25 @@ class SyncEngine {
       final device = deviceId();
       if (device == null) return const SyncReport(SyncOutcome.error, message: 'This device is not registered yet.');
 
-      // 1. Push. The cursor makes sure an operation kept for retry is not sent twice in one round.
-      var cursor = 0;
+      // 1. Push. Each pass sends at most one operation per record, so an edit never goes out in the same request
+      // as the create it depends on (the edit needs the revision the create gets). The next pass is built after the
+      // answers are stored, so the edit then carries the right base revision. An operation already tried in this
+      // round (kept for retry) is not sent again until the next round.
+      final tried = <String>{};
       while (true) {
-        final batch = await store.pendingOps(afterSeq: cursor, limit: pushBatch);
+        final queued = await store.pendingOps(afterSeq: 0, limit: pushBatch * 20);
+        final batch = <OutboxOp>[];
+        final records = <String>{};
+        for (final op in queued) {
+          final id = op.recordId;
+          // The oldest queued operation of a record holds back the later ones, even while it waits for a retry.
+          if (id != null && !records.add('${op.entity}/$id')) continue;
+          if (tried.contains(op.opId)) continue;
+          batch.add(op);
+          if (batch.length >= pushBatch) break;
+        }
         if (batch.isEmpty) break;
-        cursor = batch.last.seq!;
+        tried.addAll(batch.map((o) => o.opId));
         final results = await gateway.applyOperations(deviceId: device, requestId: newUuidV4(), operations: batch);
         final byId = {for (final r in results) r.opId: r};
         for (final op in batch) {
@@ -98,6 +112,9 @@ class SyncEngine {
       if (e.isDeviceRevoked) return SyncReport(SyncOutcome.revoked, pushed: pushed, pulled: pulled, message: e.userMessage);
       if (e.isUnreachable) return SyncReport(SyncOutcome.offline, pushed: pushed, pulled: pulled);
       return SyncReport(SyncOutcome.error, pushed: pushed, pulled: pulled, message: e.userMessage);
+    } catch (_) {
+      // An answer the app could not read, or a storage problem. Changes stay queued; the owner sees a sync problem.
+      return SyncReport(SyncOutcome.error, pushed: pushed, pulled: pulled, message: 'Sync stopped unexpectedly. Your changes are still saved on this phone.');
     } finally {
       _busy = false;
     }

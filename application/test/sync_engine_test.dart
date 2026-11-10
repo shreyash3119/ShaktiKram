@@ -87,17 +87,95 @@ void main() {
     },
   );
 
-  test('a duplicate counts as applied', () async {
+  test('a replay of an operation that was applied counts as applied', () async {
     await store.saveLocal(_create('a'));
     gateway.onApply =
         (op) => OpResult(
           opId: op.opId,
           result: 'duplicate',
           originalResult: 'applied',
+          rev: 4,
         );
     await engine.syncOnce();
     expect(await store.pendingCount(), 0);
     expect(await store.issueCount(), 0);
+  });
+
+  test('a replay of an operation that was rejected stays rejected', () async {
+    await store.saveLocal(_create('a'));
+    gateway.onApply =
+        (op) => OpResult(
+          opId: op.opId,
+          result: 'duplicate',
+          originalResult: 'rejected',
+          errorCode: 'validation_failed',
+        );
+    await engine.syncOnce();
+    expect(await store.pendingCount(), 0);
+    expect((await store.issues()).single.errorCode, 'validation_failed');
+  });
+
+  test(
+    'a duplicate that changed nothing is not success: it is kept as an issue',
+    () async {
+      await store.applyPulled([
+        const PulledRow(
+          entity: 'body_measurements',
+          rev: 5,
+          record: {'id': 'a', 'value': 80.0},
+        ),
+      ], 5);
+      await store.saveLocal(_edit('a', 'op-a2', 70.0));
+      gateway.onApply =
+          (op) => OpResult(opId: op.opId, result: 'duplicate', rev: 5);
+      await engine.syncOnce();
+      final issue = (await store.issues()).single;
+      expect(issue.errorCode, 'duplicate_ignored');
+      expect(issue.state, OpState.rejected);
+      expect((await store.get('body_measurements', 'a'))!['value'], 80.0);
+    },
+  );
+
+  test(
+    'create then edit before the first sync: the edit goes out after the create, with its revision',
+    () async {
+      await store.saveLocal(_create('a'));
+      await store.saveLocal(_edit('a', 'op-a2', 79.0));
+      gateway.onApply =
+          (op) => OpResult(
+            opId: op.opId,
+            result: 'applied',
+            rev: op.opId == 'op-a' ? 3 : 4,
+          );
+      await engine.syncOnce();
+      expect(gateway.sentBatches.length, 2);
+      expect(gateway.sentBatches[0].map((o) => o.opId), ['op-a']);
+      expect(gateway.sentBatches[1].single.opId, 'op-a2');
+      expect(gateway.sentBatches[1].single.baseRev, 3);
+      expect(await store.pendingCount(), 0);
+    },
+  );
+
+  test('an edit waits while the create before it is being retried', () async {
+    await store.saveLocal(_create('a'));
+    await store.saveLocal(_edit('a', 'op-a2', 79.0));
+    gateway.onApply =
+        (op) => OpResult(
+          opId: op.opId,
+          result: 'rejected',
+          errorCode: 'reference_missing',
+        );
+    await engine.syncOnce();
+    expect(gateway.sentBatches.expand((b) => b).map((o) => o.opId), ['op-a']);
+    expect(await store.pendingCount(), 2);
+  });
+
+  test('operations of different records go out together', () async {
+    await store.saveLocal(_create('a'));
+    await store.saveLocal(_create('b'));
+    await engine.syncOnce();
+    expect(gateway.sentBatches.length, 1);
+    expect(gateway.sentBatches.single, hasLength(2));
   });
 
   test(
@@ -283,6 +361,21 @@ void main() {
       hasLength(2),
     );
   });
+
+  test(
+    'an unreadable server answer is a sync problem, not a crash, and keeps the queue',
+    () async {
+      await store.saveLocal(_create('a'));
+      gateway.onApply = (op) => throw StateError('bad answer');
+      final report = await engine.syncOnce();
+      expect(report.outcome, SyncOutcome.error);
+      expect(await store.pendingCount(), 1);
+      gateway.onApply =
+          (op) => OpResult(opId: op.opId, result: 'applied', rev: 2);
+      expect((await engine.syncOnce()).outcome, SyncOutcome.ok);
+      expect(await store.pendingCount(), 0);
+    },
+  );
 
   test('without a device id the round reports an error', () async {
     final noDevice = SyncEngine(
