@@ -156,8 +156,15 @@ class SqfliteLocalStore implements LocalStore {
   // ---- writing from the app ----
 
   @override
-  Future<OutboxOp> saveLocal(OutboxOp op) {
-    return _db.transaction((txn) async {
+  Future<OutboxOp> saveLocal(OutboxOp op) async => (await saveLocalAll([op])).single;
+
+  @override
+  Future<List<OutboxOp>> saveLocalAll(List<OutboxOp> ops) {
+    return _db.transaction((txn) async => [for (final op in ops) await _saveIn(txn, op)]);
+  }
+
+  Future<OutboxOp> _saveIn(DatabaseExecutor txn, OutboxOp op) async {
+    {
       final id = op.recordId;
       final existing = id == null ? null : await _row(txn, op.entity, id);
       final baseRev = op.baseRev ?? (existing?['server_rev'] as int?);
@@ -191,7 +198,7 @@ class SqfliteLocalStore implements LocalStore {
         }
       }
       return op.copyWith(seq: seq, baseRev: baseRev);
-    });
+    }
   }
 
   // ---- sync engine ----

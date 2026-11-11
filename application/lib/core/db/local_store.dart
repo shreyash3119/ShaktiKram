@@ -28,6 +28,9 @@ abstract class LocalStore {
   /// Fills `baseRev` from the record's last known server revision. Returns the stored operation.
   Future<OutboxOp> saveLocal(OutboxOp op);
 
+  /// Several changes as one step: all are stored and queued, or none. Later changes see the earlier ones.
+  Future<List<OutboxOp>> saveLocalAll(List<OutboxOp> ops);
+
   // ---- Sync engine ----
 
   /// Pending operations with `seq` greater than [afterSeq], oldest first.

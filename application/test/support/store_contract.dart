@@ -99,6 +99,19 @@ void runStoreContract(String name, Future<LocalStore> Function() create) {
       expect((await store.pendingOps(afterSeq: saved.seq!)).map((o) => o.opId), ['op-2']);
     });
 
+    test('several changes saved together are all stored and queued in order, each seeing the one before', () async {
+      final saved = await store.saveLocalAll([
+        op('op-1', 'goals', uid(1), {'id': uid(1), 'title': 'A', 'type': 'weight'}),
+        op('op-2', 'goals', uid(1), {'id': uid(1), 'title': 'B'}),
+        op('op-3', 'goals', uid(2), {'id': uid(2), 'title': 'C'}),
+      ]);
+      expect(saved.map((o) => o.seq).toList(), [1, 2, 3].map((n) => saved.first.seq! + n - 1).toList());
+      expect((await store.pendingOps()).map((o) => o.opId), ['op-1', 'op-2', 'op-3']);
+      final merged = (await store.get('goals', uid(1)))!;
+      expect((merged['title'], merged['type']), ('B', 'weight'));
+      expect(await store.get('goals', uid(2)), isNotNull);
+    });
+
     test('a pull does not overwrite an unsent local edit, and ignores older revisions', () async {
       await store.applyPulled([pulled('goals', 5, {'id': uid(1), 'title': 'Server'})], 5);
       await store.saveLocal(op('op-1', 'goals', uid(1), {'id': uid(1), 'title': 'Mine'}));

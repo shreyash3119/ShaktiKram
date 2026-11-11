@@ -71,6 +71,9 @@ class MemoryLocalStore implements LocalStore {
   }
 
   @override
+  Future<List<OutboxOp>> saveLocalAll(List<OutboxOp> ops) async => [for (final op in ops) await saveLocal(op)];
+
+  @override
   Future<List<OutboxOp>> pendingOps({int afterSeq = 0, int limit = 100}) async =>
       _outbox.where((o) => o.state == OpState.pending && o.seq! > afterSeq).take(limit).toList();
 

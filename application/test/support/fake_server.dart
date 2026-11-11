@@ -16,7 +16,40 @@ class FakeServer implements BackendGateway {
     'meals': ['title', 'category'],
     'goals': ['type', 'title'],
     'body_measurements': ['occurred_at', 'local_date', 'measurement_type', 'value'],
+    'workout_sessions': ['occurred_at', 'local_date', 'tz_offset_minutes'],
+    'session_exercises': ['session_id', 'exercise_id', 'position'],
+    'sets': ['session_exercise_id', 'set_number', 'occurred_at', 'local_date', 'tz_offset_minutes'],
   };
+
+  /// Column defaults applied when a record is created.
+  final Map<String, Map<String, dynamic>> defaults = {
+    'workout_sessions': {'status': 'in_progress', 'paused_seconds': 0},
+    'session_exercises': {'status': 'done'},
+    'sets': {'set_type': 'working', 'completed': true},
+  };
+
+  /// Foreign keys the database enforces: entity, field, parent table.
+  final Map<String, Map<String, String>> foreignKeys = {
+    'workout_sessions': {
+      'schedule_entry_id': 'schedule_entries',
+      'split_version_id': 'split_versions',
+      'split_day_id': 'split_days',
+      'template_version_id': 'template_versions',
+    },
+    'session_exercises': {
+      'session_id': 'workout_sessions',
+      'exercise_id': 'exercises',
+      'template_exercise_id': 'template_exercises',
+    },
+    'sets': {'session_exercise_id': 'session_exercises'},
+    'schedule_entries': {'session_id': 'workout_sessions'},
+  };
+
+  /// Puts a record on the server as if it had been there already (reference data, a plan made earlier).
+  void seed(String entity, Map<String, dynamic> record) {
+    final r = {...record, 'rev': ++_rev, 'created_at': now.toIso8601String(), 'updated_at': now.toIso8601String(), 'device_id': 'seed', 'deleted_at': record['deleted_at']};
+    tables.putIfAbsent(entity, () => {})[r['id'] as String] = r;
+  }
 
   final Map<String, Map<String, Map<String, dynamic>>> tables = {};
   final Map<String, Map<String, dynamic>> _opLog = {};
@@ -169,16 +202,21 @@ class FakeServer implements BackendGateway {
         throw const BackendError('validation_failed', 'use new_version for versioned tables');
       }
       if (existing == null) {
+        final merged = {...?defaults[op.entity], ...op.payload, 'id': id};
         for (final field in requiredFields[op.entity] ?? const <String>[]) {
-          if (op.payload[field] == null) throw BackendError('validation_failed', 'null value in column $field');
+          if (merged[field] == null) throw BackendError('validation_failed', 'null value in column $field');
         }
-        table[id] = _stamp({...op.payload, 'id': id}, device, created: true);
+        _validate(op.entity, merged, table);
+        if (op.entity == 'session_exercises') _copyPrescription(merged);
+        table[id] = _stamp(merged, device, created: true);
         return ('applied', table[id]!['rev'] as int);
       }
       final base = op.baseRev;
       final current = existing['rev'] as int;
       if (base == null || (info.recordClass == RecordClass.appendOnly && base != current)) return ('duplicate', current);
       if (_conflicts(info, existing, base, device, clientTime)) return ('conflict', current);
+      final merged = {...existing, ...op.payload, 'id': id};
+      _validate(op.entity, merged, table);
       existing.addAll({...op.payload}..remove('id'));
       _touch(existing, device);
       return ('applied', existing['rev'] as int);
@@ -199,6 +237,78 @@ class FakeServer implements BackendGateway {
       return ('applied', existing['rev'] as int);
     }
     throw BackendError('validation_failed', 'unknown action ${op.action}');
+  }
+
+  /// The trigger `pfs_session_exercise_snapshot`: an exercise created from a template row keeps a copy of its prescription.
+  void _copyPrescription(Map<String, dynamic> row) {
+    final teId = row['template_exercise_id'];
+    final te = teId == null ? null : tables['template_exercises']?[teId];
+    if (te == null || row['prescription_snapshot'] != null) return;
+    final exercise = tables['exercises']?[te['exercise_id']];
+    row['prescription_snapshot'] = {
+      'template_version_id': te['template_version_id'],
+      'template_exercise_id': te['id'],
+      'exercise_id': te['exercise_id'],
+      'exercise_name': exercise?['name'],
+      'target_sets': te['target_sets'],
+      'rep_min': te['rep_min'],
+      'rep_max': te['rep_max'],
+      'start_weight_kg': te['start_weight_kg'],
+      'rest_s': te['rest_s'],
+    };
+  }
+
+  /// The database rules that matter to the workout screens: references, uniqueness, value ranges, vocabularies,
+  /// and `local_date` agreeing with `occurred_at` and `tz_offset_minutes`.
+  void _validate(String entity, Map<String, dynamic> row, Map<String, Map<String, dynamic>> table) {
+    for (final fk in (foreignKeys[entity] ?? const <String, String>{}).entries) {
+      final ref = row[fk.key];
+      if (ref != null && tables[fk.value]?[ref] == null) {
+        throw BackendError('reference_missing', 'insert or update on $entity violates foreign key ${fk.key}');
+      }
+    }
+    bool alive(Map<String, dynamic> r) => r['deleted_at'] == null && r['id'] != row['id'];
+    if (entity == 'sets' && row['deleted_at'] == null) {
+      if (table.values.any((r) =>
+          alive(r) &&
+          r['session_exercise_id'] == row['session_exercise_id'] &&
+          r['set_type'] == row['set_type'] &&
+          r['set_number'] == row['set_number'])) {
+        throw const BackendError('validation_failed', 'duplicate key value violates unique constraint uq_sets_number');
+      }
+      final rpe = row['rpe'];
+      if (rpe != null && ((rpe as num) < 1 || rpe > 10 || rpe * 2 != (rpe * 2).round())) throw const BackendError('validation_failed', 'ck_sets_rpe');
+      final rir = row['rir'];
+      if (rir != null && ((rir as num) < 0 || rir > 10)) throw const BackendError('validation_failed', 'ck_sets_rir');
+      final weight = row['weight_kg'];
+      if (weight != null && (weight as num) < 0) throw const BackendError('validation_failed', 'ck_sets_weight_nonnegative');
+      if (!['warmup', 'working'].contains(row['set_type'])) throw const BackendError('validation_failed', 'ck_sets_set_type_values');
+    }
+    if (entity == 'session_exercises' && row['deleted_at'] == null) {
+      if (table.values.any((r) => alive(r) && r['session_id'] == row['session_id'] && r['position'] == row['position'])) {
+        throw const BackendError('validation_failed', 'duplicate key value violates unique constraint uq_session_exercises_position');
+      }
+      if (!['done', 'skipped', 'added'].contains(row['status'])) throw const BackendError('validation_failed', 'ck_session_exercises_status_values');
+    }
+    if (entity == 'workout_sessions') {
+      if (!['in_progress', 'paused', 'completed', 'abandoned'].contains(row['status'])) {
+        throw const BackendError('validation_failed', 'ck_workout_sessions_status_values');
+      }
+      if (row['status'] == 'completed' && row['ended_at'] == null) throw const BackendError('validation_failed', 'ck_workout_sessions_completed_has_end');
+      final ended = row['ended_at'];
+      if (ended != null && DateTime.parse(ended as String).isBefore(DateTime.parse(row['occurred_at'] as String))) {
+        throw const BackendError('validation_failed', 'ck_workout_sessions_end_after_start');
+      }
+    }
+    if ((entity == 'sets' || entity == 'workout_sessions') && row['occurred_at'] != null) {
+      final at = DateTime.parse(row['occurred_at'] as String).toUtc();
+      final local = at.add(Duration(minutes: (row['tz_offset_minutes'] as num).toInt()));
+      String two(int n) => n.toString().padLeft(2, '0');
+      final expected = '${local.year.toString().padLeft(4, '0')}-${two(local.month)}-${two(local.day)}';
+      if (row['local_date'] != expected) {
+        throw BackendError('validation_failed', 'local_date ${row['local_date']} does not match occurred_at and tz_offset_minutes ($expected)');
+      }
+    }
   }
 
   /// A conflict needs a different device to have written the row since base_rev, and the server copy to be at least
