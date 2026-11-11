@@ -199,10 +199,13 @@ class Harness {
   final InMemoryDeviceStore store;
   final MemoryLocalStore local = MemoryLocalStore();
 
-  List<Override> get overrides => [
+  List<Override> get overrides => overridesWith(gateway);
+
+  /// The same app set-up, talking to another backend (for example the fake server).
+  List<Override> overridesWith(BackendGateway backend) => [
         localStoreProvider.overrideWithValue(local),
         authServiceProvider.overrideWithValue(auth),
-        backendGatewayProvider.overrideWithValue(gateway),
+        backendGatewayProvider.overrideWithValue(backend),
         deviceStoreProvider.overrideWithValue(store),
       ];
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +10,7 @@ import '../../../core/sync/sync_status.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/cards.dart';
 import '../../../core/widgets/controls.dart';
+import 'sync_check_card.dart';
 
 /// Settings. Account, devices, sign out, sync status and the theme work now.
 /// The other switches and fields only change the screen until the settings table is synced locally
@@ -413,6 +415,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ],
           ],
         ),
+        if (kDebugMode) const SyncCheckCard(),
         TitledCard(
           title: 'Local storage',
           children: [

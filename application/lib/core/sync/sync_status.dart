@@ -59,6 +59,7 @@ final syncEngineProvider = Provider<SyncEngine>((ref) {
 /// Owns the sync indicator and runs sync rounds. Never reads the local store until a sync or refresh is asked for.
 class SyncStatusNotifier extends Notifier<SyncStatus> {
   bool _running = false;
+  Future<void>? _current;
   bool _again = false;
   bool _alive = true;
 
@@ -88,12 +89,18 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
 
   SyncPhase _idlePhase(int issues) => issues > 0 ? SyncPhase.error : SyncPhase.synced;
 
-  /// Runs a sync round now. A call made during a round makes it run once more afterwards.
-  Future<void> syncNow() async {
-    if (_running) {
+  /// Runs a sync round now. A call made during a round makes it run once more afterwards, and the returned future
+  /// completes when all of it is done.
+  Future<void> syncNow() {
+    final running = _current;
+    if (running != null) {
       _again = true;
-      return;
+      return running;
     }
+    return _current = _syncLoop().whenComplete(() => _current = null);
+  }
+
+  Future<void> _syncLoop() async {
     _running = true;
     var reRegistered = false;
     try {
