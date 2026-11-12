@@ -56,15 +56,20 @@ void main() {
     expect(h.auth.signInCalls, 0);
   });
 
-  testWidgets('signing in registers the device and opens Home', (tester) async {
-    final h = Harness.signedOut();
-    await _pump(tester, h);
+testWidgets('signing in registers the device and opens Home', (tester) async {
+  final h = Harness.signedOut();
+  await _pump(tester, h);
 
-    await _fillAndSubmit(tester);
+  await _fillAndSubmit(tester);
 
-    expect(_appBarTitle('Home'), findsOneWidget);
-    expect(h.gateway.calls, ['claimOwner', 'registerDevice:device-1:Android phone']);
-  });
+  expect(_appBarTitle('Home'), findsOneWidget);
+
+  expect(h.gateway.calls, [
+    'claimOwner',
+    'registerDevice:device-1:Android phone',
+    'insight:api_daily_briefing',
+  ]);
+});
 
   testWidgets('a wrong password shows a message and stays on sign-in', (tester) async {
     final h = Harness.signedOut();
@@ -103,14 +108,23 @@ void main() {
     expect(find.byType(AppBottomBar), findsNothing);
   });
 
-  testWidgets('a registered phone opens straight to Home with no sign-in and no server call', (tester) async {
-    final h = Harness.ready();
-    await _pump(tester, h);
+ testWidgets('a registered phone opens straight to Home without sign-in or owner registration', (tester) async {
+  final h = Harness.ready();
+  await _pump(tester, h);
 
-    expect(_appBarTitle('Home'), findsOneWidget);
-    expect(find.byKey(const Key('sign-in-button')), findsNothing);
-    expect(h.gateway.calls, isEmpty);
-  });
+  expect(_appBarTitle('Home'), findsOneWidget);
+  expect(find.byKey(const Key('sign-in-button')), findsNothing);
+
+  expect(h.gateway.calls, [
+    'insight:api_daily_briefing',
+  ]);
+
+  expect(h.gateway.calls, isNot(contains('claimOwner')));
+  expect(
+    h.gateway.calls,
+    isNot(contains('registerDevice:device-1:Android phone')),
+  );
+});
 
   testWidgets('Settings shows the account and device, and sign out returns to sign-in', (tester) async {
     final h = Harness.ready();
