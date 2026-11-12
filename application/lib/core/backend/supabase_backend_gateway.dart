@@ -68,4 +68,34 @@ class SupabaseBackendGateway implements BackendGateway {
     final data = await _rpc('api_pull_changes', {'p_device_id': deviceId, 'p_since_rev': sinceRev, 'p_limit': limit});
     return PullPage.fromJson(Map<String, dynamic>.from(data as Map));
   }
+
+  @override
+  Future<Object?> callInsight(String function, {Map<String, dynamic>? params}) => _rpc(function, params);
+
+  @override
+  Future<List<Map<String, dynamic>>> readView(
+    String view, {
+    Map<String, Object>? equals,
+    String? orderBy,
+    bool descending = false,
+    int? limit,
+  }) async {
+    try {
+      var query = _client.from(view).select();
+      for (final e in (equals ?? const <String, Object>{}).entries) {
+        query = query.eq(e.key, e.value);
+      }
+      PostgrestTransformBuilder<List<Map<String, dynamic>>> shaped = query;
+      if (orderBy != null) shaped = shaped.order(orderBy, ascending: !descending);
+      if (limit != null) shaped = shaped.limit(limit);
+      final rows = await shaped;
+      return [for (final r in rows) Map<String, dynamic>.from(r)];
+    } on PostgrestException catch (e) {
+      throw BackendError.fromRaw(httpCode: e.code, message: e.message);
+    } on AuthException catch (e) {
+      throw BackendError('unauthorized', e.message);
+    } catch (_) {
+      throw const BackendError.unreachable();
+    }
+  }
 }

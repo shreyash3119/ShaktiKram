@@ -199,5 +199,23 @@ void runStoreContract(String name, Future<LocalStore> Function() create) {
       await store.recordResult(first, const OpResult(opId: 'op-1', result: 'applied', rev: 5));
       expect((await store.get('personal_targets', uid(2)))!['version'], 2);
     });
+
+    test('a cached insight is kept, replaced by key, and cleared without touching records', () async {
+      expect(await store.readInsight('daily_briefing:2026-11-10'), isNull);
+      final first = DateTime.utc(2026, 11, 10, 8);
+      await store.writeInsight('daily_briefing:2026-11-10', '{"plan":1}', first);
+      await store.writeInsight('view:v_goal_progress', '[]', first);
+      final read = (await store.readInsight('daily_briefing:2026-11-10'))!;
+      expect((read.payload, read.fetchedAt.toUtc()), ('{"plan":1}', first));
+
+      await store.writeInsight('daily_briefing:2026-11-10', '{"plan":2}', first.add(const Duration(hours: 1)));
+      expect((await store.readInsight('daily_briefing:2026-11-10'))!.payload, '{"plan":2}');
+
+      await store.saveLocal(op('op-9', 'meals', uid(5), {'title': 'Oats', 'category': 'breakfast'}));
+      await store.clearInsights();
+      expect(await store.readInsight('view:v_goal_progress'), isNull);
+      expect(await store.get('meals', uid(5)), isNotNull);
+      expect(await store.pendingCount(), 1);
+    });
   });
 }

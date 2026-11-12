@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
+import 'insight_cache.dart';
 import 'local_store.dart';
 import 'schema.dart';
 import 'store_logic.dart';
@@ -20,7 +21,7 @@ class SqfliteLocalStore implements LocalStore {
       target,
       version: databaseVersion,
       onCreate: (db, version) async {
-        for (final statement in [...schemaV1, ...migrationV2]) {
+        for (final statement in [...schemaV1, ...migrationV2, ...migrationV3]) {
           await db.execute(statement);
         }
       },
@@ -47,6 +48,11 @@ class SqfliteLocalStore implements LocalStore {
         }
       }
       await batch.commit(noResult: true);
+    }
+    if (from < 3) {
+      for (final statement in migrationV3) {
+        await db.execute(statement);
+      }
     }
   }
 
@@ -346,6 +352,26 @@ class SqfliteLocalStore implements LocalStore {
   Future<void> setLastSyncAt(DateTime time) async {
     await _db.insert('sync_state', {'key': 'last_sync_at', 'value': time.toUtc().toIso8601String()},
         conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  // ---- cached server insights ----
+
+  @override
+  Future<CachedInsight?> readInsight(String key) async {
+    final rows = await _db.query('insight_cache', where: 'key = ?', whereArgs: [key], limit: 1);
+    if (rows.isEmpty) return null;
+    return CachedInsight(key: key, payload: rows.first['payload'] as String, fetchedAt: DateTime.parse(rows.first['fetched_at'] as String));
+  }
+
+  @override
+  Future<void> writeInsight(String key, String payload, DateTime fetchedAt) async {
+    await _db.insert('insight_cache', {'key': key, 'payload': payload, 'fetched_at': fetchedAt.toUtc().toIso8601String()},
+        conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  @override
+  Future<void> clearInsights() async {
+    await _db.delete('insight_cache');
   }
 
   // ---- status ----

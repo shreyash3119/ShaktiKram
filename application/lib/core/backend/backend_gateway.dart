@@ -60,6 +60,20 @@ abstract class BackendGateway {
 
   /// `api_pull_changes`: changed rows after [sinceRev], at most [limit] (1 to 500).
   Future<PullPage> pullChanges({required String deviceId, required int sinceRev, int limit = 200});
+
+  /// A read-only server calculation: one of the `api_*` functions that returns the `{data, meta}` envelope
+  /// (`api_daily_briefing`, `api_readiness`, ...). Returns the `data` part as decoded JSON. Throws [BackendError].
+  Future<Object?> callInsight(String function, {Map<String, dynamic>? params});
+
+  /// Reads rows of a server view (`GET /rest/v1/<view>`, read-only, under row level security).
+  /// [equals] filters on column = value; [orderBy] sorts (descending when [descending]); [limit] caps the rows.
+  Future<List<Map<String, dynamic>>> readView(
+    String view, {
+    Map<String, Object>? equals,
+    String? orderBy,
+    bool descending = false,
+    int? limit,
+  });
 }
 
 /// Replaced in `main.dart` (and in tests).

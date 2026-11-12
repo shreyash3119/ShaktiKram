@@ -1,3 +1,4 @@
+import 'package:shaktikram/core/db/insight_cache.dart';
 import 'package:shaktikram/core/db/local_store.dart';
 import 'package:shaktikram/core/db/store_logic.dart';
 import 'package:shaktikram/core/db/sync_models.dart';
@@ -160,6 +161,18 @@ class MemoryLocalStore implements LocalStore {
 
   @override
   Future<void> setLastSyncAt(DateTime time) async => _lastSync = time;
+
+  final Map<String, CachedInsight> _insights = {};
+
+  @override
+  Future<CachedInsight?> readInsight(String key) async => _insights[key];
+
+  @override
+  Future<void> writeInsight(String key, String payload, DateTime fetchedAt) async =>
+      _insights[key] = CachedInsight(key: key, payload: payload, fetchedAt: fetchedAt.toUtc());
+
+  @override
+  Future<void> clearInsights() async => _insights.clear();
 
   @override
   Future<int> pendingCount() async => _outbox.where((o) => o.state == OpState.pending).length;

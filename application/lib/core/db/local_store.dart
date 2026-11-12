@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'insight_cache.dart';
 import 'sync_models.dart';
 
 /// The phone's copy of the data and the queue of changes waiting to be sent.
@@ -45,6 +46,17 @@ abstract class LocalStore {
   Future<int> lastRev();
   Future<DateTime?> lastSyncAt();
   Future<void> setLastSyncAt(DateTime time);
+
+  // ---- Cached server insights (not synced) ----
+
+  /// The last answer saved under [key], or null.
+  Future<CachedInsight?> readInsight(String key);
+
+  /// Saves (or replaces) the answer for [key].
+  Future<void> writeInsight(String key, String payload, DateTime fetchedAt);
+
+  /// Forgets every cached insight (they are copies; the server still has the originals).
+  Future<void> clearInsights();
 
   // ---- Status ----
 

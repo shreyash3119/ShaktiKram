@@ -8,6 +8,22 @@ import 'package:shaktikram/core/db/sync_models.dart';
 /// conflict rule, soft delete, and device checks. It lets the whole write path run in `flutter test` without Supabase.
 /// It is only as right as that reading of the backend; the live check in Settings is what proves the real server.
 class FakeServer implements BackendGateway {
+  /// Answers for the read-only insight functions and views; tests fill these in.
+  final Map<String, Object?> insightAnswers = {};
+  final Map<String, List<Map<String, dynamic>>> viewRows = {};
+
+  @override
+  Future<Object?> callInsight(String function, {Map<String, dynamic>? params}) async {
+    if (offline) throw const BackendError.unreachable();
+    return insightAnswers[function];
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> readView(String view, {Map<String, Object>? equals, String? orderBy, bool descending = false, int? limit}) async {
+    if (offline) throw const BackendError.unreachable();
+    return viewRows[view] ?? const [];
+  }
+
   /// The server's clock. Tests move it forward.
   DateTime now = DateTime.utc(2026, 11, 10, 10);
 

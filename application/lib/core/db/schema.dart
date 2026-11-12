@@ -2,7 +2,7 @@
 ///
 /// Rules: a new version only ever adds a new list here and a step in `SqfliteLocalStore._upgrade`.
 /// Existing statements are never edited, and no migration deletes user data.
-const databaseVersion = 2;
+const databaseVersion = 3;
 
 /// Version 1 (step 4): records, the outbox and the sync cursor.
 const schemaV1 = <String>[
@@ -54,4 +54,16 @@ CREATE TABLE record_refs (
   PRIMARY KEY (entity, id, field)
 )''',
   'CREATE INDEX record_refs_by_ref ON record_refs (entity, field, ref)',
+];
+
+/// Version 3 (phase 7): the cache for insights the server calculates (daily briefing, trends, goal progress, ...).
+/// One row per cached answer. It holds copies only: dropping a row loses nothing that is not on the server, and it is
+/// never part of sync. `payload` is the server's JSON; `fetched_at` is when this phone received it.
+const migrationV3 = <String>[
+  '''
+CREATE TABLE insight_cache (
+  key TEXT PRIMARY KEY,
+  payload TEXT NOT NULL,
+  fetched_at TEXT NOT NULL
+)''',
 ];

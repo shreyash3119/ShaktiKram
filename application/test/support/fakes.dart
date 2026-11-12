@@ -60,6 +60,27 @@ class FakeAuthService implements AuthService {
 class FakeGateway implements BackendGateway {
   final List<String> calls = [];
 
+  /// Insight reads: answers by function name or view name, an error to throw instead, and a record of the calls.
+  final Map<String, Object?> insightAnswers = {};
+  final Map<String, List<Map<String, dynamic>>> viewRows = {};
+  BackendError? insightError;
+
+  @override
+  Future<Object?> callInsight(String function, {Map<String, dynamic>? params}) async {
+    calls.add('insight:$function');
+    final error = insightError;
+    if (error != null) throw error;
+    return insightAnswers[function];
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> readView(String view, {Map<String, Object>? equals, String? orderBy, bool descending = false, int? limit}) async {
+    calls.add('view:$view');
+    final error = insightError;
+    if (error != null) throw error;
+    return viewRows[view] ?? const [];
+  }
+
   BackendError? claimError;
   BackendError? registerError;
   BackendError? listError;
