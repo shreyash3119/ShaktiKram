@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/app_router.dart';
@@ -8,96 +9,81 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/cards.dart';
 import '../../../core/widgets/controls.dart';
 import '../../../core/widgets/meters.dart';
+import '../data/training_models.dart';
+import '../data/training_providers.dart';
+import '../data/training_repository.dart';
+import '../data/workout_session_service.dart';
 
-/// Active workout. This is the design pass: sets, rest timer and tools work on the screen only.
-/// Nothing is saved yet. Saving goes through the local outbox once the sync client exists.
-/// Progression suggestions will come from the backend (decision F5); here "Previous" is placeholder data.
-class WorkoutSessionScreen extends StatefulWidget {
+/// Starts a workout (from [templateVersionId] when given) and opens the session screen. If one is already running
+/// the screen simply continues it. Used by the Training and Home start buttons.
+Future<void> startOrContinueWorkout(
+  BuildContext context,
+  WidgetRef ref, {
+  String? templateVersionId,
+  String? scheduleEntryId,
+  String? splitVersionId,
+  String? splitDayId,
+  String? name,
+}) async {
+  final service = ref.read(workoutSessionServiceProvider);
+  final router = GoRouter.of(context);
+  final messenger = ScaffoldMessenger.of(context);
+  try {
+    final active = await ref.read(trainingRepositoryProvider).activeSession();
+    if (active == null && templateVersionId != null) {
+      await service.startSession(
+        name: name,
+        templateVersionId: templateVersionId,
+        scheduleEntryId: scheduleEntryId,
+        splitVersionId: splitVersionId,
+        splitDayId: splitDayId,
+      );
+    }
+  } on SessionAlreadyActive {
+    // Fine: continue the one that is running.
+  } catch (e) {
+    messenger.showSnackBar(SnackBar(content: Text('$e')));
+    return;
+  }
+  router.push(AppRoutes.session);
+}
+
+/// The active workout. Everything is read from and written to the phone through the training providers and
+/// [WorkoutSessionService]; the screen never talks to the backend. Sets are saved the moment they are confirmed,
+/// so leaving or restarting the app does not lose them. Suggested weights and PRs are not computed here: they come
+/// from the backend later (decision F5), so "Previous" shows only what was actually logged last time.
+class WorkoutSessionScreen extends ConsumerStatefulWidget {
   const WorkoutSessionScreen({super.key});
 
   @override
-  State<WorkoutSessionScreen> createState() => _WorkoutSessionScreenState();
+  ConsumerState<WorkoutSessionScreen> createState() =>
+      _WorkoutSessionScreenState();
 }
 
-class _SetData {
-  _SetData({
-    required this.id,
-    required this.warmup,
-    required this.prevKg,
-    required this.prevReps,
-    this.kg = '',
-    this.reps = '',
-    this.done = false,
-  });
-
-  final int id;
-  final bool warmup;
-  final String prevKg;
-  final String prevReps;
-  String kg;
-  String reps;
-  bool done;
-
-  String get previous =>
-      prevKg.isEmpty ? 'No previous data' : 'Previous $prevKg × $prevReps';
-}
-
-const _exercises = [
-  ('Flat Bench Press', '4 × 6–8'),
-  ('Incline Dumbbell Press', '3 × 8–10'),
-  ('Cable Fly', '3 × 12–15'),
-  ('Lateral Raise', '3 × 12–15'),
-  ('Overhead Press', '3 × 8–10'),
-  ('Triceps Pushdown', '3 × 10–12'),
-  ('Face Pull', '3 × 15'),
-];
-
-const _totalSets = 24; // placeholder plan total
-const _doneBefore = 7; // sets finished in earlier exercises (placeholder)
-
-class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
-  final Map<int, List<_SetData>> _byExercise = {};
+class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
   Timer? _ticker;
-  int _exercise = 1;
-  int _elapsed = 42 * 60 + 10;
-  int _restLeft = 72;
-  int _nextId = 100;
-  int _rir = 2;
-  int _rpe = 8;
-  bool _paused = false;
-  bool _complete = false;
-  String? _lastRecorded = 'Set 1 recorded · 28 kg × 10';
+  int _exercise = 0;
+  int _restLeft = 0;
+  int? _rir;
+  double? _rpe;
+  bool _warmup = false;
+  String? _kg; // null until typed: the previous weight is offered instead
+  String _reps = '';
+  String _setKey = '';
+  String _workoutNote = '';
+  DateTime _now = DateTime.now();
+  DateTime? _pausedAt;
+  String? _finishedId;
+  bool _busy = false;
 
   @override
   void initState() {
     super.initState();
-    _byExercise[1] = [
-      _SetData(
-        id: 0,
-        warmup: true,
-        prevKg: '20',
-        prevReps: '12',
-        kg: '20',
-        reps: '12',
-        done: true,
-      ),
-      _SetData(
-        id: 1,
-        warmup: false,
-        prevKg: '28',
-        prevReps: '10',
-        kg: '28',
-        reps: '10',
-        done: true,
-      ),
-      _SetData(id: 2, warmup: false, prevKg: '28', prevReps: '9', kg: '28'),
-      _SetData(id: 3, warmup: false, prevKg: '28', prevReps: '8'),
-    ];
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (_paused || _complete || !mounted) return;
+      if (!mounted) return;
       setState(() {
-        _elapsed++;
-        if (_restLeft > 0) _restLeft--;
+        _now = DateTime.now();
+        if (_pausedAt == null && _restLeft > 0) _restLeft--;
       });
     });
   }
@@ -108,23 +94,12 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
     super.dispose();
   }
 
-  List<_SetData> get _sets => _byExercise.putIfAbsent(_exercise, () {
-    return [
-      _SetData(id: _nextId++, warmup: true, prevKg: '', prevReps: ''),
-      for (var i = 0; i < 3; i++)
-        _SetData(id: _nextId++, warmup: false, prevKg: '', prevReps: ''),
-    ];
-  });
-
-  int get _doneTotal =>
-      _doneBefore +
-      _byExercise.values.fold(0, (a, l) => a + l.where((s) => s.done).length);
-
-  int get _activeIndex => _sets.indexWhere((s) => !s.done);
+  WorkoutSessionService get _service => ref.read(workoutSessionServiceProvider);
 
   static String _clock(int seconds) {
     String two(int n) => n.toString().padLeft(2, '0');
-    return '${two(seconds ~/ 3600)}:${two((seconds % 3600) ~/ 60)}:${two(seconds % 60)}';
+    final s = seconds < 0 ? 0 : seconds;
+    return '${two(s ~/ 3600)}:${two((s % 3600) ~/ 60)}:${two(s % 60)}';
   }
 
   static String _mmss(int seconds) {
@@ -132,57 +107,30 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
     return '${two(seconds ~/ 60)}:${two(seconds % 60)}';
   }
 
-  void _confirmSet(int index) {
-    final s = _sets[index];
-    if (s.kg.trim().isEmpty || s.reps.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter weight and reps first.')),
-      );
-      return;
+  static String _kgText(double v) =>
+      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
+
+  int _elapsed(WorkoutSession s) {
+    final until = _pausedAt ?? _now;
+    return until.difference(s.startedAt).inSeconds - s.pausedSeconds;
+  }
+
+  void _toast(String message) => ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text(message)));
+
+  Future<void> _run(Future<void> Function() action) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await action();
+    } on ArgumentError catch (e) {
+      if (mounted) _toast('${e.message}');
+    } catch (e) {
+      if (mounted) _toast('$e');
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
-    setState(() {
-      s.done = true;
-      _restLeft = 90; // the rest timer starts after a set is confirmed
-      final number = _sets.where((x) => !x.warmup).toList().indexOf(s) + 1;
-      _lastRecorded =
-          s.warmup
-              ? 'Warm-up recorded · ${s.kg} kg × ${s.reps}'
-              : 'Set $number recorded · ${s.kg} kg × ${s.reps}';
-    });
-  }
-
-  void _addSet({required bool warmup}) {
-    setState(() {
-      final list = _sets;
-      final set = _SetData(
-        id: _nextId++,
-        warmup: warmup,
-        prevKg: '',
-        prevReps: '',
-      );
-      if (warmup) {
-        final lastWarm = list.lastIndexWhere((s) => s.warmup);
-        list.insert(lastWarm + 1, set);
-      } else {
-        list.add(set);
-      }
-    });
-  }
-
-  void _removeSet({required bool warmup}) {
-    setState(() {
-      final list = _sets;
-      final i = list.lastIndexWhere((s) => s.warmup == warmup && !s.done);
-      if (i >= 0) list.removeAt(i);
-    });
-  }
-
-  void _goTo(int index) {
-    if (index < 0 || index >= _exercises.length) return;
-    setState(() {
-      _exercise = index;
-      _restLeft = 0;
-    });
   }
 
   void _exit() {
@@ -261,11 +209,12 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
     );
   }
 
-  Future<void> _leave() async {
-    final done = _doneTotal;
+  Future<void> _leave(SessionDetail detail) async {
+    final sets = detail.exercises.fold<int>(0, (a, e) => a + e.sets.length);
     final choice = await _ask(
       title: 'Leave workout?',
-      body: 'You have $done sets recorded. Leaving now will not erase them.',
+      body:
+          'You have $sets sets recorded. They are saved on this phone and the workout stays open until you finish it.',
       stacked: true,
       choices: const [
         ('Keep going', 'keep', ButtonKind.primary),
@@ -274,28 +223,175 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
       ],
     );
     if (!mounted) return;
-    if (choice == 'save' || choice == 'discard') _exit();
+    if (choice == 'save') {
+      await _saveNote(detail.session.id);
+      // A pause is only known while this screen is open, so it ends here: the time paused is added to the session
+      // before leaving, and the saved workout is never left "paused" with an unknown start.
+      if (_pausedAt != null) await _run(() => _resume(detail.session));
+      if (!mounted) return;
+      _exit();
+    } else if (choice == 'discard') {
+      final sure = await _ask(
+        title: 'Discard this workout?',
+        body: 'Its sets and exercises are removed. This cannot be undone.',
+        choices: const [
+          ('Keep it', 'keep', ButtonKind.tonal),
+          ('Discard', 'discard', ButtonKind.danger),
+        ],
+      );
+      if (!mounted || sure != 'discard') return;
+      await _run(() => _service.discardSession(detail.session.id));
+      if (mounted) _exit();
+    }
   }
 
-  Future<void> _finish() async {
+  Future<void> _saveNote(String sessionId) async {
+    if (_workoutNote.trim().isEmpty) return;
+    await _run(() => _service.setNotes(sessionId, _workoutNote));
+  }
+
+  Future<void> _finish(SessionDetail detail) async {
+    final s = detail.summary;
     final choice = await _ask(
       title: 'Confirm: finish workout?',
-      body: '7 exercises · $_doneTotal sets · 12,450 kg',
+      body:
+          '${detail.exercises.length} exercises · ${s.workingSets} working sets · ${_kgText(s.volumeKg)} kg',
       choices: const [
         ('Keep going', 'keep', ButtonKind.tonal),
         ('Finish', 'finish', ButtonKind.primary),
       ],
     );
     if (!mounted || choice != 'finish') return;
-    setState(() => _complete = true);
+    await _run(() async {
+      if (_pausedAt != null) await _resume(detail.session);
+      await _service.completeSession(
+        detail.session.id,
+        postNotes: _workoutNote,
+      );
+      if (mounted) setState(() => _finishedId = detail.session.id);
+    });
+  }
+
+  /// A session saved as `paused` by an earlier run (the app was closed while paused). The database has no pause start,
+  /// so the paused time cannot be known. The session goes back to in progress and its clock keeps running; the pause is
+  /// not guessed. Done once per screen.
+  bool _orphanPauseHandled = false;
+
+  void _endOrphanPause(WorkoutSession s) {
+    if (_orphanPauseHandled || _pausedAt != null || s.status != 'paused'){
+      return;}
+    _orphanPauseHandled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await _run(() => _service.setPaused(s.id, paused: false));
+      if (mounted){
+        _toast(
+          'This workout was paused when the app closed. The pause time was not recorded, so the clock kept running.',
+        );}
+    });
+  }
+
+  Future<void> _pause(WorkoutSession s) async {
+    final at = DateTime.now();
+    await _service.setPaused(s.id, paused: true);
+    if (mounted) setState(() => _pausedAt = at);
+  }
+
+  Future<void> _resume(WorkoutSession s) async {
+    final at = _pausedAt;
+    final seconds = at == null ? 0 : DateTime.now().difference(at).inSeconds;
+    await _service.setPaused(s.id, paused: false, addPausedSeconds: seconds);
+    if (mounted) setState(() => _pausedAt = null);
+  }
+
+  void _resetDraft() {
+    _kg = null;
+    _reps = '';
+    _setKey = '';
+  }
+
+  Future<void> _confirmSet(
+    SessionExerciseDetail current, {
+    required int restSeconds,
+    String? prefillKg,
+  }) async {
+    final kg = double.tryParse(
+      (_kg ?? prefillKg ?? '').trim().replaceAll(',', '.'),
+    );
+    final reps = int.tryParse(_reps.trim());
+    if (kg == null || reps == null) {
+      _toast('Enter weight and reps first.');
+      return;
+    }
+    await _run(() async {
+      await _service.logSet(
+        current.exercise.id,
+        weightKg: kg,
+        reps: reps,
+        setType: _warmup ? 'warmup' : 'working',
+        rir: _warmup ? null : _rir,
+        rpe: _warmup ? null : _rpe,
+        restSeconds: restSeconds,
+      );
+      if (!mounted) return;
+      setState(() {
+        _restLeft = restSeconds;
+        _kg = _kgText(kg);
+        _reps = '';
+        _setKey = 'after-${DateTime.now().microsecondsSinceEpoch}';
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final finished = _finishedId;
+    if (finished != null) return _finishedView(finished);
+
+    final active = ref.watch(activeSessionProvider);
+    return active.when(
+      loading:
+          () => const Scaffold(
+            body: SafeArea(child: Center(child: CircularProgressIndicator())),
+          ),
+      error:
+          (e, _) => _shell(null, [
+            const MutedText('This workout could not be read from the phone.'),
+          ]),
+      data: (session) {
+        if (session == null) return _picker();
+        final detail = ref.watch(sessionDetailProvider(session.id));
+        return detail.when(
+          loading:
+              () => const Scaffold(
+                body: SafeArea(
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              ),
+          error:
+              (e, _) => _shell(null, [
+                const MutedText(
+                  'This workout could not be read from the phone.',
+                ),
+              ]),
+          data: (d) => d == null ? _picker() : _activeView(d),
+        );
+      },
+    );
+  }
+
+  /// Page frame shared by every state: back button, title and the list of cards.
+  Widget _shell(
+    SessionDetail? detail,
+    List<Widget> children, {
+    String title = 'Workout',
+    String? subtitle,
+    bool canPop = true,
+  }) {
     return PopScope(
-      canPop: _complete,
+      canPop: canPop,
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) _leave();
+        if (!didPop && detail != null) _leave(detail);
       },
       child: Scaffold(
         body: SafeArea(
@@ -307,9 +403,13 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
               28,
             ),
             children: [
-              _header(context),
+              _header(
+                title,
+                subtitle,
+                detail == null ? _exit : () => _leave(detail),
+              ),
               const SizedBox(height: AppTheme.gap),
-              if (_complete) ..._summary(context) else ..._active(context),
+              ...children,
             ],
           ),
         ),
@@ -317,14 +417,14 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
     );
   }
 
-  Widget _header(BuildContext context) {
+  Widget _header(String title, String? subtitle, VoidCallback onBack) {
     final p = context.pal;
     return Row(
       children: [
         GestureDetector(
           key: const Key('session-back'),
           behavior: HitTestBehavior.opaque,
-          onTap: _complete ? _exit : _leave,
+          onTap: onBack,
           child: Container(
             width: 48,
             height: 48,
@@ -341,20 +441,17 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Chest + Shoulders',
+                title,
                 style: TextStyle(
                   color: p.text,
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                _complete
-                    ? 'Finished · ${_clock(_elapsed)}'
-                    : 'Exercise ${_exercise + 1} of ${_exercises.length} · ${_clock(_elapsed)}${_paused ? ' · paused' : ''}',
-                style: TextStyle(color: p.muted, fontSize: 15),
-              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 2),
+                Text(subtitle, style: TextStyle(color: p.muted, fontSize: 15)),
+              ],
             ],
           ),
         ),
@@ -362,79 +459,319 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
     );
   }
 
-  List<Widget> _summary(BuildContext context) {
-    return [
-      const TitledCard(
-        title: 'Workout complete',
-        sample: true,
+  // ---- No workout running: choose how to start ----
+
+  Widget _picker() {
+    final templates =
+        ref.watch(currentTemplatesProvider).valueOrNull ??
+        const <TemplateVersion>[];
+    return _shell(null, [
+      TitledCard(
+        title: 'Start a workout',
         children: [
-          Row(
-            children: [
-              Expanded(child: StatBlock('00:58:12', 'Duration')),
-              Expanded(child: StatBlock('5,820 kg', 'Volume')),
-            ],
+          AppButton.primary(
+            'Start empty workout',
+            onPressed:
+                _busy
+                    ? null
+                    : () => _run(() async {
+                      await _service.startSession();
+                    }),
           ),
-          SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(child: StatBlock('7 / 7', 'Exercises')),
-              Expanded(child: StatBlock('1 PR', 'Bench 85 kg')),
-            ],
-          ),
+          if (templates.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const MutedText('Or start from a template:'),
+            const SizedBox(height: 6),
+            RowList([
+              for (final t in templates)
+                RowItem(
+                  title: t.name,
+                  subtitle: 'Version ${t.version}',
+                  trailing: 'Start ›',
+                  onTap:
+                      _busy
+                          ? null
+                          : () => _run(() async {
+                            await _service.startSession(
+                              name: t.name,
+                              templateVersionId: t.id,
+                            );
+                          }),
+                ),
+            ]),
+          ],
         ],
       ),
-      const SizedBox(height: AppTheme.gap),
-      const TitledCard(
-        title: 'Session stats',
-        sample: true,
-        children: [
-          Row(
-            children: [
-              Expanded(flex: 3, child: StatBlock('1,120 kg', 'Volume')),
-              Expanded(flex: 2, child: StatBlock('9', 'Sets done')),
-              Expanded(flex: 2, child: StatBlock('82 s', 'Avg rest')),
-            ],
-          ),
-        ],
-      ),
-      const SizedBox(height: AppTheme.gap),
-      AppButton.primary('Save workout', height: 56, onPressed: _exit),
-    ];
+    ]);
   }
 
-  List<Widget> _active(BuildContext context) {
-    final p = context.pal;
-    final (name, scheme) = _exercises[_exercise];
-    final active = _activeIndex;
-    final nextName =
-        _exercise + 1 < _exercises.length ? _exercises[_exercise + 1].$1 : null;
-    final sets = _sets;
-    final warmCount = sets.where((s) => s.warmup).length;
-    final workCount = sets.length - warmCount;
+  // ---- Finished: summary ----
 
-    var workNumber = 0;
-    final rows = <Widget>[];
-    for (var i = 0; i < sets.length; i++) {
-      final s = sets[i];
-      if (!s.warmup) workNumber++;
-      rows.add(
-        _SetRow(
-          key: ValueKey('set-${s.id}-${i == active}'),
-          data: s,
-          label: s.warmup ? 'Warm-up' : 'Working set $workNumber',
-          number: s.warmup ? 'W' : '$workNumber',
-          state:
-              s.done
-                  ? _RowState.done
-                  : (i == active ? _RowState.active : _RowState.pending),
-          onKg: (v) => s.kg = v,
-          onReps: (v) => s.reps = v,
-          onConfirm: () => _confirmSet(i),
-          prefillKg: i == active && s.kg.isEmpty ? s.prevKg : null,
+  Widget _finishedView(String sessionId) {
+    final detail = ref.watch(sessionDetailProvider(sessionId)).valueOrNull;
+    final names = _exerciseNames();
+    final s = detail?.summary;
+    return PopScope(
+      canPop: true,
+      child: Scaffold(
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(
+              AppTheme.pagePadding,
+              14,
+              AppTheme.pagePadding,
+              28,
+            ),
+            children: [
+              _header(
+                detail?.session.name ?? 'Workout',
+                s == null
+                    ? null
+                    : 'Finished · ${_clock(s.durationSeconds ?? 0)}',
+                _exit,
+              ),
+              const SizedBox(height: AppTheme.gap),
+              TitledCard(
+                title: 'Workout complete',
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: StatBlock(
+                          _clock(s?.durationSeconds ?? 0),
+                          'Duration',
+                        ),
+                      ),
+                      Expanded(
+                        child: StatBlock(
+                          '${_kgText(s?.volumeKg ?? 0)} kg',
+                          'Volume',
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: StatBlock(
+                          '${s?.exercisesDone ?? 0}',
+                          'Exercises done',
+                        ),
+                      ),
+                      Expanded(
+                        child: StatBlock(
+                          '${s?.workingSets ?? 0}',
+                          'Working sets',
+                        ),
+                      ),
+                      Expanded(
+                        child: StatBlock('${s?.totalReps ?? 0}', 'Reps'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              if (detail != null) ...[
+                const SizedBox(height: AppTheme.gap),
+                TitledCard(
+                  title: 'What you did',
+                  children: [
+                    RowList([
+                      for (final e in detail.exercises)
+                        RowItem(
+                          title: names[e.exercise.exerciseId] ?? 'Exercise',
+                          subtitle:
+                              e.exercise.isSkipped
+                                  ? 'Skipped${e.exercise.skipReason == null ? '' : ' · ${e.exercise.skipReason}'}'
+                                  : _setsLine(e.sets),
+                        ),
+                    ]),
+                  ],
+                ),
+              ],
+              const SizedBox(height: AppTheme.gap),
+              const MutedText(
+                'Saved on this phone. It will sync when online. Personal records appear once the backend has processed the workout.',
+              ),
+              const SizedBox(height: AppTheme.gap),
+              AppButton.primary('Done', height: 56, onPressed: _exit),
+            ],
+          ),
         ),
-      );
-      rows.add(const SizedBox(height: 10));
-    }
+      ),
+    );
+  }
+
+  Map<String, String> _exerciseNames() => {
+    for (final e
+        in ref.watch(exerciseLibraryProvider).valueOrNull ?? const <Exercise>[])
+      e.id: e.name,
+  };
+
+  static String _setsLine(List<LoggedSet> sets) {
+    final working = [
+      for (final s in sets)
+        if (s.isWorking) s,
+    ];
+    if (working.isEmpty){
+      return sets.isEmpty ? 'No sets logged' : '${sets.length} warm-up sets';}
+    return working
+        .map(
+          (s) =>
+              '${s.weightKg == null ? '–' : _kgText(s.weightKg!)}×${s.reps ?? '–'}',
+        )
+        .join(' · ');
+  }
+
+  // ---- Active workout ----
+
+  Widget _activeView(SessionDetail detail) {
+    final session = detail.session;
+    final names = _exerciseNames();
+    final exercises = detail.exercises;
+    if (_exercise >= exercises.length){
+      _exercise = exercises.isEmpty ? 0 : exercises.length - 1;}
+    final current = exercises.isEmpty ? null : exercises[_exercise];
+    _endOrphanPause(session);
+    final paused = _pausedAt != null;
+
+    final subtitle =
+        exercises.isEmpty
+            ? '${_clock(_elapsed(session))}${paused ? ' · paused' : ''}'
+            : 'Exercise ${_exercise + 1} of ${exercises.length} · ${_clock(_elapsed(session))}${paused ? ' · paused' : ''}';
+
+    return _shell(
+      detail,
+      canPop: false,
+      title: session.name ?? 'Workout',
+      subtitle: subtitle,
+      [
+        if (current == null)
+          _addExerciseCard(session, names, empty: true)
+        else
+          ..._exerciseSection(detail, current, names),
+        const SizedBox(height: AppTheme.gap),
+        if (current != null) _addExerciseCard(session, names),
+        const SizedBox(height: AppTheme.gap),
+        TitledCard(
+          title: 'Workout note',
+          children: [
+            FieldBox(
+              key: ValueKey('note-${session.id}'),
+              initial: session.notes ?? '',
+              hint: 'How did it feel?',
+              onChanged: (v) => _workoutNote = v,
+            ),
+            const SizedBox(height: 10),
+            AppButton(
+              'Save note',
+              onPressed: _busy ? null : () => _saveNote(session.id),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppTheme.gap),
+        TitledCard(
+          title: 'Pause or finish',
+          children: [
+            AppButton(
+              paused ? 'Resume workout' : 'Pause workout',
+              onPressed:
+                  _busy
+                      ? null
+                      : () => _run(
+                        () => paused ? _resume(session) : _pause(session),
+                      ),
+            ),
+            const SizedBox(height: 12),
+            AppButton.primary(
+              'Finish workout',
+              height: 54,
+              onPressed: _busy ? null : () => _finish(detail),
+            ),
+            const SizedBox(height: 12),
+            const MutedText(
+              'Sets are saved as you confirm them. Pausing stops the clock while this screen is open; leaving the screen ends the pause.',
+              size: 14.5,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _exerciseSection(
+    SessionDetail detail,
+    SessionExerciseDetail current,
+    Map<String, String> names,
+  ) {
+    final p = context.pal;
+    final exercises = detail.exercises;
+    final session = detail.session;
+    final ex = current.exercise;
+    final name = names[ex.exerciseId] ?? 'Exercise';
+    final library =
+        ref.watch(exerciseLibraryProvider).valueOrNull ?? const <Exercise>[];
+    final info =
+        [
+          for (final e in library)
+            if (e.id == ex.exerciseId) e,
+        ].firstOrNull;
+    final previous =
+        ref
+            .watch(
+              previousPerformanceProvider((
+                exerciseId: ex.exerciseId,
+                beforeSessionId: session.id,
+              )),
+            )
+            .valueOrNull;
+
+    final prescription = ex.prescription;
+    final target =
+        prescription == null ? null : _prescriptionText(prescription);
+    final restSeconds = (prescription?['rest_s'] as num?)?.toInt() ?? 90;
+    final prevWorking = previous?.workingSets ?? const <LoggedSet>[];
+
+    final working = [
+      for (final s in current.sets)
+        if (s.isWorking) s,
+    ];
+    final warm = [
+      for (final s in current.sets)
+        if (!s.isWorking) s,
+    ];
+    final nextNumber = _warmup ? warm.length + 1 : working.length + 1;
+    final prevForNext =
+        !_warmup && nextNumber <= prevWorking.length
+            ? prevWorking[nextNumber - 1]
+            : null;
+    final prefillKg =
+        prevForNext?.weightKg == null ? null : _kgText(prevForNext!.weightKg!);
+    final draftKey = ValueKey(
+      'draft-${ex.id}-${current.sets.length}-$_setKey-$_warmup',
+    );
+    final nextName =
+        _exercise + 1 < exercises.length
+            ? names[exercises[_exercise + 1].exercise.exerciseId] ?? 'Next'
+            : null;
+
+    final rows = <Widget>[
+      for (final s in [...warm, ...working])
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: _DoneSetRow(
+            label:
+                s.isWorking
+                    ? 'Working set ${s.setNumber}'
+                    : 'Warm-up ${s.setNumber}',
+            number: s.isWorking ? '${s.setNumber}' : 'W',
+            text:
+                '${s.weightKg == null ? '–' : _kgText(s.weightKg!)} kg × ${s.reps ?? '–'}${s.rir == null ? '' : ' · RIR ${s.rir}'}',
+            onRemove: _busy ? null : () => _run(() => _service.deleteSet(s.id)),
+          ),
+        ),
+    ];
 
     return [
       AppCard(
@@ -451,12 +788,63 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              '$scheme · rest 90 s · RIR $_rir',
+              [
+                if (target != null) target,
+                'rest $restSeconds s',
+                if (ex.isSkipped) 'skipped',
+              ].join(' · '),
               style: TextStyle(color: p.muted, fontSize: 14.5),
             ),
             const SizedBox(height: 14),
+            if (ex.isSkipped) ...[
+              const MutedText(
+                'This exercise is marked skipped. Log a set or restore it.',
+              ),
+              const SizedBox(height: 10),
+              AppButton(
+                'Restore exercise',
+                onPressed:
+                    _busy
+                        ? null
+                        : () => _run(() => _service.restoreExercise(ex.id)),
+              ),
+              const SizedBox(height: 14),
+            ],
             ...rows,
-            AppButton('+ Add set', onPressed: () => _addSet(warmup: false)),
+            _DraftRow(
+              key: draftKey,
+              label:
+                  _warmup
+                      ? 'Warm-up $nextNumber · now'
+                      : 'Working set $nextNumber · now',
+              number: _warmup ? 'W' : '$nextNumber',
+              previous:
+                  prevForNext == null
+                      ? 'No previous data'
+                      : 'Previous ${prevForNext.weightKg == null ? '–' : _kgText(prevForNext.weightKg!)} × ${prevForNext.reps ?? '–'}',
+              kg: _kg ?? prefillKg ?? '',
+              reps: _reps,
+              onKg: (v) => _kg = v,
+              onReps: (v) => _reps = v,
+              onConfirm:
+                  _busy
+                      ? null
+                      : () => _confirmSet(
+                        current,
+                        restSeconds: restSeconds,
+                        prefillKg: prefillKg,
+                      ),
+            ),
+            const SizedBox(height: 12),
+            PillTabs(
+              labels: const ['Working', 'Warm-up'],
+              index: _warmup ? 1 : 0,
+              onChanged:
+                  (i) => setState(() {
+                    _warmup = i == 1;
+                    _resetDraft();
+                  }),
+            ),
           ],
         ),
       ),
@@ -531,9 +919,15 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          LinkText('Skip exercise', onTap: () => _goTo(_exercise + 1)),
-          LinkText('Add note', onTap: () {}),
-          LinkText('Finish workout', color: p.red, onTap: _finish),
+          LinkText(
+            ex.isSkipped ? 'Exercise skipped' : 'Skip exercise',
+            onTap: ex.isSkipped ? () {} : () => _skip(ex),
+          ),
+          LinkText(
+            'Remove exercise',
+            color: p.red,
+            onTap: () => _removeExercise(ex),
+          ),
         ],
       ),
       const SizedBox(height: 4),
@@ -541,12 +935,12 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
       const SizedBox(height: AppTheme.gap),
       TitledCard(
         title: 'Workout progress',
-        sample: true,
         children: [
-          MeterBar(value: _doneTotal / _totalSets),
+          MeterBar(value: _progress(exercises)),
           const SizedBox(height: 12),
           MutedText(
-            'Exercise ${_exercise + 1} of ${_exercises.length} · $_doneTotal of $_totalSets sets done',
+            '${exercises.where((e) => e.sets.isNotEmpty || e.exercise.isSkipped).length} of ${exercises.length} exercises started · '
+            '${detail.summary.workingSets} working sets · ${_kgText(detail.summary.volumeKg)} kg',
             size: 15,
           ),
         ],
@@ -555,231 +949,215 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
       TitledCard(
         title: 'Set details',
         children: [
-          const FieldLabel('RIR (reps in reserve)'),
+          const FieldLabel('RIR (reps in reserve) for the next working set'),
           PillTabs(
-            labels: const ['0', '1', '2', '3', '4+'],
-            index: _rir.clamp(0, 4),
-            onChanged: (i) => setState(() => _rir = i),
+            labels: const ['–', '0', '1', '2', '3', '4+'],
+            index: _rir == null ? 0 : (_rir! + 1).clamp(1, 5),
+            onChanged:
+                (i) =>
+                    setState(() => _rir = i == 0 ? null : (i == 5 ? 4 : i - 1)),
           ),
           const SizedBox(height: 12),
           const FieldLabel('RPE (optional)'),
           PillTabs(
-            labels: const ['6', '7', '8', '9', '10'],
-            index: (_rpe - 6).clamp(0, 4),
-            onChanged: (i) => setState(() => _rpe = i + 6),
-          ),
-          if (_lastRecorded != null) ...[
-            const SizedBox(height: 14),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: p.greenFill,
-                borderRadius: BorderRadius.circular(AppTheme.radius),
-              ),
-              child: Text(
-                '✓ $_lastRecorded',
-                style: TextStyle(color: p.green, fontSize: 14.5),
-              ),
-            ),
-          ],
-          const SizedBox(height: 14),
-          ButtonPair(
-            AppButton('+ Add set', onPressed: () => _addSet(warmup: false)),
-            AppButton(
-              '− Remove set',
-              onPressed: () => _removeSet(warmup: false),
-            ),
+            labels: const ['–', '6', '7', '8', '9', '10'],
+            index: _rpe == null ? 0 : (_rpe! - 5).round().clamp(1, 5),
+            onChanged:
+                (i) =>
+                    setState(() => _rpe = i == 0 ? null : (i + 5).toDouble()),
           ),
         ],
       ),
-      const SizedBox(height: AppTheme.gap),
-      const TitledCard(
-        title: 'Notes',
-        children: [
-          FieldLabel('Exercise note'),
-          FieldBox(hint: 'Machine setup, pain, form…'),
-          SizedBox(height: 12),
-          FieldLabel('Workout note'),
-          FieldBox(hint: 'How did it feel?'),
-        ],
-      ),
-      const SizedBox(height: AppTheme.gap),
-      const GroupLabel('Exercise tools'),
-      const SizedBox(height: AppTheme.gap),
-      TitledCard(
-        title: 'Sets',
-        children: [
-          _Stepper(
-            label: 'Warm-up sets',
-            value: warmCount,
-            onMinus: () => _removeSet(warmup: true),
-            onPlus: () => _addSet(warmup: true),
-          ),
-          const SizedBox(height: 10),
-          _Stepper(
-            label: 'Working sets',
-            value: workCount,
-            onMinus: () => _removeSet(warmup: false),
-            onPlus: () => _addSet(warmup: false),
-          ),
-        ],
-      ),
-      const SizedBox(height: AppTheme.gap),
-      TitledCard(
-        title: 'Replace exercise',
-        link: 'Search',
-        children: [
-          const MutedText(
-            'Matched to the same muscles, your equipment and recorded restrictions.',
-          ),
-          const SizedBox(height: 6),
-          RowList([
-            RowItem(
-              title: 'Cable Fly',
-              subtitle: 'Cable · chest',
-              trailing: 'Use ›',
-              onTap: () {},
-            ),
-            RowItem(
-              title: 'Machine Chest Press',
-              subtitle: 'Machine · chest',
-              trailing: 'Use ›',
-              onTap: () {},
-            ),
-          ]),
-        ],
-      ),
-      const SizedBox(height: AppTheme.gap),
-      TitledCard(
-        title: 'Instructions',
-        children: [
-          const MutedText(
-            'Bench at 30°, elbows about 45° from the torso, press steadily off the bottom.',
-            size: 15,
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 14,
-            children: [
-              for (final m in ['Upper chest', 'Front delts', 'Triceps'])
-                Text(m, style: TextStyle(color: p.link, fontSize: 15)),
-            ],
-          ),
-        ],
-      ),
-      const SizedBox(height: AppTheme.gap),
-      TitledCard(
-        title: 'Pause or finish',
-        children: [
-          AppButton(
-            _paused ? 'Resume workout' : 'Pause workout',
-            onPressed: () => setState(() => _paused = !_paused),
-          ),
-          const SizedBox(height: 12),
-          AppButton.primary('Finish workout', height: 54, onPressed: _finish),
-          const SizedBox(height: 12),
-          const MutedText('Pause saves progress and you can resume later.'),
-        ],
-      ),
-      const SizedBox(height: AppTheme.gap),
-      const TitledCard(
-        title: 'Later',
-        children: [
-          RowList([
-            RowItem(
-              title: 'Exercise demonstrations',
-              subtitle: 'Videos and instructions',
-              trailing: 'Later',
-            ),
-            RowItem(
-              title: 'Advanced session stats',
-              subtitle: 'Live volume and tempo',
-              trailing: 'Later',
-            ),
-          ]),
-        ],
-      ),
+      if (info?.notes != null && info!.notes!.trim().isNotEmpty) ...[
+        const SizedBox(height: AppTheme.gap),
+        TitledCard(
+          title: 'Instructions',
+          children: [MutedText(info.notes!, size: 15)],
+        ),
+      ],
     ];
+  }
+
+  double _progress(List<SessionExerciseDetail> exercises) {
+    if (exercises.isEmpty) return 0;
+    final started =
+        exercises
+            .where((e) => e.sets.isNotEmpty || e.exercise.isSkipped)
+            .length;
+    return started / exercises.length;
+  }
+
+  static String? _prescriptionText(Map<String, dynamic> p) {
+    final sets = (p['target_sets'] as num?)?.toInt();
+    final min = (p['rep_min'] as num?)?.toInt();
+    final max = (p['rep_max'] as num?)?.toInt();
+    if (sets == null) return null;
+    if (min == null) return '$sets sets';
+    return max == null || max == min ? '$sets × $min' : '$sets × $min–$max';
+  }
+
+  void _goTo(int index) => setState(() {
+    _exercise = index;
+    _restLeft = 0;
+    _resetDraft();
+  });
+
+  Future<void> _skip(SessionExercise ex) async {
+    await _run(() => _service.skipExercise(ex.id, reason: 'Skipped'));
+  }
+
+  Future<void> _removeExercise(SessionExercise ex) async {
+    final choice = await _ask(
+      title: 'Remove this exercise?',
+      body: 'Any sets logged for it are removed too.',
+      choices: const [
+        ('Keep it', 'keep', ButtonKind.tonal),
+        ('Remove', 'remove', ButtonKind.danger),
+      ],
+    );
+    if (!mounted || choice != 'remove') return;
+    await _run(() => _service.removeExercise(ex.id));
+    if (mounted && _exercise > 0) setState(() => _exercise--);
+  }
+
+  Widget _addExerciseCard(
+    WorkoutSession session,
+    Map<String, String> names, {
+    bool empty = false,
+  }) {
+    final library =
+        ref.watch(exerciseLibraryProvider).valueOrNull ?? const <Exercise>[];
+    return TitledCard(
+      title: empty ? 'Add your first exercise' : 'Add exercise',
+      children: [
+        if (library.isEmpty)
+          const MutedText(
+            'No exercises on this phone yet. They appear after the first sync, or you can add one in Training › Exercises.',
+          )
+        else
+          RowList([
+            for (final e in library.take(empty ? 12 : 6))
+              RowItem(
+                title: e.name,
+                subtitle: e.category,
+                trailing: 'Add ›',
+                onTap:
+                    _busy
+                        ? null
+                        : () => _run(() async {
+                          await _service.addExercise(session.id, e.id);
+                          if (mounted) setState(() => _resetDraft());
+                        }),
+              ),
+          ]),
+      ],
+    );
   }
 }
 
-enum _RowState { done, active, pending }
-
-class _SetRow extends StatelessWidget {
-  const _SetRow({
-    super.key,
-    required this.data,
+class _DoneSetRow extends StatelessWidget {
+  const _DoneSetRow({
     required this.label,
     required this.number,
-    required this.state,
-    required this.onKg,
-    required this.onReps,
-    required this.onConfirm,
-    this.prefillKg,
+    required this.text,
+    this.onRemove,
   });
 
-  final _SetData data;
   final String label;
   final String number;
-  final _RowState state;
-  final ValueChanged<String> onKg;
-  final ValueChanged<String> onReps;
-  final VoidCallback onConfirm;
-  final String? prefillKg;
+  final String text;
+  final VoidCallback? onRemove;
 
   @override
   Widget build(BuildContext context) {
     final p = context.pal;
-    final isActive = state == _RowState.active;
-    final isDone = state == _RowState.done;
-
-    final Color badgeBg;
-    final Color badgeFg;
-    if (data.warmup) {
-      badgeBg = p.amber.withValues(alpha: 0.2);
-      badgeFg = p.amber;
-    } else if (isDone) {
-      badgeBg = p.greenFill;
-      badgeFg = p.green;
-    } else if (isActive) {
-      badgeBg = p.primary;
-      badgeFg = p.onPrimary;
-    } else {
-      badgeBg = p.tile;
-      badgeFg = p.muted;
-    }
-
-    final initialKg = data.kg.isNotEmpty ? data.kg : (prefillKg ?? '');
-    if (isActive && data.kg.isEmpty && initialKg.isNotEmpty) {
-      data.kg = initialKg;
-    }
-
-    final check = GestureDetector(
-      onTap: isActive ? onConfirm : null,
-      child: Container(
-        key: isActive ? const Key('confirm-set') : null,
-        width: 64,
-        height: 56,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: isDone ? p.greenFill : (isActive ? p.primary : p.tile),
-          borderRadius: BorderRadius.circular(AppTheme.radius),
-        ),
-        child: Icon(
-          Icons.check,
-          size: 26,
-          color: isDone ? p.green : (isActive ? p.onPrimary : p.faint),
-        ),
-      ),
-    );
-
-    final content = Container(
+    return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isActive ? p.bg.withValues(alpha: 0.35) : Colors.transparent,
+        color: p.tile,
         borderRadius: BorderRadius.circular(AppTheme.radius + 2),
-        border: isActive ? Border.all(color: p.primary, width: 1.6) : null,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: p.greenFill,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              number,
+              style: TextStyle(
+                color: p.green,
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: p.text,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(text, style: TextStyle(color: p.muted, fontSize: 14)),
+              ],
+            ),
+          ),
+          GestureDetector(
+            key: Key('remove-set-$number-$label'),
+            onTap: onRemove,
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Icon(Icons.close, size: 20, color: p.muted),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DraftRow extends StatelessWidget {
+  const _DraftRow({
+    super.key,
+    required this.label,
+    required this.number,
+    required this.previous,
+    required this.kg,
+    required this.reps,
+    required this.onKg,
+    required this.onReps,
+    required this.onConfirm,
+  });
+
+  final String label;
+  final String number;
+  final String previous;
+  final String kg;
+  final String reps;
+  final ValueChanged<String> onKg;
+  final ValueChanged<String> onReps;
+  final VoidCallback? onConfirm;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.pal;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: p.bg.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(AppTheme.radius + 2),
+        border: Border.all(color: p.primary, width: 1.6),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -791,13 +1169,13 @@ class _SetRow extends StatelessWidget {
                 height: 36,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: badgeBg,
+                  color: p.primary,
                   shape: BoxShape.circle,
                 ),
                 child: Text(
                   number,
                   style: TextStyle(
-                    color: badgeFg,
+                    color: p.onPrimary,
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
                   ),
@@ -809,7 +1187,7 @@ class _SetRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isActive ? '$label · now' : label,
+                      label,
                       style: TextStyle(
                         color: p.text,
                         fontSize: 16,
@@ -817,7 +1195,7 @@ class _SetRow extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      data.previous,
+                      previous,
                       style: TextStyle(color: p.muted, fontSize: 14),
                     ),
                   ],
@@ -830,8 +1208,8 @@ class _SetRow extends StatelessWidget {
             children: [
               Expanded(
                 child: FieldBox(
-                  fieldKey: isActive ? const Key('kg-field') : null,
-                  initial: initialKg,
+                  fieldKey: const Key('kg-field'),
+                  initial: kg,
                   hint: 'kg',
                   keyboard: const TextInputType.numberWithOptions(
                     decimal: true,
@@ -842,89 +1220,32 @@ class _SetRow extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: FieldBox(
-                  fieldKey: isActive ? const Key('reps-field') : null,
-                  initial: data.reps,
+                  fieldKey: const Key('reps-field'),
+                  initial: reps,
                   hint: 'reps',
                   keyboard: TextInputType.number,
                   onChanged: onReps,
                 ),
               ),
               const SizedBox(width: 10),
-              check,
+              GestureDetector(
+                key: const Key('confirm-set'),
+                onTap: onConfirm,
+                child: Container(
+                  width: 64,
+                  height: 56,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: p.primary,
+                    borderRadius: BorderRadius.circular(AppTheme.radius),
+                  ),
+                  child: Icon(Icons.check, size: 26, color: p.onPrimary),
+                ),
+              ),
             ],
           ),
         ],
       ),
-    );
-    return state == _RowState.pending
-        ? Opacity(opacity: 0.55, child: content)
-        : content;
-  }
-}
-
-class _Stepper extends StatelessWidget {
-  const _Stepper({
-    required this.label,
-    required this.value,
-    required this.onMinus,
-    required this.onPlus,
-  });
-
-  final String label;
-  final int value;
-  final VoidCallback onMinus;
-  final VoidCallback onPlus;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.pal;
-    Widget square(String text, VoidCallback onTap) => GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 52,
-        height: 48,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: p.tile,
-          borderRadius: BorderRadius.circular(AppTheme.radius),
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: p.text,
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-    );
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(
-              color: p.text,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        square('−', onMinus),
-        SizedBox(
-          width: 44,
-          child: Text(
-            '$value',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: p.text,
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        square('+', onPlus),
-      ],
     );
   }
 }

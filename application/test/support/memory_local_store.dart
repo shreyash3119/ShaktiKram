@@ -58,6 +58,15 @@ class MemoryLocalStore implements LocalStore {
     final baseRev = op.baseRev ?? existing?.serverRev;
     final stored = op.copyWith(seq: ++_seq, baseRev: baseRev);
     _outbox.add(stored);
+    if (id != null && op.action == 'new_version') {
+      final entityId = op.payload['entity_id'];
+      final siblings = <Map<String, dynamic>>[
+        if (entityId is String)
+          for (final e in _records.entries)
+            if (e.key.startsWith('${op.entity}/') && !isDeleted(e.value.data) && e.value.data['entity_id'] == entityId) e.value.data,
+      ];
+      _records[_key(op.entity, id)] = _Rec(serverRev: null, serverData: null, data: overlayNewVersion(siblings, id, op.payload, op.clientUpdatedAt), dirty: true);
+    }
     if (id != null && op.action != 'new_version') {
       final next = op.action == 'delete'
           ? (existing == null ? null : overlayDelete(existing.data, op.clientUpdatedAt))

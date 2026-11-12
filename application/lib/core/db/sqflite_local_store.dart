@@ -180,6 +180,19 @@ class SqfliteLocalStore implements LocalStore {
         'state': OpState.pending.name,
       });
 
+      if (id != null && op.action == 'new_version') {
+        final entityId = op.payload['entity_id'];
+        final siblings = entityId is String ? await _versionsOf(txn, op.entity, entityId) : <Map<String, dynamic>>[];
+        await _putRecord(
+          txn,
+          op.entity,
+          id,
+          serverRev: null,
+          serverData: null,
+          data: overlayNewVersion(siblings, id, op.payload, op.clientUpdatedAt),
+          dirty: true,
+        );
+      }
       if (id != null && op.action != 'new_version') {
         final current = existing == null ? null : _decode(existing['data']);
         final next = op.action == 'delete'
@@ -199,6 +212,15 @@ class SqfliteLocalStore implements LocalStore {
       }
       return op.copyWith(seq: seq, baseRev: baseRev);
     }
+  }
+
+  Future<List<Map<String, dynamic>>> _versionsOf(DatabaseExecutor db, String entity, String entityId) async {
+    final rows = await db.rawQuery(
+      'SELECT r.data AS data FROM record_refs f JOIN records r ON r.entity = f.entity AND r.id = f.id '
+      "WHERE f.entity = ? AND f.field = 'entity_id' AND f.ref = ? AND r.deleted = 0",
+      [entity, entityId],
+    );
+    return [for (final r in rows) _decode(r['data'])];
   }
 
   // ---- sync engine ----

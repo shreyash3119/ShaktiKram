@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -82,13 +83,17 @@ void main() {
     await tester.tap(_navLabel('Training'));
     await tester.pumpAndSettle();
 
+    // Quick actions is further down the Overview than the first screenful, so scroll to it.
+    await tester.scrollUntilVisible(find.text('Quick actions'), 300, scrollable: find.byType(Scrollable).first);
     expect(find.text('Quick actions'), findsOneWidget);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, 3000));
+    await tester.pumpAndSettle();
     await _tapPill(tester, 'Splits');
     expect(find.text('Your splits'), findsOneWidget);
     await _tapPill(tester, 'Exercises');
     expect(find.text('Exercise library'), findsOneWidget);
     await _tapPill(tester, 'History');
-    expect(find.text('Compare sessions'), findsWidgets);
+    expect(find.textContaining('Finished workouts show up here'), findsOneWidget);
     await _tapPill(tester, 'Schedule');
     expect(find.text('Schedule · this week'), findsOneWidget);
   });

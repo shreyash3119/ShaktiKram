@@ -352,7 +352,7 @@ class _QuickWeightCardState extends ConsumerState<_QuickWeightCard> {
             ),
           ),
           const SizedBox(width: 12),
-          Expanded(child: AppButton.primary('Save', height: 56, onPressed: _save)),
+          Expanded(child: AppButton.primary('Save', key: const Key('quick-weight-save'), height: 56, onPressed: _save)),
         ]),
         const SizedBox(height: 14),
         Text(

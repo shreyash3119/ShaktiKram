@@ -46,7 +46,10 @@ void main() {
     final field = find.byKey(const Key('quick-weight-field'));
     await tester.scrollUntilVisible(field, 300, scrollable: find.byType(Scrollable).first);
     await tester.enterText(field, '77.5');
-    await tester.tap(find.text('Save').first);
+    final save = find.byKey(const Key('quick-weight-save'));
+    await tester.ensureVisible(save);
+    await tester.pumpAndSettle();
+    await tester.tap(save);
     await tester.pumpAndSettle();
     final rows = await h.local.list('body_measurements');
     expect(rows.single['value'], 77.5);

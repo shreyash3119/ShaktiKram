@@ -181,5 +181,23 @@ void runStoreContract(String name, Future<LocalStore> Function() create) {
       expect(await store.lastRev(), 12);
       expect((await store.lastSyncAt())!.toUtc(), when);
     });
+
+    test('a new version of a versioned record is shown at once as the next version, and goes away if refused', () async {
+      await store.applyPulled([
+        pulled('personal_targets', 2, {'id': uid(1), 'entity_id': uid(9), 'version': 1, 'protein_g': 150, 'effective_from': '2026-11-01T00:00:00Z', 'effective_to': null}),
+      ], 2);
+      final first = await store.saveLocal(op('op-1', 'personal_targets', uid(2), {'entity_id': uid(9), 'protein_g': 160}, action: 'new_version'));
+      final second = await store.saveLocal(op('op-2', 'personal_targets', uid(3), {'entity_id': uid(9), 'protein_g': 170}, action: 'new_version'));
+
+      final shown = (await store.listByRef('personal_targets', 'entity_id', uid(9)))..sort((a, b) => (a['version'] as int).compareTo(b['version'] as int));
+      expect(shown.map((r) => (r['version'], r['protein_g'])), [(1, 150), (2, 160), (3, 170)]);
+      expect(shown.last['previous_version_id'], uid(2));
+      expect(shown.last['effective_to'], isNull);
+
+      await store.recordResult(second, const OpResult(opId: 'op-2', result: 'rejected', errorCode: 'validation_failed'));
+      expect(await store.get('personal_targets', uid(3)), isNull);
+      await store.recordResult(first, const OpResult(opId: 'op-1', result: 'applied', rev: 5));
+      expect((await store.get('personal_targets', uid(2)))!['version'], 2);
+    });
   });
 }

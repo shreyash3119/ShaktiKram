@@ -43,6 +43,13 @@ class FakeServer implements BackendGateway {
     },
     'sets': {'session_exercise_id': 'session_exercises'},
     'schedule_entries': {'session_id': 'workout_sessions'},
+    'injuries': {'body_region_id': 'body_regions'},
+    'injury_updates': {'injury_id': 'injuries'},
+    'pain_entries': {'body_region_id': 'body_regions', 'injury_id': 'injuries', 'checkin_id': 'daily_checkins'},
+    'exercise_restrictions': {'injury_id': 'injuries', 'exercise_id': 'exercises'},
+    'supplement_phases': {'entity_id': 'supplements'},
+    'supplement_logs': {'supplement_id': 'supplements', 'phase_id': 'supplement_phases'},
+    'meal_plan_entries': {'meal_id': 'meals', 'replaced_by_meal_id': 'meals'},
   };
 
   /// Puts a record on the server as if it had been there already (reference data, a plan made earlier).
@@ -300,7 +307,8 @@ class FakeServer implements BackendGateway {
         throw const BackendError('validation_failed', 'ck_workout_sessions_end_after_start');
       }
     }
-    if ((entity == 'sets' || entity == 'workout_sessions') && row['occurred_at'] != null) {
+    _validateLifestyle(entity, row, table, alive);
+    if (row['occurred_at'] != null && row['tz_offset_minutes'] != null && row['local_date'] != null) {
       final at = DateTime.parse(row['occurred_at'] as String).toUtc();
       final local = at.add(Duration(minutes: (row['tz_offset_minutes'] as num).toInt()));
       String two(int n) => n.toString().padLeft(2, '0');
@@ -308,6 +316,56 @@ class FakeServer implements BackendGateway {
       if (row['local_date'] != expected) {
         throw BackendError('validation_failed', 'local_date ${row['local_date']} does not match occurred_at and tz_offset_minutes ($expected)');
       }
+    }
+  }
+
+  /// The Stage 3 rules the Lifestyle screens depend on: one check-in and one step count per day, unique supplement
+  /// names, value ranges and the check constraints that tie fields together.
+  void _validateLifestyle(String entity, Map<String, dynamic> row, Map<String, Map<String, dynamic>> table, bool Function(Map<String, dynamic>) alive) {
+    Never fail(String name) => throw BackendError('validation_failed', name);
+    final live = row['deleted_at'] == null;
+    switch (entity) {
+      case 'daily_checkins':
+        if (live && table.values.any((r) => alive(r) && r['local_date'] == row['local_date'])) fail('uq_daily_checkins_local_date');
+        for (final k in ['energy', 'sleep_quality', 'soreness', 'fatigue', 'motivation', 'stress']) {
+          final v = row[k];
+          if (v != null && ((v as num) < 1 || v > 5)) fail('ck_daily_checkins_$k');
+        }
+      case 'daily_steps':
+        if (live && table.values.any((r) => alive(r) && r['local_date'] == row['local_date'])) fail('uq_daily_steps_local_date');
+        if ((row['steps'] as num) < 0) fail('ck_daily_steps_steps_nonnegative');
+      case 'sleep_logs':
+        final d = row['duration_s'] as num;
+        if (d <= 0 || d > 86400) fail('ck_sleep_logs_duration');
+        if (row['sleep_at'] != null && row['wake_at'] != null && !DateTime.parse(row['wake_at'] as String).isAfter(DateTime.parse(row['sleep_at'] as String))) {
+          fail('ck_sleep_logs_wake_after_sleep');
+        }
+      case 'water_logs':
+        if ((row['amount_ml'] as num) <= 0) fail('ck_water_logs_amount_positive');
+      case 'cardio_sessions':
+        if ((row['duration_s'] as num) <= 0) fail('ck_cardio_sessions_duration_positive');
+        if (!['walking', 'running', 'cycling', 'treadmill', 'stairmaster', 'elliptical', 'custom'].contains(row['activity'])) fail('ck_cardio_sessions_activity_values');
+        if (row['activity'] == 'custom' && row['custom_activity'] == null) fail('ck_cardio_sessions_custom_has_name');
+      case 'body_measurements':
+        if ((row['value'] as num) <= 0) fail('ck_body_measurements_value_positive');
+        if (row['measurement_type'] == 'body_fat' && (row['method'] == null || (row['value'] as num) >= 100)) fail('ck_body_measurements_body_fat');
+      case 'injuries':
+        if (row['status'] == 'resolved' && row['resolved_on'] == null) fail('ck_injuries_resolved_has_date');
+        final resolved = row['resolved_on'] as String?;
+        if (resolved != null && resolved.compareTo(row['start_date'] as String) < 0) fail('ck_injuries_resolved_after_start');
+      case 'pain_entries':
+        final l = row['level'] as num;
+        if (l < 0 || l > 10) fail('ck_pain_entries_level');
+      case 'exercise_restrictions':
+        if (row['exercise_id'] == null && row['movement'] == null) fail('ck_exercise_restrictions_target');
+      case 'supplements':
+        final name = (row['name'] as String).trim().toLowerCase();
+        if (live && table.values.any((r) => alive(r) && (r['name'] as String).trim().toLowerCase() == name)) fail('uq_supplements_name_alive');
+      case 'supplement_logs':
+        if (!['taken', 'missed', 'skipped'].contains(row['outcome'])) fail('ck_supplement_logs_outcome_values');
+      case 'meal_plan_entries':
+        if (row['status'] == 'replaced' && row['replaced_by_meal_id'] == null) fail('ck_meal_plan_entries_replaced_has_meal');
+        if ((row['servings'] as num) <= 0) fail('ck_meal_plan_entries_servings_positive');
     }
   }
 

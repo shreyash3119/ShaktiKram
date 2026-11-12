@@ -38,3 +38,17 @@ final previousPerformanceProvider = FutureProvider.family<PreviousPerformance?, 
 
 final templateExercisesProvider =
     FutureProvider.family<List<TemplateExercise>, String>((ref, templateVersionId) => _reload(ref, (r) => r.templateExercises(templateVersionId)));
+
+/// The schedule entries for the seven days starting [firstLocalDate] (`YYYY-MM-DD`); a day with none is null.
+final scheduleWeekProvider = FutureProvider.family<List<ScheduleEntry?>, String>((ref, firstLocalDate) async {
+  ref.watch(dataRevisionProvider);
+  final repo = ref.watch(trainingRepositoryProvider);
+  final start = DateTime.parse(firstLocalDate);
+  String two(int n) => n.toString().padLeft(2, '0');
+  final out = <ScheduleEntry?>[];
+  for (var i = 0; i < 7; i++) {
+    final d = DateTime.utc(start.year, start.month, start.day + i);
+    out.add(await repo.scheduleFor('${d.year.toString().padLeft(4, '0')}-${two(d.month)}-${two(d.day)}'));
+  }
+  return out;
+});
