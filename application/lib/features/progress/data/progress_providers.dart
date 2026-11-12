@@ -4,6 +4,9 @@ import '../../../core/db/local_store.dart';
 import '../../../core/insights/insight_providers.dart';
 import '../../../core/insights/insight_repository.dart';
 import '../../../core/sync/sync_status.dart';
+import '../../lifestyle/data/lifestyle_models.dart';
+import '../../lifestyle/data/lifestyle_providers.dart';
+import '../../training/data/training_providers.dart';
 import 'progress_insights.dart';
 import 'progress_models.dart';
 import 'progress_repository.dart';
@@ -74,3 +77,23 @@ final muscleExposureProvider = Provider<InsightRows<MuscleExposure>>((ref) => _t
 final muscleRatingsProvider = Provider<InsightRows<MuscleRating>>((ref) => _typed(ref.watch(insightProvider(muscleRatingsSpec)), MuscleRating.fromJson));
 
 final bodyCompositionProvider = Provider<InsightRows<BodyComposition>>((ref) => _typed(ref.watch(insightProvider(bodyCompositionSpec)), BodyComposition.fromJson));
+
+// ---- Local helpers shared by the Progress screens ----
+
+/// Body measurements of [type] (`weight`, `waist`, ...) newest first; null means every type.
+final measurementsProvider = FutureProvider.family<List<BodyMeasurement>, String?>((ref, type) {
+  ref.watch(dataRevisionProvider);
+  return ref.watch(lifestyleRepositoryProvider).measurements(type: type, limit: 400);
+});
+
+/// Exercise names by id, from the exercise library on the phone.
+final exerciseNamesProvider = Provider<Map<String, String>>((ref) {
+  return {for (final e in ref.watch(exerciseLibraryProvider).valueOrNull ?? const []) e.id: e.name};
+});
+
+/// Muscle labels by id, from the muscle reference data on the phone.
+final muscleLabelsProvider = FutureProvider<Map<String, String>>((ref) async {
+  ref.watch(dataRevisionProvider);
+  final rows = await ref.read(localStoreProvider).list('muscles');
+  return {for (final r in rows) r['id'] as String: (r['label'] as String?) ?? (r['key'] as String? ?? '')};
+});
