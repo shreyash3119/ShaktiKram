@@ -68,14 +68,13 @@ void main() {
     expect(find.text('3 waiting'), findsOneWidget);
   });
 
-  testWidgets('Home shows today card, readiness, and marks placeholder data', (tester) async {
+  testWidgets('Home on an empty phone shows empty states and no sample values', (tester) async {
     await _pumpApp(tester);
 
-    expect(find.text('Today · Day 1 of 4'), findsOneWidget);
-    expect(find.text('Chest + Shoulders'), findsWidgets);
+    expect(find.text('No workout planned'), findsOneWidget);
     expect(find.text('Start workout'), findsOneWidget);
-    expect(find.text('Readiness check-in'), findsOneWidget);
-    expect(find.text('Sample values'), findsWidgets);
+    expect(find.text('Readiness'), findsOneWidget);
+    expect(find.text('Sample values'), findsNothing);
   });
 
   testWidgets('Training sub-tabs switch the content', (tester) async {
