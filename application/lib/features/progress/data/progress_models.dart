@@ -43,7 +43,7 @@ class PersonalRecord {
 }
 
 class Achievement {
-  const Achievement({required this.id, required this.kind, required this.threshold, required this.title, required this.achievedOn});
+  const Achievement({required this.id, required this.kind, required this.threshold, required this.title, required this.achievedOn, this.supportingTable, this.supportingRecordId});
 
   final String id;
 
@@ -53,12 +53,18 @@ class Achievement {
   final String title;
   final String achievedOn;
 
+  /// The record the server found this achievement from (for a workout count, the workout session).
+  final String? supportingTable;
+  final String? supportingRecordId;
+
   factory Achievement.fromRecord(Map<String, dynamic> r) => Achievement(
         id: r['id'] as String,
         kind: (r['kind'] as String?) ?? '',
         threshold: _int(r['threshold']) ?? 0,
         title: (r['title'] as String?) ?? '',
         achievedOn: (r['achieved_on'] as String?) ?? '',
+        supportingTable: r['supporting_table'] as String?,
+        supportingRecordId: r['supporting_record_id'] as String?,
       );
 }
 
@@ -476,4 +482,28 @@ class DailyBriefing {
       weakPoints: [for (final w in weakMaps) BriefingWeakPoint.fromJson(w)],
     );
   }
+}
+
+/// One workout from `v_session_summary`: the server's totals for a session (paused time already removed from the duration).
+class SessionSummaryRow {
+  const SessionSummaryRow({required this.sessionId, required this.localDate, required this.status, this.durationSeconds, this.workingSets = 0, this.volumeKg = 0});
+
+  final String sessionId;
+  final String localDate;
+  final String status;
+  final int? durationSeconds;
+  final int workingSets;
+  final double volumeKg;
+
+  /// A workout counts only when it was finished and has at least one logged working set.
+  bool get counts => status == 'completed' && workingSets > 0;
+
+  factory SessionSummaryRow.fromJson(Map<String, dynamic> r) => SessionSummaryRow(
+        sessionId: (r['session_id'] as String?) ?? '',
+        localDate: (r['local_date'] as String?) ?? '',
+        status: (r['status'] as String?) ?? '',
+        durationSeconds: _int(r['duration_s']),
+        workingSets: _int(r['working_sets']) ?? 0,
+        volumeKg: _double(r['volume_kg']) ?? 0,
+      );
 }

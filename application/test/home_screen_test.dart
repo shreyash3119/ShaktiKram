@@ -82,7 +82,7 @@ void main() {
     await h.local.applyPulled([
       pulled('workout_sessions', 1, {
         'id': uid(1),
-        'started_at': DateTime.now().toUtc().toIso8601String(),
+        'occurred_at': DateTime.now().toUtc().toIso8601String(),
         'local_date': localStampOf(DateTime.now()).localDate,
         'status': 'in_progress',
         'name': 'Push A',

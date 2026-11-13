@@ -23,3 +23,6 @@ final goalMilestonesSpec = _view('v_goal_milestones', freshFor: const Duration(m
 final muscleExposureSpec = _view('v_muscle_exposure_weekly', orderBy: 'week_start', descending: true, limit: 200);
 final muscleRatingsSpec = _view('v_muscle_ratings');
 final bodyCompositionSpec = _view('v_body_composition', orderBy: 'local_date', descending: true, limit: 60);
+
+/// Totals per workout, used for the monthly figures on the Training overview.
+final sessionSummarySpec = _view('v_session_summary', orderBy: 'local_date', descending: true, limit: 200, freshFor: const Duration(minutes: 30));

@@ -11,6 +11,8 @@ import '../../../core/widgets/insight_status.dart';
 import '../../../core/widgets/meters.dart';
 import '../../lifestyle/data/lifestyle_models.dart';
 import '../data/progress_insights.dart';
+import '../data/progress_service.dart' show measuredMetrics;
+import 'progress_editors.dart';
 import '../data/progress_models.dart';
 import '../data/progress_providers.dart';
 
@@ -36,24 +38,13 @@ class _ProgressScreenState extends State<ProgressScreen> {
       case 1:
         return const [_StrengthTrends(), _E1rmChart(), _PrHistory(full: true)];
       case 2:
-        return const [
-          _BodyWeight(),
-          _BodyCompositionCard(),
-          _MeasurementHistory(),
-        ];
+        return const [_BodyWeight(), _BodyCompositionCard(), _MeasurementHistory()];
       case 3:
         return const [_MuscleRatings(), _Exposure(), _WeakPoints()];
       case 4:
         return const [_GoalsCard(), _GoalMilestones()];
       default:
-        return const [
-          _Highlights(),
-          _StrengthTrends(),
-          _PrHistory(),
-          _BodyLast(),
-          _GoalsCard(),
-          _Exposure(),
-        ];
+        return const [_Highlights(), _StrengthTrends(), _PrHistory(), _BodyLast(), _GoalsCard(), _Exposure()];
     }
   }
 
@@ -63,13 +54,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
       title: 'Progress',
       subtitle: 'Your history and change over time',
       children: [
-        PillTabs(
-          labels: _tabs,
-          index: _tab,
-          container: true,
-          layout: PillLayout.scroll,
-          onChanged: (i) => setState(() => _tab = i),
-        ),
+        PillTabs(labels: _tabs, index: _tab, container: true, layout: PillLayout.scroll, onChanged: (i) => setState(() => _tab = i)),
         ..._content(),
       ],
     );
@@ -78,48 +63,30 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
 // ---- helpers ----
 
-const _months = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
+const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 String _dateText(String localDate) {
   final d = DateTime.tryParse(localDate);
   return d == null ? localDate : '${_months[d.month - 1]} ${d.day}';
 }
 
-String _kg(double v) =>
-    v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
+String _kg(double v) => v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
 
-String _cap(String s) =>
-    s.isEmpty
-        ? s
-        : '${s[0].toUpperCase()}${s.substring(1).replaceAll('_', ' ')}';
+String _cap(String s) => s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1).replaceAll('_', ' ')}';
 
 String _prKind(String kind) => switch (kind) {
-  'max_weight' => 'Heaviest weight',
-  'est_1rm' => 'Estimated 1RM',
-  'best_reps_at_weight' => 'Most reps at this weight',
-  'session_volume' => 'Session volume',
-  'workout_volume' => 'Workout volume',
-  _ => _cap(kind),
-};
+      'max_weight' => 'Heaviest weight',
+      'est_1rm' => 'Estimated 1RM',
+      'best_reps_at_weight' => 'Most reps at this weight',
+      'session_volume' => 'Session volume',
+      'workout_volume' => 'Workout volume',
+      _ => _cap(kind),
+    };
 
 String _prValue(PersonalRecord r) => switch (r.kind) {
-  'best_reps_at_weight' =>
-    '${r.reps ?? _kg(r.value)} reps${r.weightKg == null ? '' : ' @ ${_kg(r.weightKg!)} kg'}',
-  _ => '${_kg(r.value)} kg',
-};
+      'best_reps_at_weight' => '${r.reps ?? _kg(r.value)} reps${r.weightKg == null ? '' : ' @ ${_kg(r.weightKg!)} kg'}',
+      _ => '${_kg(r.value)} kg',
+    };
 
 /// Axis limits that fit the values, with four ticks.
 ({double min, double max, List<double> ticks}) _axis(List<double> values) {
@@ -138,11 +105,8 @@ String _prValue(PersonalRecord r) => switch (r.kind) {
 
 /// X labels for a series: the first, the middle and the last date, blanks elsewhere.
 List<String> _xLabels(List<String> dates) => [
-  for (var i = 0; i < dates.length; i++)
-    (i == 0 || i == dates.length - 1 || i == dates.length ~/ 2)
-        ? _dateText(dates[i])
-        : '',
-];
+      for (var i = 0; i < dates.length; i++) (i == 0 || i == dates.length - 1 || i == dates.length ~/ 2) ? _dateText(dates[i]) : '',
+    ];
 
 Widget _gap([double h = 12]) => SizedBox(height: h);
 
@@ -154,10 +118,7 @@ class _Status extends ConsumerWidget {
   final InsightSnapshot snapshot;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => InsightStatusLine(
-    snapshot: snapshot,
-    onRefresh: () => ref.read(insightProvider(spec).notifier).refresh(),
-  );
+  Widget build(BuildContext context, WidgetRef ref) => InsightStatusLine(snapshot: snapshot, onRefresh: () => ref.read(insightProvider(spec).notifier).refresh());
 }
 
 // ---- Overview ----
@@ -168,90 +129,38 @@ class _Highlights extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final p = context.pal;
-    final records =
-        ref.watch(personalRecordsProvider).valueOrNull ??
-        const <PersonalRecord>[];
+    final records = ref.watch(personalRecordsProvider).valueOrNull ?? const <PersonalRecord>[];
     final names = ref.watch(exerciseNamesProvider);
-    final achievements =
-        ref.watch(achievementsProvider).valueOrNull ?? const <Achievement>[];
-    final briefing = ref.watch(
-      dailyBriefingProvider(localStampOf(DateTime.now()).localDate),
-    );
+    final achievements = ref.watch(visibleAchievementsProvider).valueOrNull ?? const <Achievement>[];
+    final briefing = ref.watch(dailyBriefingProvider(localStampOf(DateTime.now()).localDate));
     final latest = records.isEmpty ? null : records.first;
     final streak = briefing.briefing?.currentStreak;
 
     Widget col(String label, String value, String note) => Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: TextStyle(color: p.muted, fontSize: 13)),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              color: p.text,
-              fontSize: 19,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(note, style: TextStyle(color: p.muted, fontSize: 13)),
-        ],
-      ),
-    );
-    return TitledCard(
-      title: 'Recent highlights',
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            col(
-              'Latest record',
-              latest == null
-                  ? '–'
-                  : '${names[latest.exerciseId] ?? 'Workout'} ${_prValue(latest)}',
-              latest == null
-                  ? 'None yet'
-                  : '${_prKind(latest.kind)} · ${_dateText(latest.achievedOn)}',
-            ),
-            const SizedBox(width: 12),
-            col(
-              'Workout streak',
-              streak == null
-                  ? '–'
-                  : '$streak ${streak == 1 ? 'workout' : 'workouts'}',
-              streak == null
-                  ? 'Not loaded yet'
-                  : 'Longest ${briefing.briefing?.longestStreak ?? '–'}',
-            ),
-          ],
-        ),
-        if (achievements.isNotEmpty) ...[
-          _gap(),
-          RowList([
-            for (final a in achievements.take(2))
-              RowItem(
-                title: a.title,
-                subtitle: 'Achievement · ${_dateText(a.achievedOn)}',
-              ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(label, style: TextStyle(color: p.muted, fontSize: 13)),
+            const SizedBox(height: 4),
+            Text(value, style: TextStyle(color: p.text, fontSize: 19, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 4),
+            Text(note, style: TextStyle(color: p.muted, fontSize: 13)),
           ]),
-        ],
-        InsightStatusLine(
-          snapshot: briefing.snapshot,
-          onRefresh:
-              () =>
-                  ref
-                      .read(
-                        insightProvider(
-                          dailyBriefingSpec(
-                            localStampOf(DateTime.now()).localDate,
-                          ),
-                        ).notifier,
-                      )
-                      .refresh(),
-        ),
+        );
+    return TitledCard(title: 'Recent highlights', children: [
+      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        col('Latest record', latest == null ? '–' : '${names[latest.exerciseId] ?? 'Workout'} ${_prValue(latest)}', latest == null ? 'None yet' : '${_prKind(latest.kind)} · ${_dateText(latest.achievedOn)}'),
+        const SizedBox(width: 12),
+        col('Workout streak', streak == null ? '–' : '$streak ${streak == 1 ? 'workout' : 'workouts'}', streak == null ? 'Not loaded yet' : 'Scheduled sessions in a row · longest ${briefing.briefing?.longestStreak ?? '–'}'),
+      ]),
+      if (achievements.isNotEmpty) ...[
+        _gap(),
+        RowList([
+          for (final a in achievements.take(2)) RowItem(title: a.title, subtitle: 'Achievement · ${_dateText(a.achievedOn)}'),
+        ]),
       ],
-    );
+      _gap(10),
+      const MutedText('Only finished workouts with logged sets count. The streak counts scheduled sessions done in a row, so it needs a schedule.', size: 13),
+      InsightStatusLine(snapshot: briefing.snapshot, onRefresh: () => ref.read(insightProvider(dailyBriefingSpec(localStampOf(DateTime.now()).localDate)).notifier).refresh()),
+    ]);
   }
 }
 
@@ -260,44 +169,25 @@ class _BodyLast extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final all =
-        ref.watch(measurementsProvider(null)).valueOrNull ??
-        const <BodyMeasurement>[];
+    final all = ref.watch(measurementsProvider(null)).valueOrNull ?? const <BodyMeasurement>[];
     final latest = <String, BodyMeasurement>{};
     for (final m in all) {
-      latest.putIfAbsent(
-        m.type == 'custom' ? 'custom:${m.customLabel}' : m.type,
-        () => m,
-      );
+      latest.putIfAbsent(m.type == 'custom' ? 'custom:${m.customLabel}' : m.type, () => m);
     }
     final newest = all.isEmpty ? null : all.first.localDate;
-    return TitledCard(
-      title:
-          newest == null ? 'Body' : 'Body · last measured ${_dateText(newest)}',
-      children: [
-        if (latest.isEmpty)
-          const MutedText('No measurements yet. Log your weight from Home.')
-        else
-          RowList([for (final m in latest.values.take(4)) _measurementRow(m)]),
-      ],
-    );
+    return TitledCard(title: newest == null ? 'Body' : 'Body · last measured ${_dateText(newest)}', children: [
+      if (latest.isEmpty)
+        const MutedText('No measurements yet. Log your weight from Home.')
+      else
+        RowList([for (final m in latest.values.take(4)) _measurementRow(m)]),
+    ]);
   }
 }
 
 RowItem _measurementRow(BodyMeasurement m) {
   final label = m.type == 'custom' ? (m.customLabel ?? 'Custom') : _cap(m.type);
-  final unit = switch (m.type) {
-    'weight' || 'muscle_mass' => 'kg',
-    'body_fat' => '%',
-    'custom' => m.customUnit ?? '',
-    _ => 'cm',
-  };
-  return RowItem(
-    title: label,
-    subtitle:
-        '${_dateText(m.localDate)}${m.method == null ? '' : ' · ${_cap(m.method!)}'}',
-    trailing: '${_kg(m.value)} $unit'.trim(),
-  );
+  final unit = switch (m.type) { 'weight' || 'muscle_mass' => 'kg', 'body_fat' => '%', 'custom' => m.customUnit ?? '', _ => 'cm' };
+  return RowItem(title: label, subtitle: '${_dateText(m.localDate)}${m.method == null ? '' : ' · ${_cap(m.method!)}'}', trailing: '${_kg(m.value)} $unit'.trim());
 }
 
 // ---- Strength ----
@@ -309,40 +199,23 @@ class _StrengthTrends extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final trends = ref.watch(exerciseTrendsProvider);
     final names = ref.watch(exerciseNamesProvider);
-    final rows = [
-      for (final t in trends.rows)
-        if (t.signal != 'insufficient_data') t,
-    ]..sort(
-      (a, b) =>
-          (names[a.exerciseId] ?? '').compareTo(names[b.exerciseId] ?? ''),
-    );
-    return TitledCard(
-      title: 'Strength trends',
-      children: [
-        const MutedText(
-          'From your last four sessions of each exercise (estimated 1RM). An observation, not an instruction.',
-        ),
-        _gap(10),
-        if (rows.isEmpty)
-          MutedText(
-            trends.snapshot.hasData
-                ? 'Not enough sessions yet to show a trend.'
-                : 'Trends appear once they have loaded from the server.',
-          )
-        else
-          RowList([
-            for (final t in rows.take(8))
-              RowItem(
-                title: names[t.exerciseId] ?? 'Exercise',
-                subtitle:
-                    '${t.sessionsConsidered} sessions · last ${_dateText(t.lastSessionDate ?? '')}',
-                trailing:
-                    '${_cap(t.signal)}${t.changePct == null ? '' : ' ${t.changePct! >= 0 ? '+' : ''}${t.changePct!.toStringAsFixed(1)}%'}',
-              ),
-          ]),
-        _Status(exerciseTrendsSpec, trends.snapshot),
-      ],
-    );
+    final rows = [for (final t in trends.rows) if (t.signal != 'insufficient_data') t]..sort((a, b) => (names[a.exerciseId] ?? '').compareTo(names[b.exerciseId] ?? ''));
+    return TitledCard(title: 'Strength trends', children: [
+      const MutedText('From your last four sessions of each exercise (estimated 1RM). An observation, not an instruction.'),
+      _gap(10),
+      if (rows.isEmpty)
+        MutedText(trends.snapshot.hasData ? 'Not enough sessions yet to show a trend.' : 'Trends appear once they have loaded from the server.')
+      else
+        RowList([
+          for (final t in rows.take(8))
+            RowItem(
+              title: names[t.exerciseId] ?? 'Exercise',
+              subtitle: '${t.sessionsConsidered} sessions · last ${_dateText(t.lastSessionDate ?? '')}',
+              trailing: '${_cap(t.signal)}${t.changePct == null ? '' : ' ${t.changePct! >= 0 ? '+' : ''}${t.changePct!.toStringAsFixed(1)}%'}',
+            ),
+        ]),
+      _Status(exerciseTrendsSpec, trends.snapshot),
+    ]);
   }
 }
 
@@ -365,67 +238,33 @@ class _E1rmChartState extends ConsumerState<_E1rmChart> {
     for (final r in best.rows) {
       byExercise.putIfAbsent(r.exerciseId, () => []).add(r);
     }
-    final ids =
-        byExercise.keys.toList()
-          ..sort((a, b) => (names[a] ?? '').compareTo(names[b] ?? ''));
+    final ids = byExercise.keys.toList()..sort((a, b) => (names[a] ?? '').compareTo(names[b] ?? ''));
     final index = ids.isEmpty ? 0 : _exercise.clamp(0, ids.length - 1);
-    final selected =
-        ids.isEmpty
-            ? <ExerciseSessionBest>[]
-            : (byExercise[ids[index]]!
-              ..sort((a, b) => a.localDate.compareTo(b.localDate)));
-    double? value(ExerciseSessionBest r) =>
-        _metric == 0 ? r.topWeightKg : r.bestE1rmKg;
-    final points = [
-      for (final r in selected)
-        if (value(r) != null) (r.localDate, value(r)!),
-    ];
+    final selected = ids.isEmpty ? <ExerciseSessionBest>[] : (byExercise[ids[index]]!..sort((a, b) => a.localDate.compareTo(b.localDate)));
+    double? value(ExerciseSessionBest r) => _metric == 0 ? r.topWeightKg : r.bestE1rmKg;
+    final points = [for (final r in selected) if (value(r) != null) (r.localDate, value(r)!)];
 
-    return TitledCard(
-      title: 'Strength',
-      children: [
-        if (ids.isEmpty)
-          const MutedText(
-            'Finished workouts with logged sets show up here once they have been calculated by the server.',
-          )
+    return TitledCard(title: 'Strength', children: [
+      if (ids.isEmpty)
+        const MutedText('Finished workouts with logged sets show up here once they have been calculated by the server.')
+      else ...[
+        PillTabs(labels: [for (final id in ids.take(12)) names[id] ?? 'Exercise'], index: index, layout: PillLayout.scroll, onChanged: (i) => setState(() => _exercise = i)),
+        _gap(10),
+        PillTabs(labels: const ['Top set', 'Est. 1RM'], index: _metric, onChanged: (i) => setState(() => _metric = i)),
+        _gap(),
+        if (points.length < 2)
+          const MutedText('At least two sessions are needed to draw a line.')
         else ...[
-          PillTabs(
-            labels: [for (final id in ids.take(12)) names[id] ?? 'Exercise'],
-            index: index,
-            layout: PillLayout.scroll,
-            onChanged: (i) => setState(() => _exercise = i),
-          ),
+          Builder(builder: (_) {
+            final a = _axis([for (final p in points) p.$2]);
+            return LineChartView(values: [for (final p in points) p.$2], xLabels: _xLabels([for (final p in points) p.$1]), yMin: a.min, yMax: a.max, yTicks: a.ticks);
+          }),
           _gap(10),
-          PillTabs(
-            labels: const ['Top set', 'Est. 1RM'],
-            index: _metric,
-            onChanged: (i) => setState(() => _metric = i),
-          ),
-          _gap(),
-          if (points.length < 2)
-            const MutedText('At least two sessions are needed to draw a line.')
-          else ...[
-            Builder(
-              builder: (_) {
-                final a = _axis([for (final p in points) p.$2]);
-                return LineChartView(
-                  values: [for (final p in points) p.$2],
-                  xLabels: _xLabels([for (final p in points) p.$1]),
-                  yMin: a.min,
-                  yMax: a.max,
-                  yTicks: a.ticks,
-                );
-              },
-            ),
-            _gap(10),
-            MutedText(
-              '${_metric == 0 ? 'Heaviest working set' : 'Best estimated 1RM'} (kg) per session. Latest ${_kg(points.last.$2)} kg, previous ${_kg(points[points.length - 2].$2)} kg.',
-            ),
-          ],
+          MutedText('${_metric == 0 ? 'Heaviest working set' : 'Best estimated 1RM'} (kg) per session. Latest ${_kg(points.last.$2)} kg, previous ${_kg(points[points.length - 2].$2)} kg.'),
         ],
-        _Status(exerciseSessionBestSpec, best.snapshot),
       ],
-    );
+      _Status(exerciseSessionBestSpec, best.snapshot),
+    ]);
   }
 }
 
@@ -436,30 +275,22 @@ class _PrHistory extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final records =
-        ref.watch(personalRecordsProvider).valueOrNull ??
-        const <PersonalRecord>[];
+    final records = ref.watch(personalRecordsProvider).valueOrNull ?? const <PersonalRecord>[];
     final names = ref.watch(exerciseNamesProvider);
     final shown = full ? records.take(30) : records.take(3);
-    return TitledCard(
-      title: 'PR history',
-      children: [
-        if (records.isEmpty)
-          const MutedText(
-            'Personal records are found by the server after a workout syncs. They appear here when they arrive.',
-          )
-        else
-          RowList([
-            for (final r in shown)
-              RowItem(
-                title: names[r.exerciseId] ?? 'Workout',
-                subtitle:
-                    '${_prKind(r.kind)} · ${_dateText(r.achievedOn)}${r.previousValue == null ? '' : ' · was ${_kg(r.previousValue!)}'}',
-                trailing: _prValue(r),
-              ),
-          ]),
-      ],
-    );
+    return TitledCard(title: 'PR history', children: [
+      if (records.isEmpty)
+        const MutedText('Personal records are found by the server after a workout syncs. They appear here when they arrive.')
+      else
+        RowList([
+          for (final r in shown)
+            RowItem(
+              title: names[r.exerciseId] ?? 'Workout',
+              subtitle: '${_prKind(r.kind)} · ${_dateText(r.achievedOn)}${r.previousValue == null ? '' : ' · was ${_kg(r.previousValue!)}'}',
+              trailing: _prValue(r),
+            ),
+        ]),
+    ]);
   }
 }
 
@@ -478,46 +309,23 @@ class _BodyWeightState extends ConsumerState<_BodyWeight> {
 
   @override
   Widget build(BuildContext context) {
-    final all =
-        ref.watch(measurementsProvider('weight')).valueOrNull ??
-        const <BodyMeasurement>[];
+    final all = ref.watch(measurementsProvider('weight')).valueOrNull ?? const <BodyMeasurement>[];
     final cutoff = DateTime.now().subtract(Duration(days: _days[_range]));
-    final inRange =
-        [
-          for (final m in all)
-            if ((m.occurredAt ?? DateTime.now()).isAfter(cutoff)) m,
-        ].reversed.toList();
-    return TitledCard(
-      title: 'Body weight',
-      children: [
-        PillTabs(
-          labels: const ['1M', '3M', '6M', '1Y'],
-          index: _range,
-          onChanged: (i) => setState(() => _range = i),
-        ),
+    final inRange = [for (final m in all) if ((m.occurredAt ?? DateTime.now()).isAfter(cutoff)) m].reversed.toList();
+    return TitledCard(title: 'Body weight', children: [
+      PillTabs(labels: const ['1M', '3M', '6M', '1Y'], index: _range, onChanged: (i) => setState(() => _range = i)),
+      _gap(10),
+      if (inRange.length < 2)
+        const MutedText('Log your weight on at least two days to see a line.')
+      else ...[
+        Builder(builder: (_) {
+          final a = _axis([for (final m in inRange) m.value]);
+          return LineChartView(values: [for (final m in inRange) m.value], xLabels: _xLabels([for (final m in inRange) m.localDate]), yMin: a.min, yMax: a.max, yTicks: a.ticks);
+        }),
         _gap(10),
-        if (inRange.length < 2)
-          const MutedText('Log your weight on at least two days to see a line.')
-        else ...[
-          Builder(
-            builder: (_) {
-              final a = _axis([for (final m in inRange) m.value]);
-              return LineChartView(
-                values: [for (final m in inRange) m.value],
-                xLabels: _xLabels([for (final m in inRange) m.localDate]),
-                yMin: a.min,
-                yMax: a.max,
-                yTicks: a.ticks,
-              );
-            },
-          ),
-          _gap(10),
-          MutedText(
-            'Latest ${_kg(inRange.last.value)} kg on ${_dateText(inRange.last.localDate)}. Daily weight moves around; compare longer periods.',
-          ),
-        ],
+        MutedText('Latest ${_kg(inRange.last.value)} kg on ${_dateText(inRange.last.localDate)}. Daily weight moves around; compare longer periods.'),
       ],
-    );
+    ]);
   }
 }
 
@@ -528,51 +336,21 @@ class _BodyCompositionCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final comp = ref.watch(bodyCompositionProvider);
     final latest = comp.rows.isEmpty ? null : comp.rows.first;
-    return TitledCard(
-      title: 'Body composition',
-      children: [
-        if (latest == null)
-          MutedText(
-            comp.snapshot.hasData
-                ? 'No body-fat readings yet. Add one in Lifestyle.'
-                : 'Body composition appears once it has loaded from the server.',
-          )
-        else ...[
-          RowList([
-            if (latest.weightKg != null)
-              RowItem(
-                title: 'Weight',
-                subtitle: _dateText(latest.localDate),
-                trailing: '${_kg(latest.weightKg!)} kg',
-              ),
-            if (latest.bodyFatPct != null)
-              RowItem(
-                title: 'Body fat',
-                subtitle:
-                    latest.method == null ? 'Reading' : _cap(latest.method!),
-                trailing: '${_kg(latest.bodyFatPct!)}%',
-              ),
-            if (latest.fatMassKg != null)
-              RowItem(
-                title: 'Fat mass',
-                subtitle: 'Estimated: weight × body fat %',
-                trailing: '${_kg(latest.fatMassKg!)} kg',
-              ),
-            if (latest.leanMassKg != null)
-              RowItem(
-                title: 'Lean mass',
-                subtitle: 'Estimated',
-                trailing: '${_kg(latest.leanMassKg!)} kg',
-              ),
-          ]),
-          _gap(10),
-          const MutedText(
-            'Fat and lean mass are estimates from one reading. Readings vary by method; compare like with like.',
-          ),
-        ],
-        _Status(bodyCompositionSpec, comp.snapshot),
+    return TitledCard(title: 'Body composition', children: [
+      if (latest == null)
+        MutedText(comp.snapshot.hasData ? 'No body-fat readings yet. Add one in Lifestyle.' : 'Body composition appears once it has loaded from the server.')
+      else ...[
+        RowList([
+          if (latest.weightKg != null) RowItem(title: 'Weight', subtitle: _dateText(latest.localDate), trailing: '${_kg(latest.weightKg!)} kg'),
+          if (latest.bodyFatPct != null) RowItem(title: 'Body fat', subtitle: latest.method == null ? 'Reading' : _cap(latest.method!), trailing: '${_kg(latest.bodyFatPct!)}%'),
+          if (latest.fatMassKg != null) RowItem(title: 'Fat mass', subtitle: 'Estimated: weight × body fat %', trailing: '${_kg(latest.fatMassKg!)} kg'),
+          if (latest.leanMassKg != null) RowItem(title: 'Lean mass', subtitle: 'Estimated', trailing: '${_kg(latest.leanMassKg!)} kg'),
+        ]),
+        _gap(10),
+        const MutedText('Fat and lean mass are estimates from one reading. Readings vary by method; compare like with like.'),
       ],
-    );
+      _Status(bodyCompositionSpec, comp.snapshot),
+    ]);
   }
 }
 
@@ -581,18 +359,10 @@ class _MeasurementHistory extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final all =
-        ref.watch(measurementsProvider(null)).valueOrNull ??
-        const <BodyMeasurement>[];
-    return TitledCard(
-      title: 'Measurement history',
-      children: [
-        if (all.isEmpty)
-          const MutedText('Measurements you log appear here.')
-        else
-          RowList([for (final m in all.take(12)) _measurementRow(m)]),
-      ],
-    );
+    final all = ref.watch(measurementsProvider(null)).valueOrNull ?? const <BodyMeasurement>[];
+    return TitledCard(title: 'Measurement history', children: [
+      if (all.isEmpty) const MutedText('Measurements you log appear here.') else RowList([for (final m in all.take(12)) _measurementRow(m)]),
+    ]);
   }
 }
 
@@ -604,37 +374,25 @@ class _MuscleRatings extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ratings = ref.watch(muscleRatingsProvider);
-    final rated = [
-      for (final r in ratings.rows)
-        if (r.currentLevel != null) r,
-    ]..sort((a, b) => a.muscleKey.compareTo(b.muscleKey));
-    return TitledCard(
-      title: 'Muscles · your own ratings',
-      children: [
-        const MutedText(
-          'These are the ratings you entered yourself. They are not calculated from training.',
-        ),
-        _gap(10),
-        if (rated.isEmpty)
-          MutedText(
-            ratings.snapshot.hasData
-                ? 'No assessment recorded yet.'
-                : 'Ratings appear once they have loaded from the server.',
-          )
-        else
-          RowList([
-            for (final r in rated)
-              RowItem(
-                title: _cap(r.muscleKey),
-                subtitle:
-                    '${r.category == null ? '' : '${_cap(r.category!)} · '}${r.ratedOn == null ? '' : _dateText(r.ratedOn!)}',
-                trailing:
-                    '${r.currentLevel}${r.previousLevel == null ? '' : ' (was ${r.previousLevel})'}',
-              ),
-          ]),
-        _Status(muscleRatingsSpec, ratings.snapshot),
-      ],
-    );
+    final rated = [for (final r in ratings.rows) if (r.currentLevel != null) r]..sort((a, b) => a.muscleKey.compareTo(b.muscleKey));
+    return TitledCard(title: 'Muscles · your own ratings', children: [
+      const MutedText('These are the ratings you entered yourself. They are not calculated from training.'),
+      _gap(10),
+      if (rated.isEmpty)
+        MutedText(ratings.snapshot.hasData ? 'No assessment recorded yet.' : 'Ratings appear once they have loaded from the server.')
+      else
+        RowList([
+          for (final r in rated)
+            RowItem(
+              title: _cap(r.muscleKey),
+              subtitle: '${r.category == null ? '' : '${_cap(r.category!)} · '}${r.ratedOn == null ? '' : _dateText(r.ratedOn!)}',
+              trailing: '${r.currentLevel}${r.previousLevel == null ? '' : ' (was ${r.previousLevel})'}',
+            ),
+        ]),
+      _gap(12),
+      AppButton.primary(rated.isEmpty ? 'Rate your muscles' : 'Update your ratings', onPressed: () => showAssessmentSheet(context)),
+      _Status(muscleRatingsSpec, ratings.snapshot),
+    ]);
   }
 }
 
@@ -644,45 +402,23 @@ class _Exposure extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final exposure = ref.watch(muscleExposureProvider);
-    final labels =
-        ref.watch(muscleLabelsProvider).valueOrNull ?? const <String, String>{};
+    final labels = ref.watch(muscleLabelsProvider).valueOrNull ?? const <String, String>{};
     final cutoff = DateTime.now().subtract(const Duration(days: 28));
-    final recent = [
-      for (final e in exposure.rows)
-        if ((DateTime.tryParse(e.weekStart) ?? DateTime(2000)).isAfter(cutoff))
-          e,
-    ];
+    final recent = [for (final e in exposure.rows) if ((DateTime.tryParse(e.weekStart) ?? DateTime(2000)).isAfter(cutoff)) e];
     final totals = <String, double>{};
     for (final e in recent) {
       totals[e.muscleId] = (totals[e.muscleId] ?? 0.0) + e.directSets;
     }
-    final ordered =
-        totals.entries.toList()..sort((a, b) => a.value.compareTo(b.value));
-    return TitledCard(
-      title: 'Training exposure · last 4 weeks',
-      children: [
-        const MutedText(
-          'Direct working sets per muscle. This counts what you did; it says nothing about how developed a muscle is.',
-        ),
-        _gap(10),
-        if (ordered.isEmpty)
-          MutedText(
-            exposure.snapshot.hasData
-                ? 'No working sets in the last four weeks.'
-                : 'Exposure appears once it has loaded from the server.',
-          )
-        else
-          RowList([
-            for (final e in ordered.take(10))
-              RowItem(
-                title: labels[e.key] ?? 'Muscle',
-                subtitle: 'Direct sets, 4 weeks',
-                trailing: '${e.value}',
-              ),
-          ]),
-        _Status(muscleExposureSpec, exposure.snapshot),
-      ],
-    );
+    final ordered = totals.entries.toList()..sort((a, b) => a.value.compareTo(b.value));
+    return TitledCard(title: 'Training exposure · last 4 weeks', children: [
+      const MutedText('Direct working sets per muscle. This counts what you did; it says nothing about how developed a muscle is.'),
+      _gap(10),
+      if (ordered.isEmpty)
+        MutedText(exposure.snapshot.hasData ? 'No counted working sets in the last four weeks. Workouts with no logged sets do not contribute.' : 'Exposure appears once it has loaded from the server.')
+      else
+        RowList([for (final e in ordered.take(10)) RowItem(title: labels[e.key] ?? 'Muscle', subtitle: 'Direct sets, 4 weeks', trailing: '${e.value.round()}')]),
+      _Status(muscleExposureSpec, exposure.snapshot),
+    ]);
   }
 }
 
@@ -694,94 +430,103 @@ class _WeakPoints extends ConsumerWidget {
     final today = localStampOf(DateTime.now()).localDate;
     final briefing = ref.watch(dailyBriefingProvider(today));
     final weak = briefing.briefing?.weakPoints ?? const <BriefingWeakPoint>[];
-    return TitledCard(
-      title: 'Muscles that get little direct work',
-      children: [
-        if (weak.isEmpty)
-          MutedText(
-            briefing.snapshot.hasData
-                ? 'Nothing flagged right now.'
-                : 'Suggestions appear once the daily briefing has loaded.',
-          )
-        else
-          RowList([
-            for (final w in weak)
-              RowItem(
-                title: _cap(w.muscleKey),
-                subtitle:
-                    '${w.directSets28d} direct sets in 4 weeks${w.suggestions.isEmpty ? '' : ' · e.g. ${w.suggestions.join(', ')}'}',
-              ),
-          ]),
-        _gap(10),
-        const MutedText(
-          'Suggestions to consider within your split and recovery, not instructions.',
-        ),
-        InsightStatusLine(
-          snapshot: briefing.snapshot,
-          onRefresh:
-              () =>
-                  ref
-                      .read(insightProvider(dailyBriefingSpec(today)).notifier)
-                      .refresh(),
-        ),
-      ],
-    );
+    final exposure = ref.watch(muscleExposureProvider);
+    final ratings = ref.watch(muscleRatingsProvider);
+    final cutoff = DateTime.now().subtract(const Duration(days: 28));
+    final hasSets = exposure.rows.any((e) => e.directSets > 0 && (DateTime.tryParse(e.weekStart) ?? DateTime(2000)).isAfter(cutoff));
+    final hasRatings = ratings.rows.any((r) => r.currentLevel != null);
+    final String empty;
+    if (!briefing.snapshot.hasData) {
+      empty = 'Suggestions appear once the daily briefing has loaded.';
+    } else if (!hasSets && !hasRatings) {
+      empty = 'Not enough data to assess. Log workouts with sets, or rate your muscles, and suggestions will appear here.';
+    } else {
+      empty = 'No low-exposure muscles detected from the data you have.';
+    }
+    return TitledCard(title: 'Muscles that get little direct work', children: [
+      if (weak.isEmpty)
+        MutedText(empty)
+      else
+        RowList([
+          for (final w in weak)
+            RowItem(
+              title: _cap(w.muscleKey),
+              subtitle: '${w.directSets28d} direct sets in 4 weeks${w.suggestions.isEmpty ? '' : ' · e.g. ${w.suggestions.join(', ')}'}',
+            ),
+        ]),
+      _gap(10),
+      const MutedText('Suggestions to consider within your split and recovery, not instructions.'),
+      InsightStatusLine(snapshot: briefing.snapshot, onRefresh: () => ref.read(insightProvider(dailyBriefingSpec(today)).notifier).refresh()),
+    ]);
   }
 }
 
 // ---- Goals ----
 
-class _GoalsCard extends ConsumerWidget {
+class _GoalsCard extends ConsumerStatefulWidget {
   const _GoalsCard();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_GoalsCard> createState() => _GoalsCardState();
+}
+
+class _GoalsCardState extends ConsumerState<_GoalsCard> {
+  bool _archived = false;
+
+  @override
+  Widget build(BuildContext context) {
     final p = context.pal;
-    final goals = ref.watch(goalsProvider).valueOrNull ?? const <Goal>[];
+    final goals = (_archived ? ref.watch(allGoalsProvider) : ref.watch(goalsProvider)).valueOrNull ?? const <Goal>[];
     final progress = ref.watch(goalProgressProvider);
     final byGoal = {for (final g in progress.rows) g.goalId: g};
-    return TitledCard(
-      title: 'Goals',
-      children: [
-        if (goals.isEmpty)
-          const MutedText('No goals yet.')
-        else
-          for (final g in goals.take(5)) ...[
-            Text(
-              g.title,
-              style: TextStyle(
-                color: p.text,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              _goalLine(g, byGoal[g.id]),
-              style: TextStyle(color: p.muted, fontSize: 14),
-            ),
-            const SizedBox(height: 8),
-            MeterBar(
-              value:
-                  ((byGoal[g.id]?.progressPct ?? 0) / 100)
-                      .clamp(0, 1)
-                      .toDouble(),
-            ),
-            _gap(14),
-          ],
-        if (goals.isNotEmpty) _Status(goalProgressSpec, progress.snapshot),
-      ],
-    );
+    return TitledCard(title: 'Goals', children: [
+      if (goals.isEmpty)
+        const MutedText('No goals yet. Create one to track it here.')
+      else
+        for (final g in goals.take(12)) ...[
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => showGoalActions(context, g),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(g.title, style: TextStyle(color: p.text, fontSize: 16, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 4),
+              Text(_goalLine(g, byGoal[g.id]), style: TextStyle(color: p.muted, fontSize: 14)),
+              if (_isOpen(g)) ...[
+                const SizedBox(height: 8),
+                MeterBar(value: ((byGoal[g.id]?.progressPct ?? 0) / 100).clamp(0, 1).toDouble()),
+              ],
+            ]),
+          ),
+          _gap(14),
+        ],
+      ToggleRow(title: 'Show archived goals', value: _archived, onChanged: (v) => setState(() => _archived = v)),
+      _gap(6),
+      AppButton.primary('New goal', onPressed: () => showGoalEditor(context)),
+      if (goals.isNotEmpty) ...[_gap(8), const MutedText('Tap a goal to edit it, record progress, add milestones, pause, complete or archive it.', size: 13), _Status(goalProgressSpec, progress.snapshot)],
+    ]);
   }
 
+  static bool _isOpen(Goal g) => g.status == 'active' || g.status == 'paused';
+
+  /// Completed and archived goals are closed: the server's progress percentage no longer applies, so it is not shown.
   static String _goalLine(Goal g, GoalProgress? p) {
-    final status = _cap(g.status);
+    final status = g.status == 'abandoned' ? 'Archived' : _cap(g.status);
+    if (!_isOpen(g)) {
+      final target = g.targetValue == null ? '' : ' · target ${_kg(g.targetValue!)}${g.targetUnit == null ? '' : ' ${g.targetUnit}'}';
+      return '$status$target';
+    }
     if (p == null) return '$status · progress not loaded yet';
-    final value =
-        p.currentValue == null || p.targetValue == null
-            ? ''
-            : '${_kg(p.currentValue!)} / ${_kg(p.targetValue!)}${g.targetUnit == null ? '' : ' ${g.targetUnit}'} · ';
+    if (p.progressStatus == 'insufficient_data') return '$status · not enough data yet. ${_missing(g)}';
+    final value = p.currentValue == null || p.targetValue == null ? '' : '${_kg(p.currentValue!)} / ${_kg(p.targetValue!)}${g.targetUnit == null ? '' : ' ${g.targetUnit}'} · ';
     return '$status · $value${_cap(p.progressStatus)}${p.progressPct == null ? '' : ' (${p.progressPct!.round()}%)'}';
+  }
+
+  static String _missing(Goal g) {
+    final m = g.targetMetric;
+    if (g.targetValue == null) return 'Set a target value.';
+    if (m == null || m.isEmpty) return 'Record values with "Record progress".';
+    if (measuredMetrics.containsKey(m)) return 'Log ${measuredMetrics[m]!.$1.toLowerCase()} on or after the start date.';
+    return 'Needs logged workouts for that exercise.';
   }
 }
 
@@ -792,34 +537,26 @@ class _GoalMilestones extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final p = context.pal;
     final goals = ref.watch(goalsProvider).valueOrNull ?? const <Goal>[];
-    final milestones = ref.watch(goalMilestonesProvider);
-    final titles = {for (final g in goals) g.id: g.title};
-    final shown = [
-      for (final m in milestones.rows)
-        if (titles.containsKey(m.goalId)) m,
-    ];
-    return TitledCard(
-      title: 'Goal milestones',
-      children: [
-        if (shown.isEmpty)
-          MutedText(
-            milestones.snapshot.hasData
-                ? 'No milestones set for your goals.'
-                : 'Milestones appear once they have loaded from the server.',
-          )
-        else
-          RowList([
-            for (final m in shown)
-              RowItem(
-                title: m.title,
-                subtitle: titles[m.goalId],
-                trailing:
-                    m.isReached ? 'Reached' : '${_kg(m.targetValue)} target',
-                trailingColor: m.isReached ? p.green : null,
-              ),
-          ]),
-        _Status(goalMilestonesSpec, milestones.snapshot),
-      ],
-    );
+    final server = ref.watch(goalMilestonesProvider);
+    final reached = {for (final m in server.rows) m.milestoneId: m.isReached};
+    final rows = <Widget>[];
+    for (final g in goals) {
+      final local = ref.watch(milestonesProvider(g.id)).valueOrNull ?? const <Milestone>[];
+      for (final m in local) {
+        final r = reached[m.id];
+        rows.add(RowItem(
+          title: m.title,
+          subtitle: g.title,
+          trailing: r == true ? 'Reached' : (r == null ? '${_kg(m.targetValue)} · not checked yet' : '${_kg(m.targetValue)} target'),
+          trailingColor: r == true ? p.green : null,
+          chevron: true,
+          onTap: () => showMilestoneEditor(context, g.id, milestone: m),
+        ));
+      }
+    }
+    return TitledCard(title: 'Goal milestones', children: [
+      if (rows.isEmpty) const MutedText('No milestones yet. Open a goal and add one.') else RowList(rows),
+      _Status(goalMilestonesSpec, server.snapshot),
+    ]);
   }
 }

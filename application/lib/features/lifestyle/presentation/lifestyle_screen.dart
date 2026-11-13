@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/insights/insight_providers.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/time/local_stamp.dart';
 import '../../../core/widgets/cards.dart';
 import '../../../core/widgets/controls.dart';
+import '../../../core/widgets/insight_status.dart';
 import '../../../core/widgets/meters.dart';
+import '../../progress/data/progress_insights.dart';
+import '../../progress/data/progress_providers.dart';
 import '../data/lifestyle_models.dart';
 import '../data/lifestyle_providers.dart';
 import '../data/lifestyle_service.dart';
@@ -213,20 +217,32 @@ class _TodayLifestyle extends ConsumerWidget {
   }
 }
 
-class _RecoveryReadiness extends StatelessWidget {
+/// Readiness as the server calculated it in the daily briefing, with how old that answer is. Nothing is worked out here.
+class _RecoveryReadiness extends ConsumerWidget {
   const _RecoveryReadiness();
 
   @override
-  Widget build(BuildContext context) {
-    return const TitledCard(
-      title: 'Recovery and readiness',
-      sample: true,
-      children: [
-        MutedText(
-          'Readiness is calculated by the backend from your check-ins, sleep and training, and will appear here in a later step.',
-        ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = context.pal;
+    final today = localStampOf(DateTime.now()).localDate;
+    final result = ref.watch(dailyBriefingProvider(today));
+    final readiness = result.briefing?.readiness;
+    final deload = result.briefing?.deload;
+    return TitledCard(title: 'Recovery and readiness', children: [
+      if (readiness == null)
+        MutedText(result.snapshot.hasData ? 'No readiness answer yet. Add today’s check-in below.' : 'Readiness appears once the daily briefing has loaded from the server.')
+      else ...[
+        Text('${readiness.level[0].toUpperCase()}${readiness.level.substring(1).replaceAll('_', ' ')}', style: TextStyle(color: p.text, fontSize: 22, fontWeight: FontWeight.w800)),
+        for (final line in readiness.reasoning) ...[const SizedBox(height: 6), Text(line, style: TextStyle(color: p.muted, fontSize: 15, height: 1.35))],
       ],
-    );
+      if (deload != null && deload.level != 'none' && deload.level != 'unknown') ...[
+        const SizedBox(height: 10),
+        Text('Deload: ${deload.level.replaceAll('_', ' ')}', style: TextStyle(color: p.text, fontSize: 15, fontWeight: FontWeight.w700)),
+      ],
+      const SizedBox(height: 10),
+      const MutedText('Guidance from your own check-ins, not medical advice.', size: 13),
+      InsightStatusLine(snapshot: result.snapshot, onRefresh: () => ref.read(insightProvider(dailyBriefingSpec(today)).notifier).refresh()),
+    ]);
   }
 }
 
