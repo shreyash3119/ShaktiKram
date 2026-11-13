@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shaktikram/app.dart';
 import 'package:shaktikram/core/backend/backend_error.dart';
 import 'package:shaktikram/core/routing/app_shell.dart';
-import 'package:shaktikram/core/widgets/controls.dart';
 
 import 'support/fakes.dart';
 import 'support/store_contract.dart';
@@ -24,12 +23,9 @@ Future<void> _open(WidgetTester tester, Harness h) async {
 }
 
 Future<void> _pill(WidgetTester tester, String label) async {
-  await tester.tap(
-    find.descendant(
-      of: find.byType(PillTabs).first,
-      matching: find.text(label),
-    ),
-  );
+  final tab = find.text(label).first;
+  await tester.ensureVisible(tab);
+  await tester.tap(tab);
   await tester.pumpAndSettle();
 }
 
@@ -58,14 +54,15 @@ void main() {
       findsOneWidget,
     );
 
-    // Return to the top of the Progress screen.
-    final scrollable = find.byType(Scrollable).first;
-    await tester.drag(scrollable, const Offset(0, 1000));
+    // Select Goals directly. The tab bar has its own horizontal scrollable.
+    await _pill(tester, 'Goals');
     await tester.pumpAndSettle();
 
-    await _pill(tester, 'Goals');
-
-    expect(find.text('No goals yet.'), findsOneWidget);
+    expect(find.text('Goals'), findsWidgets);
+    expect(
+      find.textContaining('No goals yet. Create one to track it here.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets(

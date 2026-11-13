@@ -1,6 +1,5 @@
 import '../../../core/errors/user_facing_error.dart';
 import '../../../core/sync/change_writer.dart';
-import '../../../core/time/local_stamp.dart';
 import 'training_models.dart';
 import 'training_repository.dart';
 

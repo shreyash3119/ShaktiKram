@@ -11,26 +11,40 @@ import 'package:shaktikram/features/home/presentation/home_screen.dart';
 import 'support/fakes.dart';
 
 /// These tests run as a signed-in, registered phone, so the app opens on Home.
-Future<void> _pumpApp(WidgetTester tester, {List<Override> extra = const []}) async {
+Future<void> _pumpApp(
+  WidgetTester tester, {
+  List<Override> extra = const [],
+}) async {
   final h = Harness.ready();
-  await tester.pumpWidget(ProviderScope(overrides: [...h.overrides, ...extra], child: const ShaktiKramApp()));
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [...h.overrides, ...extra],
+      child: const ShaktiKramApp(),
+    ),
+  );
   await tester.pumpAndSettle();
 }
 
-Finder _navLabel(String label) => find.descendant(of: find.byType(AppBottomBar), matching: find.text(label));
+Finder _navLabel(String label) =>
+    find.descendant(of: find.byType(AppBottomBar), matching: find.text(label));
 
 /// A line that only that screen shows (its subtitle).
 Map<String, String> _subtitles() => {
-      'Home': dateLine(DateTime.now()),
-      'Training': 'Splits, exercises and workouts',
-      'Progress': 'Your history and change over time',
-      'Lifestyle': 'Recovery, nutrition and daily activity',
-      'Reports': 'Analyze history and export',
-      'Settings': 'Profile, sync, preferences and data',
-    };
+  'Home': dateLine(DateTime.now()),
+  'Training': 'Splits, exercises and workouts',
+  'Progress': 'Your history and change over time',
+  'Lifestyle': 'Recovery, nutrition and daily activity',
+  'Reports': 'Analyze history and export',
+  'Settings': 'Profile, sync, preferences and data',
+};
 
 Future<void> _tapPill(WidgetTester tester, String label) async {
-  await tester.tap(find.descendant(of: find.byType(PillTabs).first, matching: find.text(label)));
+  await tester.tap(
+    find.descendant(
+      of: find.byType(PillTabs).first,
+      matching: find.text(label),
+    ),
+  );
   await tester.pumpAndSettle();
 }
 
@@ -40,18 +54,40 @@ void main() {
 
     expect(find.text(_subtitles()['Home']!), findsOneWidget);
     expect(find.text(greetingFor(DateTime.now())), findsOneWidget);
-    for (final label in ['Home', 'Training', 'Progress', 'Lifestyle', 'Reports', 'Settings']) {
-      expect(_navLabel(label), findsOneWidget, reason: 'missing section $label');
+    for (final label in [
+      'Home',
+      'Training',
+      'Progress',
+      'Lifestyle',
+      'Reports',
+      'Settings',
+    ]) {
+      expect(
+        _navLabel(label),
+        findsOneWidget,
+        reason: 'missing section $label',
+      );
     }
   });
 
   testWidgets('tapping each section opens its screen', (tester) async {
     await _pumpApp(tester);
 
-    for (final label in ['Training', 'Progress', 'Lifestyle', 'Reports', 'Settings', 'Home']) {
+    for (final label in [
+      'Training',
+      'Progress',
+      'Lifestyle',
+      'Reports',
+      'Settings',
+      'Home',
+    ]) {
       await tester.tap(_navLabel(label));
       await tester.pumpAndSettle();
-      expect(find.text(_subtitles()[label]!), findsOneWidget, reason: 'screen for $label did not open');
+      expect(
+        find.text(_subtitles()[label]!),
+        findsOneWidget,
+        reason: 'screen for $label did not open',
+      );
     }
   });
 
@@ -61,21 +97,30 @@ void main() {
   });
 
   testWidgets('the sync indicator shows the waiting count', (tester) async {
-    await _pumpApp(tester, extra: [
-      syncStatusProvider.overrideWith(() => _FixedSync(const SyncStatus(SyncPhase.pending, pendingCount: 3))),
-    ]);
+    await _pumpApp(
+      tester,
+      extra: [
+        syncStatusProvider.overrideWith(
+          () =>
+              _FixedSync(const SyncStatus(SyncPhase.pending, pendingCount: 3)),
+        ),
+      ],
+    );
 
     expect(find.text('3 waiting'), findsOneWidget);
   });
 
-  testWidgets('Home on an empty phone shows empty states and no sample values', (tester) async {
-    await _pumpApp(tester);
+  testWidgets(
+    'Home on an empty phone shows empty states and no sample values',
+    (tester) async {
+      await _pumpApp(tester);
 
-    expect(find.text('No workout planned'), findsOneWidget);
-    expect(find.text('Start workout'), findsOneWidget);
-    expect(find.text('Readiness'), findsOneWidget);
-    expect(find.text('Sample values'), findsNothing);
-  });
+      expect(find.text('No workout planned'), findsOneWidget);
+      expect(find.text('Start workout'), findsOneWidget);
+      expect(find.text('Readiness'), findsOneWidget);
+      expect(find.text('Sample values'), findsNothing);
+    },
+  );
 
   testWidgets('Training sub-tabs switch the content', (tester) async {
     await _pumpApp(tester);
@@ -83,7 +128,11 @@ void main() {
     await tester.pumpAndSettle();
 
     // Quick actions is further down the Overview than the first screenful, so scroll to it.
-    await tester.scrollUntilVisible(find.text('Quick actions'), 300, scrollable: find.byType(Scrollable).first);
+    await tester.scrollUntilVisible(
+      find.text('Quick actions'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Quick actions'), findsOneWidget);
     await tester.drag(find.byType(Scrollable).first, const Offset(0, 3000));
     await tester.pumpAndSettle();
@@ -92,12 +141,32 @@ void main() {
     await _tapPill(tester, 'Exercises');
     expect(find.text('Exercise library'), findsOneWidget);
     await _tapPill(tester, 'History');
-    expect(find.textContaining('Finished workouts show up here'), findsOneWidget);
+    expect(
+      find.textContaining('Finished workouts show up here'),
+      findsOneWidget,
+    );
     await _tapPill(tester, 'Schedule');
-    expect(find.text('Schedule · this week'), findsOneWidget);
+
+    final scheduleHeading = find.text('Schedule · this week');
+    await tester.scrollUntilVisible(
+      scheduleHeading,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(scheduleHeading, findsOneWidget);
+    expect(
+      find.text(
+        'Planned rest days and approved breaks do not count as missed.',
+      ),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('Progress, Lifestyle and Reports sub-tabs switch the content', (tester) async {
+  testWidgets('Progress, Lifestyle and Reports sub-tabs switch the content', (
+    tester,
+  ) async {
     await _pumpApp(tester);
 
     await tester.tap(_navLabel('Progress'));

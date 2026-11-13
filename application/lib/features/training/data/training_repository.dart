@@ -63,15 +63,29 @@ class TrainingRepository {
 
   /// The newest version of every template. The highest version number counts as current, so a version saved on this
   /// phone shows at once, before the server has closed the earlier one.
-  Future<List<TemplateVersion>> currentTemplateVersions() async {
+    Future<List<TemplateVersion>> currentTemplateVersions() async {
     final rows = await _store.list('template_versions');
     final latest = <String, TemplateVersion>{};
+
     for (final r in rows) {
+      if (r['deleted_at'] != null) continue;
+
       final v = TemplateVersion.fromRecord(r);
+      final template = await _store.get('workout_templates', v.templateId);
+
+      // A deleted template must not appear in the current template list.
+      if (template == null || template['deleted_at'] != null) continue;
+
       final seen = latest[v.templateId];
-      if (seen == null || v.version > seen.version) latest[v.templateId] = v;
+      if (seen == null || v.version > seen.version) {
+        latest[v.templateId] = v;
+      }
     }
-    return latest.values.toList()..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+
+    return latest.values.toList()
+      ..sort(
+        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+      );
   }
 
   Future<TemplateVersion?> templateVersion(String id) async {
