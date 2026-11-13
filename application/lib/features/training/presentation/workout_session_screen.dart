@@ -252,6 +252,19 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
 
   Future<void> _finish(SessionDetail detail) async {
     final s = detail.summary;
+    if (s.workingSets == 0) {
+      // A workout with no logged sets never counts (not as a workout, a streak, a record or training volume), so it is
+      // not finished. The person goes back to it, or throws it away.
+      final choice = await _ask(
+        title: 'No sets logged',
+        body: 'This workout has no logged sets, so it would not count. Go back and log a set, or discard it.',
+        choices: const [('Return to workout', 'keep', ButtonKind.primary), ('Discard workout', 'discard', ButtonKind.danger)],
+      );
+      if (!mounted || choice != 'discard') return;
+      await _run(() => _service.discardSession(detail.session.id));
+      if (mounted) _exit();
+      return;
+    }
     final choice = await _ask(
       title: 'Confirm: finish workout?',
       body:

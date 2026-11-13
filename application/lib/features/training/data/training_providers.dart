@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/db/local_store.dart';
 import '../../../core/sync/change_writer.dart';
 import '../../../core/sync/sync_status.dart';
+import 'training_management_service.dart';
 import 'training_models.dart';
 import 'training_repository.dart';
 import 'workout_session_service.dart';
@@ -11,6 +12,10 @@ final trainingRepositoryProvider = Provider<TrainingRepository>((ref) => Trainin
 
 final workoutSessionServiceProvider = Provider<WorkoutSessionService>((ref) {
   return WorkoutSessionService(writer: ref.read(changeWriterProvider), repository: ref.read(trainingRepositoryProvider));
+});
+
+final trainingManagementServiceProvider = Provider<TrainingManagementService>((ref) {
+  return TrainingManagementService(writer: ref.read(changeWriterProvider), repository: ref.read(trainingRepositoryProvider));
 });
 
 /// Reads that reload whenever local data changes (a save, or rows pulled from the server).
@@ -52,3 +57,50 @@ final scheduleWeekProvider = FutureProvider.family<List<ScheduleEntry?>, String>
   }
   return out;
 });
+
+/// Every split that is not archived, each with its newest version and days.
+final splitsProvider = FutureProvider<List<ActiveSplit>>((ref) => _reload(ref, (r) => r.splits()));
+
+final musclesProvider = FutureProvider<List<MuscleRef>>((ref) => _reload(ref, (r) => r.muscles()));
+
+final equipmentProvider = FutureProvider<List<EquipmentRef>>((ref) => _reload(ref, (r) => r.equipment()));
+
+final exerciseMusclesProvider =
+    FutureProvider.family<List<({String muscleId, String role})>, String>((ref, exerciseId) => _reload(ref, (r) => r.exerciseMuscles(exerciseId)));
+
+/// Finished workouts, newest first, each marked with whether it counts (it has logged working sets).
+final finishedSessionsProvider = FutureProvider<List<({WorkoutSession session, bool counted})>>((ref) => _reload(ref, (r) => r.finishedSessions(limit: 60)));
+
+/// The schedule entries from [range.from] to [range.to], by date.
+final scheduleRangeProvider = FutureProvider.family<List<ScheduleEntry>, ({String from, String to})>((ref, range) => _reload(ref, (r) => r.scheduleBetween(range.from, range.to)));
+
+/// What is planned for one day, resolved against the split day and template it points to. The template is the newest
+/// version of the day's template, so a template edited after the day was scheduled is the one that starts.
+class TodayPlan {
+  const TodayPlan({this.entry, this.day, this.template});
+
+  final ScheduleEntry? entry;
+  final SplitDay? day;
+  final TemplateVersion? template;
+
+  bool get isRest => entry?.isRestDay == true;
+  bool get hasPlan => entry != null && (isRest || day != null || template != null);
+
+  /// What to call the planned workout.
+  String? get title => isRest ? 'Rest day' : (day != null && day!.label.isNotEmpty ? day!.label : template?.name);
+}
+
+final todayPlanProvider = FutureProvider.family<TodayPlan, String>((ref, localDate) async {
+  ref.watch(dataRevisionProvider);
+  final repo = ref.watch(trainingRepositoryProvider);
+  final entry = await repo.scheduleFor(localDate);
+  if (entry == null) return const TodayPlan();
+  final day = entry.splitDayId == null ? null : await repo.splitDay(entry.splitDayId!);
+  TemplateVersion? template = day?.templateId == null ? null : await repo.currentVersionOfTemplate(day!.templateId!);
+  template ??= entry.templateVersionId == null ? null : await repo.templateVersion(entry.templateVersionId!);
+  return TodayPlan(entry: entry, day: day, template: template);
+});
+
+final exerciseLinksProvider = FutureProvider<Map<String, List<({String muscleId, String role})>>>((ref) => _reload(ref, (r) => r.exerciseMuscleLinks()));
+
+final splitDayLabelsProvider = FutureProvider<Map<String, String>>((ref) => _reload(ref, (r) => r.splitDayLabels()));

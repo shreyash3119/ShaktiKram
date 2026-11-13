@@ -93,10 +93,15 @@ void main() {
     await _close(tester);
   });
 
-  testWidgets('finishing completes the workout and shows the summary', (tester) async {
+  testWidgets('finishing a workout with a logged set completes it and shows the summary', (tester) async {
     final (h, _) = await _openSession(tester);
     await tester.tap(find.text('Start empty workout'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Add ›').first);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('kg-field')), '60');
+    await tester.enterText(find.byKey(const Key('reps-field')), '8');
+    await _tapVisible(tester, find.byKey(const Key('confirm-set')));
 
     await _tapVisible(tester, find.text('Finish workout'));
     expect(find.text('Confirm: finish workout?'), findsOneWidget);
@@ -105,6 +110,26 @@ void main() {
 
     expect(find.text('Workout complete'), findsOneWidget);
     expect((await h.local.list('workout_sessions')).single['status'], 'completed');
+    await _close(tester);
+  });
+
+  testWidgets('finishing a workout with no sets offers Return or Discard and never completes it', (tester) async {
+    final (h, _) = await _openSession(tester);
+    await tester.tap(find.text('Start empty workout'));
+    await tester.pumpAndSettle();
+
+    await _tapVisible(tester, find.text('Finish workout'));
+    expect(find.text('No sets logged'), findsOneWidget);
+    expect(find.text('Finish'), findsNothing);
+
+    await tester.tap(find.text('Return to workout'));
+    await tester.pumpAndSettle();
+    expect((await h.local.list('workout_sessions')).single['status'], 'in_progress');
+
+    await _tapVisible(tester, find.text('Finish workout'));
+    await tester.tap(find.text('Discard workout'));
+    await tester.pumpAndSettle();
+    expect(await h.local.list('workout_sessions'), isEmpty);
     await _close(tester);
   });
 

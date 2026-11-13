@@ -28,12 +28,50 @@ class TrainingRepository {
     return out;
   }
 
+  Future<List<MuscleRef>> muscles() async {
+    final rows = await _store.list('muscles');
+    return [for (final r in rows) MuscleRef.fromRecord(r)]..sort((a, b) {
+        final g = a.groupKey.compareTo(b.groupKey);
+        return g != 0 ? g : a.label.compareTo(b.label);
+      });
+  }
+
+  Future<List<EquipmentRef>> equipment() async {
+    final rows = await _store.list('equipment');
+    return [for (final r in rows) EquipmentRef.fromRecord(r)]..sort((a, b) => a.label.compareTo(b.label));
+  }
+
+  /// The raw exercise-muscle rows of an exercise (id, muscle_id, role), for editing.
+  Future<List<Map<String, dynamic>>> exerciseMuscleRows(String exerciseId) => _store.listByRef('exercise_muscles', 'exercise_id', exerciseId);
+
+  /// For every exercise, the muscles it trains (used to filter the library by muscle group).
+  Future<Map<String, List<({String muscleId, String role})>>> exerciseMuscleLinks() async {
+    final out = <String, List<({String muscleId, String role})>>{};
+    for (final r in await _store.list('exercise_muscles')) {
+      out.putIfAbsent(r['exercise_id'] as String, () => []).add((muscleId: r['muscle_id'] as String, role: (r['role'] as String?) ?? 'primary'));
+    }
+    return out;
+  }
+
+  /// Names of every split day ever saved, by id. Old schedule entries point at days of earlier split versions.
+  Future<Map<String, String>> splitDayLabels() async {
+    final rows = await _store.list('split_days');
+    return {for (final r in rows) r['id'] as String: ((r['is_rest'] == true) ? 'Rest' : ((r['label'] as String?) ?? 'Workout'))};
+  }
+
   // ---- Templates ----
 
+  /// The newest version of every template. The highest version number counts as current, so a version saved on this
+  /// phone shows at once, before the server has closed the earlier one.
   Future<List<TemplateVersion>> currentTemplateVersions() async {
     final rows = await _store.list('template_versions');
-    return [for (final r in rows) TemplateVersion.fromRecord(r)].where((v) => v.isCurrent).toList()
-      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    final latest = <String, TemplateVersion>{};
+    for (final r in rows) {
+      final v = TemplateVersion.fromRecord(r);
+      final seen = latest[v.templateId];
+      if (seen == null || v.version > seen.version) latest[v.templateId] = v;
+    }
+    return latest.values.toList()..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
   }
 
   Future<TemplateVersion?> templateVersion(String id) async {
@@ -44,7 +82,7 @@ class TrainingRepository {
   /// The current version of a template, or null.
   Future<TemplateVersion?> currentVersionOfTemplate(String templateId) async {
     final rows = await _store.listByRef('template_versions', 'entity_id', templateId);
-    final versions = [for (final r in rows) TemplateVersion.fromRecord(r)].where((v) => v.isCurrent).toList();
+    final versions = [for (final r in rows) TemplateVersion.fromRecord(r)]..sort((a, b) => b.version.compareTo(a.version));
     return versions.isEmpty ? null : versions.first;
   }
 
@@ -60,11 +98,30 @@ class TrainingRepository {
     final splits = await _store.list('splits');
     final active = splits.where((s) => s['status'] == 'active').toList();
     if (active.isEmpty) return null;
-    final splitId = active.first['id'] as String;
+    return _splitWithDays(active.first['id'] as String, status: 'active');
+  }
+
+  /// Every split that is not archived or deleted, each with its newest version and days. Active first, then by name.
+  Future<List<ActiveSplit>> splits({bool includeArchived = false}) async {
+    final out = <ActiveSplit>[];
+    for (final s in await _store.list('splits')) {
+      final status = (s['status'] as String?) ?? 'draft';
+      if (!includeArchived && status == 'archived') continue;
+      final split = await _splitWithDays(s['id'] as String, status: status);
+      if (split != null) out.add(split);
+    }
+    out.sort((a, b) {
+      final byActive = (a.status == 'active' ? 0 : 1).compareTo(b.status == 'active' ? 0 : 1);
+      return byActive != 0 ? byActive : a.name.toLowerCase().compareTo(b.name.toLowerCase());
+    });
+    return out;
+  }
+
+  Future<ActiveSplit?> _splitWithDays(String splitId, {required String status}) async {
     final versions = await _store.listByRef('split_versions', 'entity_id', splitId);
-    final current = versions.where((v) => v['effective_to'] == null).toList();
-    if (current.isEmpty) return null;
-    final v = current.first;
+    if (versions.isEmpty) return null;
+    versions.sort((a, b) => ((b['version'] as num?) ?? 0).compareTo((a['version'] as num?) ?? 0));
+    final v = versions.first;
     final days = await _store.listByRef('split_days', 'split_version_id', v['id'] as String);
     return ActiveSplit(
       splitId: splitId,
@@ -72,8 +129,17 @@ class TrainingRepository {
       name: (v['name'] as String?) ?? '',
       pattern: (v['pattern'] as String?) ?? 'fixed_weekly',
       cycleLengthDays: (v['cycle_length_days'] as num?)?.toInt(),
+      status: status,
+      notes: v['notes'] as String?,
       days: [for (final d in days) SplitDay.fromRecord(d)]..sort((a, b) => a.position.compareTo(b.position)),
     );
+  }
+
+  /// Schedule entries from [fromDate] to [toDate] inclusive (`YYYY-MM-DD`), by date.
+  Future<List<ScheduleEntry>> scheduleBetween(String fromDate, String toDate) async {
+    final rows = await _store.list('schedule_entries');
+    return [for (final r in rows) ScheduleEntry.fromRecord(r)].where((e) => e.localDate.compareTo(fromDate) >= 0 && e.localDate.compareTo(toDate) <= 0).toList()
+      ..sort((a, b) => a.localDate.compareTo(b.localDate));
   }
 
   Future<SplitDay?> splitDay(String id) async {
@@ -132,6 +198,28 @@ class TrainingRepository {
         final byType = (a.isWorking ? 1 : 0).compareTo(b.isWorking ? 1 : 0);
         return byType != 0 ? byType : a.setNumber.compareTo(b.setNumber);
       });
+  }
+
+  /// Whether a session has at least one completed working set. A workout with none does not count as a workout.
+  Future<bool> hasLoggedSets(String sessionId) async {
+    for (final e in await sessionExercises(sessionId)) {
+      if (e.isSkipped) continue;
+      for (final s in await sets(e.id)) {
+        if (s.isWorking && s.completed) return true;
+      }
+    }
+    return false;
+  }
+
+  /// Finished workouts, newest first, each marked with whether it counts (it has logged working sets).
+  Future<List<({WorkoutSession session, bool counted})>> finishedSessions({int? limit}) async {
+    final out = <({WorkoutSession session, bool counted})>[];
+    for (final s in await sessions()) {
+      if (s.status != 'completed') continue;
+      out.add((session: s, counted: await hasLoggedSets(s.id)));
+      if (limit != null && out.length >= limit) break;
+    }
+    return out;
   }
 
   Future<SessionSummary> summary(String sessionId) async {

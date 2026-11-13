@@ -7,7 +7,7 @@ int? _int(Object? v) => v is num ? v.toInt() : (v is String ? int.tryParse(v) : 
 DateTime? _time(Object? v) => v is String ? DateTime.tryParse(v) : null;
 
 class Exercise {
-  const Exercise({required this.id, required this.name, this.category, this.equipmentId, this.notes, this.isCustom = true});
+  const Exercise({required this.id, required this.name, this.category, this.equipmentId, this.notes, this.isCustom = true, this.removedOn});
 
   final String id;
   final String name;
@@ -16,6 +16,11 @@ class Exercise {
   final String? notes;
   final bool isCustom;
 
+  /// The day the exercise was taken out of use (`YYYY-MM-DD`). Past workouts keep it; it is left out of pickers.
+  final String? removedOn;
+
+  bool get isInactive => removedOn != null;
+
   factory Exercise.fromRecord(Map<String, dynamic> r) => Exercise(
         id: r['id'] as String,
         name: (r['name'] as String?) ?? '',
@@ -23,6 +28,7 @@ class Exercise {
         equipmentId: r['equipment_id'] as String?,
         notes: r['notes'] as String?,
         isCustom: r['is_custom'] != false,
+        removedOn: r['removed_on'] as String?,
       );
 }
 
@@ -117,13 +123,17 @@ class SplitDay {
 
 /// The split that is active now, with its current version and days.
 class ActiveSplit {
-  const ActiveSplit({required this.splitId, required this.versionId, required this.name, required this.pattern, this.cycleLengthDays, required this.days});
+  const ActiveSplit({required this.splitId, required this.versionId, required this.name, required this.pattern, this.cycleLengthDays, this.status = 'active', this.notes, required this.days});
 
   final String splitId;
   final String versionId;
   final String name;
   final String pattern;
   final int? cycleLengthDays;
+
+  /// `draft`, `active`, `inactive` or `archived`.
+  final String status;
+  final String? notes;
   final List<SplitDay> days;
 }
 
@@ -333,4 +343,32 @@ class PreviousPerformance {
   final List<LoggedSet> sets;
 
   List<LoggedSet> get workingSets => [for (final s in sets) if (s.isWorking && s.completed) s];
+}
+
+/// A muscle from the reference list on the phone.
+class MuscleRef {
+  const MuscleRef({required this.id, required this.key, required this.label, required this.groupKey});
+
+  final String id;
+  final String key;
+  final String label;
+  final String groupKey;
+
+  factory MuscleRef.fromRecord(Map<String, dynamic> r) => MuscleRef(
+        id: r['id'] as String,
+        key: (r['key'] as String?) ?? '',
+        label: (r['label'] as String?) ?? (r['key'] as String? ?? ''),
+        groupKey: (r['group_key'] as String?) ?? '',
+      );
+}
+
+/// A piece of gym equipment from the reference list on the phone.
+class EquipmentRef {
+  const EquipmentRef({required this.id, required this.key, required this.label});
+
+  final String id;
+  final String key;
+  final String label;
+
+  factory EquipmentRef.fromRecord(Map<String, dynamic> r) => EquipmentRef(id: r['id'] as String, key: (r['key'] as String?) ?? '', label: (r['label'] as String?) ?? (r['key'] as String? ?? ''));
 }
