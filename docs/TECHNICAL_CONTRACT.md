@@ -267,3 +267,12 @@ A module is done when it has: migrations, constraints and indexes; RLS; operatio
 - **Written by the database.** `personal_records` and `achievements` are filled by deferred triggers at commit and are read-only for clients. Re-running detection is safe.
 - **Internal functions stay closed.** `pfs_*` and `calc_*` functions are not granted to clients; only `api_*` functions are, and each checks the owner.
 - **Views that call functions.** A `security_invoker` view runs its functions as the caller, so the functions it needs are granted explicitly.
+
+## 18. Stage 5 conventions
+
+- **The reporting service only reads.** It connects as `pfs_reader` (read everything, write nothing). Every write still goes through `api_apply_operations`. A migration that adds a view ends with `select pfs_grant_reader();`.
+- **Who may call it.** The app sends the owner's Supabase access token. The service asks Supabase Auth who it is and checks the user against `app_owner`. No token gives 401, another account 403.
+- **Report figures come from the views**, so the app and the reports agree. Estimates (`estimated`) and the user's own ratings (`user_assessment`) stay labelled in every export. Observations are cautious statements taken from the figures, never advice or a diagnosis.
+- **Backups.** One zip with `manifest.json` and `data.json`. Each table is the exact JSON text PostgreSQL produces, taken in one consistent snapshot in UTC, with a row count and a content hash per table (`pfs_table_fingerprints()`), a hash of the data file and a hash of the database layout.
+- **Restore is a command-line operation** (`backend/scripts/restore_backup.py`). It needs a role that can write and a clean, freshly migrated database. Foreign keys are checked and every table's row count and content hash must match before anything is kept.
+- **A CSV export is not a backup.** It is for reading in a spreadsheet and cannot be restored.

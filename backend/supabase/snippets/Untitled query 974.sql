@@ -1,3 +1,2 @@
-SELECT COUNT(*) AS total_muscles
-FROM public.muscles
-WHERE deleted_at IS NULL;
+SELECT *
+FROM public.app_owner;

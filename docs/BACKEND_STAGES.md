@@ -116,6 +116,22 @@ Not verified: Postgres 17 and the hosted project. Personal-record test cases for
 
 Left for later stages: monthly recommendations and report text (Stage 5), caching of insights if needed (Stage 5), offline behaviour (Stage 6).
 
+## Stage 5: implementation complete (10 Nov 2026), verification pending
+
+Stage 5 is written. The automated tests are written and wired in, but have not been run: they are to be run on PostgreSQL 17 and Windows.
+
+- [x] Read-only reporting role `pfs_reader` and its SQL test (`97_stage5_reader.test.sql`)
+- [x] Report periods (8 kinds), report summary, previous-period comparison
+- [x] Excel export (17 worksheets) and PDF export with charts
+- [x] Full backup (zip with manifest and content hashes), CSV export, backup validation
+- [x] Restore as a command-line script (clean target, one transaction, row counts and content hashes), `--check-only`
+- [x] API routes: `/api/v1/reports/*` and `/api/v1/backup/*`, owner sign-in check
+- [x] Realistic sample data (`backend/tests/sample_data.sql`), shared with Stage 7
+- [x] Test files: periods, summary, exports, backup and restore, API and the read-only role (`backend/fastapi/tests/`, run by `backend/tests/stage5.sh`)
+- [ ] Tests run and passing on PostgreSQL 17 and Windows
+- [ ] Restore round trip run for real
+- [ ] Sign-in check, hosted pooler access for `pfs_reader` and media download tried against a real Supabase project
+
 ## Backend completion criteria
 
 All tables and relationships implemented; all 26 modules have working operations;

@@ -12,7 +12,7 @@ class Settings(BaseSettings):
 
     # Sign-in check: the app sends the owner's Supabase access token; this service asks Supabase Auth whether it is valid.
     SUPABASE_URL: str = ""
-    SUPABASE_ANON_KEY: str = ""
+    SUPABASE_PUBLISHABLE_KEY: str = ""
     # Folder holding shared/vocabulary. Empty means the repository's own shared folder.
     SHARED_DIR: str = ""
 

@@ -34,7 +34,7 @@
   "pr_kind": ["max_weight", "best_reps_at_weight", "est_1rm", "session_volume", "workout_volume"],
   "weak_point_event": ["identified", "exercise_added", "reassessed"],
   "reminder_kind": ["workout", "leave_for_gym", "rest_day", "supplement", "water", "reassessment", "break_end"],
-  "report_period": ["monthly", "quarterly", "half_yearly", "yearly", "custom", "complete"],
+  "report_period": ["daily", "weekly", "monthly", "quarterly", "half_yearly", "yearly", "custom", "complete"],
   "report_format": ["xlsx", "pdf", "backup_json", "backup_csv"],
   "insight_kind": ["daily", "weekly", "monthly"],
   "value_kind": ["measured", "estimated", "suggestion"],

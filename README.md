@@ -34,7 +34,8 @@ Personal-Fitness-System/
 - Stage 2 (core training backend): done and tested
 - Stage 3 (body and lifestyle backend): done and tested
 - Stage 4 (intelligence and progression): done and tested
-- Stages 5-7: not started
+- Stage 5 (reports, exports and backup): built, manual testing pending
+- Stages 6-7: not started
 
 ## Ground rules
 
