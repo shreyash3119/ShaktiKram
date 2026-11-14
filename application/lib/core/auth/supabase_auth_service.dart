@@ -36,4 +36,23 @@ class SupabaseAuthService implements AuthService {
 
   @override
   Future<void> signOut() => _auth.signOut();
+
+  @override
+  Future<String?> accessToken({bool forceRefresh = false}) async {
+    var session = _auth.currentSession;
+    if (session == null) return null;
+    final expiresAt = session.expiresAt;
+    final nearExpiry = expiresAt != null && DateTime.fromMillisecondsSinceEpoch(expiresAt * 1000).isBefore(DateTime.now().add(const Duration(seconds: 60)));
+    if (forceRefresh || session.isExpired || nearExpiry) {
+      try {
+        final refreshed = await _auth.refreshSession();
+        session = refreshed.session ?? _auth.currentSession;
+      } catch (_) {
+        // The refresh could not be done (offline, or the refresh token was rejected). Use what is stored unless it has expired.
+        session = _auth.currentSession;
+        if (session == null || session.isExpired) return null;
+      }
+    }
+    return session?.accessToken;
+  }
 }

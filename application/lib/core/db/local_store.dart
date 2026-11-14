@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'export_log.dart';
 import 'insight_cache.dart';
 import 'sync_models.dart';
 
@@ -57,6 +58,11 @@ abstract class LocalStore {
 
   /// Forgets every cached insight (they are copies; the server still has the originals).
   Future<void> clearInsights();
+
+  /// Files saved by report exports and backups on this phone (local only, never synced). Newest first.
+  Future<ExportLogEntry> addExportLog(ExportLogEntry entry);
+  Future<List<ExportLogEntry>> exportLog({int limit = 100});
+  Future<void> removeExportLog(int id);
 
   // ---- Status ----
 

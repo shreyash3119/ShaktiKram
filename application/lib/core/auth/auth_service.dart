@@ -38,6 +38,11 @@ abstract class AuthService {
   Future<void> signIn({required String email, required String password});
 
   Future<void> signOut();
+
+  /// The owner's current access token for services outside Supabase (the reporting service), or null when signed out.
+  /// Refreshes the session first when the token has expired or [forceRefresh] is set (for example after a 401).
+  /// The token is passed straight on; it is never stored or logged by the app.
+  Future<String?> accessToken({bool forceRefresh = false});
 }
 
 /// Replaced in `main.dart` (and in tests).

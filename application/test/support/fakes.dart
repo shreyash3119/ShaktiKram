@@ -50,6 +50,18 @@ class FakeAuthService implements AuthService {
     _changes.add(false);
   }
 
+  /// What [accessToken] returns, and how often it was asked for (and with a forced refresh).
+  String? token = 'test-token';
+  int tokenCalls = 0;
+  int refreshCalls = 0;
+
+  @override
+  Future<String?> accessToken({bool forceRefresh = false}) async {
+    tokenCalls++;
+    if (forceRefresh) refreshCalls++;
+    return hasSession ? token : null;
+  }
+
   /// Simulates the server ending the session (for example a rejected refresh token).
   void endSessionFromServer() {
     hasSession = false;

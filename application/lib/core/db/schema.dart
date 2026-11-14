@@ -2,7 +2,7 @@
 ///
 /// Rules: a new version only ever adds a new list here and a step in `SqfliteLocalStore._upgrade`.
 /// Existing statements are never edited, and no migration deletes user data.
-const databaseVersion = 3;
+const databaseVersion = 4;
 
 /// Version 1 (step 4): records, the outbox and the sync cursor.
 const schemaV1 = <String>[
@@ -66,4 +66,20 @@ CREATE TABLE insight_cache (
   payload TEXT NOT NULL,
   fetched_at TEXT NOT NULL
 )''',
+];
+
+/// Version 4 (Stage 5): the files this phone saved from report exports and backups. Local only, never synced.
+/// The table holds file names and facts about the files, not their contents; deleting a row never touches the file.
+const migrationV4 = <String>[
+  '''
+CREATE TABLE export_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  kind TEXT NOT NULL,
+  label TEXT NOT NULL,
+  file_path TEXT NOT NULL,
+  size_bytes INTEGER NOT NULL,
+  created_at TEXT NOT NULL,
+  detail TEXT
+)''',
+  'CREATE INDEX idx_export_log_created_at ON export_log (created_at)',
 ];

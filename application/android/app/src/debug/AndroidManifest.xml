@@ -4,4 +4,7 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Debug builds only: lets a phone on your Wi-Fi reach a reporting service running on your computer over http://.
+         Release builds keep Android's default (https only), which is why REPORT_API_URL must be https:// there. -->
+    <application android:usesCleartextTraffic="true" />
 </manifest>

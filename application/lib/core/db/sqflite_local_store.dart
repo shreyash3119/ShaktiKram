@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
+import 'export_log.dart';
 import 'insight_cache.dart';
 import 'local_store.dart';
 import 'schema.dart';
@@ -21,7 +22,7 @@ class SqfliteLocalStore implements LocalStore {
       target,
       version: databaseVersion,
       onCreate: (db, version) async {
-        for (final statement in [...schemaV1, ...migrationV2, ...migrationV3]) {
+        for (final statement in [...schemaV1, ...migrationV2, ...migrationV3, ...migrationV4]) {
           await db.execute(statement);
         }
       },
@@ -51,6 +52,11 @@ class SqfliteLocalStore implements LocalStore {
     }
     if (from < 3) {
       for (final statement in migrationV3) {
+        await db.execute(statement);
+      }
+    }
+    if (from < 4) {
+      for (final statement in migrationV4) {
         await db.execute(statement);
       }
     }
@@ -372,6 +378,44 @@ class SqfliteLocalStore implements LocalStore {
   @override
   Future<void> clearInsights() async {
     await _db.delete('insight_cache');
+  }
+
+  // ---- export log ----
+
+  @override
+  Future<ExportLogEntry> addExportLog(ExportLogEntry entry) async {
+    final id = await _db.insert('export_log', {
+      'kind': entry.kind.wire,
+      'label': entry.label,
+      'file_path': entry.path,
+      'size_bytes': entry.sizeBytes,
+      'created_at': entry.createdAt.toUtc().toIso8601String(),
+      'detail': entry.detailJson(),
+    });
+    return entry.withId(id);
+  }
+
+  @override
+  Future<List<ExportLogEntry>> exportLog({int limit = 100}) async {
+    final rows = await _db.query('export_log', orderBy: 'created_at DESC, id DESC', limit: limit);
+    return [
+      for (final r in rows)
+        if (ExportKind.fromWire(r['kind'] as String?) != null)
+          ExportLogEntry(
+            id: r['id'] as int,
+            kind: ExportKind.fromWire(r['kind'] as String?)!,
+            label: r['label'] as String,
+            path: r['file_path'] as String,
+            sizeBytes: r['size_bytes'] as int,
+            createdAt: DateTime.parse(r['created_at'] as String).toLocal(),
+            detail: ExportLogEntry.detailFromJson(r['detail']),
+          ),
+    ];
+  }
+
+  @override
+  Future<void> removeExportLog(int id) async {
+    await _db.delete('export_log', where: 'id = ?', whereArgs: [id]);
   }
 
   // ---- status ----

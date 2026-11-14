@@ -1,3 +1,4 @@
+import 'package:shaktikram/core/db/export_log.dart';
 import 'package:shaktikram/core/db/insight_cache.dart';
 import 'package:shaktikram/core/db/local_store.dart';
 import 'package:shaktikram/core/db/store_logic.dart';
@@ -173,6 +174,28 @@ class MemoryLocalStore implements LocalStore {
 
   @override
   Future<void> clearInsights() async => _insights.clear();
+
+  final List<ExportLogEntry> _exportLog = [];
+  int _exportLogId = 0;
+
+  @override
+  Future<ExportLogEntry> addExportLog(ExportLogEntry entry) async {
+    final saved = entry.withId(++_exportLogId);
+    _exportLog.add(saved);
+    return saved;
+  }
+
+  @override
+  Future<List<ExportLogEntry>> exportLog({int limit = 100}) async {
+    final sorted = [..._exportLog]..sort((a, b) {
+        final c = b.createdAt.compareTo(a.createdAt);
+        return c != 0 ? c : (b.id ?? 0).compareTo(a.id ?? 0);
+      });
+    return sorted.take(limit).toList();
+  }
+
+  @override
+  Future<void> removeExportLog(int id) async => _exportLog.removeWhere((e) => e.id == id);
 
   @override
   Future<int> pendingCount() async => _outbox.where((o) => o.state == OpState.pending).length;
