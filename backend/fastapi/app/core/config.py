@@ -7,7 +7,14 @@ class Settings(BaseSettings):
     # Off unless asked for: DEBUG makes SQLAlchemy log every statement together with its parameters (health data).
     DEBUG: bool = False
 
+    # Use the read-only role (pfs_reader), never the owner role: this service only reads.
     DATABASE_URL: str
+
+    # Sign-in check: the app sends the owner's Supabase access token; this service asks Supabase Auth whether it is valid.
+    SUPABASE_URL: str = ""
+    SUPABASE_ANON_KEY: str = ""
+    # Folder holding shared/vocabulary. Empty means the repository's own shared folder.
+    SHARED_DIR: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",

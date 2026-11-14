@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from app.core.config import settings
-from app.api.routes import health
+from app.api.routes import backup, health, reports
 
 
 # Interactive docs and the schema are for development only.
@@ -16,10 +16,9 @@ app = FastAPI(
 )
 
 
-app.include_router(
-    health.router,
-    prefix="/api/v1"
-)
+app.include_router(health.router, prefix="/api/v1")
+app.include_router(reports.router, prefix="/api/v1")
+app.include_router(backup.router, prefix="/api/v1")
 
 
 @app.get("/")

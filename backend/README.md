@@ -30,3 +30,14 @@ Never put the service-role key or the database password in the mobile app.
 ## Backups
 
 See `BACKUPS.md`.
+
+## Reporting service (FastAPI)
+
+Reports, Excel and PDF export and the full backup are served by `backend/fastapi`. It reads the database as the read-only role `pfs_reader` and never writes.
+
+1. Apply the migrations (they create the role without a password), then set one: `alter role pfs_reader login password '...';`
+2. `cd backend/fastapi`, create a virtual environment, `pip install -r requirements.txt`, copy `.env.example` to `.env` and fill it in (use the `pfs_reader` connection, never the owner one).
+3. Start it: `uvicorn app.main:app --reload`. The app calls `/api/v1/reports/...` and `/api/v1/backup/...` with the owner's access token. Interactive docs are at `/docs` (development only).
+4. Tests: `pip install -r requirements-dev.txt`, then `bash backend/tests/run.sh` (it loads the sample data and runs `backend/tests/stage5.sh`).
+
+Restoring a backup is a command-line operation, see `BACKUPS.md`.

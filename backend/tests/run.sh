@@ -16,10 +16,10 @@ cd "$(dirname "$0")/../.."
 DB="${PFS_TEST_DB:-pfs_test}"
 
 # This script DROPS and recreates $DB. Refuse anything that is not clearly a scratch database or that points at a hosted project.
-case "$DB" in
-  pfs_test*) ;;
-  *) echo "Refusing to run: PFS_TEST_DB must start with pfs_test (got: $DB)"; exit 1 ;;
-esac
+if [[ ! "$DB" =~ ^pfs_test[A-Za-z0-9_]*$ ]]; then
+  echo "Refusing to run: PFS_TEST_DB must be a safe scratch database name starting with pfs_test."
+  exit 1
+fi
 
 case "${PGHOST:-}" in
   *supabase.co*|*supabase.com*)
@@ -28,7 +28,7 @@ case "${PGHOST:-}" in
     ;;
 esac
 
-PY="$(command -v python3 || command -v python)"
+PY="$(command -v python)"
 
 echo "Target server: host=${PGHOST:-local socket} port=${PGPORT:-default}; scratch database to recreate: $DB"
 
@@ -43,6 +43,9 @@ for f in backend/supabase/migrations/*.sql; do
   $P -d "$DB" -f "$f"
 done
 
+# Allow the local test runner to switch into the read-only reporting role.
+$P -d "$DB" -c "GRANT pfs_reader TO $PGUSER WITH INHERIT FALSE, SET TRUE"
+
 $P -d "$DB" -f backend/supabase/seed.sql
 $P -d "$DB" -f backend/tests/helpers.sql
 
@@ -54,6 +57,9 @@ for t in backend/tests/*.test.sql; do
   echo "== $(basename "$t")"
   $P -d "$DB" -f "$t"
 done
+
+# Stage 5: reporting, exports, backup and restore tests
+bash backend/tests/stage5.sh "$DB"
 
 bash backend/scripts/restore_verify.sh "$DB" backend/tests/supabase_stub.sql
 
