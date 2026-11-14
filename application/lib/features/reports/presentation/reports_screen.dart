@@ -1,384 +1,258 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/backend/reporting_gateway.dart' show reportingConfiguredProvider;
+import '../../../core/insights/insight_repository.dart' show InsightFreshness;
+import '../../../core/sync/sync_status.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/cards.dart';
 import '../../../core/widgets/controls.dart';
-import '../../../core/widgets/meters.dart';
-import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/insight_status.dart' show ageText;
+import '../data/report_period.dart';
+import '../data/report_repository.dart';
+import 'export_tab.dart';
+import 'report_sections.dart';
 
-/// Reports section: analytics tabs plus the export centre and backup.
-/// Figures are placeholders; exporting is wired up when the report endpoints exist (decision D18).
-class ReportsScreen extends StatefulWidget {
-  const ReportsScreen({super.key});
+const reportTabs = ['Overview', 'Workouts', 'Strength', 'Body', 'Lifestyle', 'Goals', 'Export'];
 
-  @override
-  State<ReportsScreen> createState() => _ReportsScreenState();
+/// Index of a tab named in a link such as `/reports?tab=export`.
+int reportTabIndex(String? name) {
+  final i = reportTabs.indexWhere((t) => t.toLowerCase() == (name ?? '').toLowerCase());
+  return i < 0 ? 0 : i;
 }
 
-class _ReportsScreenState extends State<ReportsScreen> {
-  static const _periods = ['This week', 'This month', 'Quarter', 'Year', 'Custom'];
-  static const _tabs = ['Overview', 'Workouts', 'Strength', 'Body', 'Export'];
-  int _period = 0;
-  int _tab = 0;
+/// Reports: what the reporting service worked out about a period, plus exports and backup.
+/// Every figure comes from the server; the phone only shows it and keeps the last answer for offline use.
+class ReportsScreen extends ConsumerStatefulWidget {
+  const ReportsScreen({super.key, this.initialTab});
 
-  List<Widget> _content() {
-    switch (_tab) {
-      case 1:
-        return const [_Performance(), _Consistency(), _CompareCard(title: 'Compare periods')];
-      case 2:
-        return const [_StrengthHighlights(), _DetailedReports()];
-      case 3:
-        return const [_BodyChanges(), _MuscleRadar()];
-      case 4:
-        return const [
-          _ExportReports(),
-          _ReportingPeriod(),
-          _Categories(),
-          _IncludeInExport(),
-          _ReportPreview(),
-          _ExportHistory(),
-          GroupLabel('Backup'),
-          _Backup(),
-        ];
-      default:
-        return const [
-          GroupLabel('Analytics'),
-          _Performance(),
-          _Consistency(),
-          _StrengthHighlights(),
-          _BodyChanges(),
-          _MuscleRadar(),
-          GroupLabel('Export'),
-          _ExportReports(),
-          _ExportHistory(),
-          _Backup(),
-        ];
-    }
+  final String? initialTab;
+
+  @override
+  ConsumerState<ReportsScreen> createState() => _ReportsScreenState();
+}
+
+class _ReportsScreenState extends ConsumerState<ReportsScreen> {
+  late int _tab = reportTabIndex(widget.initialTab);
+
+  Future<void> _pickRange(ReportQuery current) async {
+    final now = DateTime.now();
+    final range = current.range;
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(now.year + 1, 12, 31),
+      initialDateRange: range == null ? null : DateTimeRange(start: range.$1, end: range.$2.isAfter(now) ? now : range.$2),
+      helpText: 'Report range (up to $maxCustomDays days)',
+    );
+    if (picked == null || !mounted) return;
+    ref.read(reportQueryProvider.notifier).state = ReportQuery.custom(picked.start, picked.end);
+  }
+
+  void _selectKind(int i) {
+    final kind = ReportKind.values[i];
+    final current = ref.read(reportQueryProvider);
+    if (kind == current.kind && kind != ReportKind.custom) return;
+    final next = ReportQuery.current(kind, DateTime.now());
+    ref.read(reportQueryProvider.notifier).state = next;
+    if (kind == ReportKind.custom) _pickRange(next);
   }
 
   @override
   Widget build(BuildContext context) {
+    final query = ref.watch(reportQueryProvider);
+    final request = ref.watch(reportRequestProvider);
+    final isExport = _tab == reportTabs.length - 1;
     return ScreenFrame(
       title: 'Reports',
       subtitle: 'Analyze history and export',
       children: [
-        PillTabs(labels: _periods, index: _period, container: true, layout: PillLayout.scroll, onChanged: (i) => setState(() => _period = i)),
-        PillTabs(labels: _tabs, index: _tab, container: true, layout: PillLayout.scroll, onChanged: (i) => setState(() => _tab = i)),
-        ..._content(),
+        const SizedBox(height: 16),
+        PillTabs(labels: reportTabs, index: _tab, layout: PillLayout.scroll, container: true, onChanged: (i) => setState(() => _tab = i)),
+        const SizedBox(height: 14),
+        if (!isExport) ...[
+          PillTabs(labels: [for (final k in ReportKind.values) k.label], index: ReportKind.values.indexOf(query.kind), layout: PillLayout.scroll, onChanged: _selectKind),
+          const SizedBox(height: 10),
+          _PeriodBar(query: query, onPickRange: () => _pickRange(query), onChanged: (q) => ref.read(reportQueryProvider.notifier).state = q),
+          ToggleRow(
+            title: 'Compare with the previous period',
+            subtitle: 'Adds change figures to the Overview',
+            value: ref.watch(reportCompareProvider),
+            onChanged: (v) => ref.read(reportCompareProvider.notifier).state = v,
+          ),
+          const _UnsyncedNotice(),
+          const SizedBox(height: 4),
+          _ReportBody(request: request, tab: _tab),
+        ] else ...[
+          ExportTab(request: request),
+        ],
+        const SizedBox(height: 8),
       ],
     );
   }
 }
 
-class _Performance extends StatelessWidget {
-  const _Performance();
+class _PeriodBar extends StatelessWidget {
+  const _PeriodBar({required this.query, required this.onPickRange, required this.onChanged});
+  final ReportQuery query;
+  final VoidCallback onPickRange;
+  final ValueChanged<ReportQuery> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return const TitledCard(title: 'Performance overview', sample: true, children: [
-      Row(children: [
-        Expanded(child: StatBlock('3 / 4', 'Workouts', size: 26)),
-        Expanded(child: StatBlock('12,450 kg', 'Total volume', size: 26)),
-      ]),
-      SizedBox(height: 18),
-      Row(children: [
-        Expanded(child: StatBlock('3 h 45 m', 'Total time', size: 26)),
-        Expanded(child: StatBlock('+6.2 %', 'vs last week', size: 26)),
-      ]),
-    ]);
-  }
-}
-
-class _Consistency extends StatelessWidget {
-  const _Consistency();
-
-  @override
-  Widget build(BuildContext context) {
-    return const TitledCard(title: 'Workout consistency', sample: true, link: 'Last 4 weeks', children: [
-      Row(children: [
-        RingGauge(value: 0.75, centerText: '75%', subText: '12 / 16', size: 104, stroke: 9),
-        SizedBox(width: 14),
+    final p = context.pal;
+    final canStep = query.canStep;
+    final nextBlocked = !canStep || query.shifted(1).startsAfter(DateTime.now());
+    return AppCard(
+      child: Row(children: [
+        if (canStep)
+          IconButton(key: const Key('period-prev'), tooltip: 'Previous period', onPressed: () => onChanged(query.shifted(-1)), icon: const Icon(Icons.chevron_left)),
         Expanded(
-          child: BarChartView(
-            values: [3, 2, 4, 3],
-            labels: ['W1', 'W2', 'W3', 'W4'],
-            maxValue: 4,
-            height: 120,
-            barWidth: 28,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: query.kind == ReportKind.custom ? onPickRange : null,
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Text(query.label, textAlign: TextAlign.center, style: TextStyle(color: p.text, fontSize: 16, fontWeight: FontWeight.w700)),
+              if (query.kind == ReportKind.custom) Text('Tap to change', style: TextStyle(color: p.link, fontSize: 12)),
+              if (query.kind == ReportKind.complete) Text('From your first record to today', style: TextStyle(color: p.muted, fontSize: 12)),
+            ]),
           ),
         ),
+        if (canStep)
+          IconButton(key: const Key('period-next'), tooltip: 'Next period', onPressed: nextBlocked ? null : () => onChanged(query.shifted(1)), icon: const Icon(Icons.chevron_right)),
       ]),
-      SizedBox(height: 12),
-      MutedText('Last 4 weeks. Planned breaks and rest days are excluded.'),
-    ]);
+    );
   }
+
 }
 
-class _StrengthHighlights extends StatelessWidget {
-  const _StrengthHighlights();
+/// Shown when changes made on this phone have not reached the server yet. Reports are worked out on the server.
+class _UnsyncedNotice extends ConsumerWidget {
+  const _UnsyncedNotice();
 
   @override
-  Widget build(BuildContext context) {
-    return const TitledCard(title: 'Strength highlights', sample: true, link: 'Details', children: [
-      RowList([
-        RowItem(title: 'Bench Press', trailing: '+2.5 kg'),
-        RowItem(title: 'Barbell Row', trailing: '+5.0 kg'),
-        RowItem(title: 'Squat', trailing: '+5.0 kg'),
-      ]),
-    ]);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pending = ref.watch(syncStatusProvider.select((s) => s.pendingCount));
+    if (pending == 0) return const SizedBox.shrink();
+    final p = context.pal;
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, bottom: 6),
+      child: AppCard(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('$pending ${pending == 1 ? 'change' : 'changes'} on this phone ${pending == 1 ? 'has' : 'have'} not synced yet', style: TextStyle(color: p.amber, fontSize: 14, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 4),
+          const MutedText('Reports are calculated on the server, so they do not include these changes until they sync.', size: 13),
+          const SizedBox(height: 6),
+          LinkText('Sync now', onTap: () => ref.read(syncStatusProvider.notifier).syncNow()),
+        ]),
+      ),
+    );
   }
 }
 
-class _BodyChanges extends StatelessWidget {
-  const _BodyChanges();
+class _ReportBody extends ConsumerWidget {
+  const _ReportBody({required this.request, required this.tab});
+  final ReportRequest request;
+  final int tab;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final query = request.query;
+    final problem = query.validate();
+    if (problem != null) return _Message(title: 'This period cannot be used', text: problem, icon: Icons.event_busy_outlined);
+    if (query.startsAfter(DateTime.now())) {
+      return const _Message(title: 'This period has not started', text: 'There are no records in the future. Go back to see a report.', icon: Icons.schedule_outlined);
+    }
+    final configured = ref.watch(reportingConfiguredProvider);
+    final async = ref.watch(reportSummaryProvider(request));
+    final snap = async.valueOrNull;
+    if (snap == null) {
+      if (async.hasError) return _Message(title: 'Could not load the report', text: '${async.error}', icon: Icons.error_outline);
+      return const Padding(padding: EdgeInsets.symmetric(vertical: 40), child: Center(child: CircularProgressIndicator()));
+    }
+    final refresh = snap.refreshing ? null : () => ref.read(reportSummaryProvider(request).notifier).refresh();
+    final children = <Widget>[_StatusLine(snapshot: snap, configured: configured, onRefresh: refresh), const SizedBox(height: 12)];
+    final summary = snap.summary;
+    if (summary == null) {
+      if (snap.refreshing) {
+        children.add(const Padding(padding: EdgeInsets.symmetric(vertical: 40), child: Center(child: CircularProgressIndicator())));
+      } else {
+        children.add(_Message(
+          title: !configured ? 'Reports are not set up' : (snap.isOffline ? 'You are offline' : 'No report yet'),
+          text: !configured
+              ? 'This build has no reporting service address. Set REPORT_API_URL and rebuild the app.'
+              : (snap.isOffline ? 'This period has not been loaded on this phone yet. Connect to the internet and try again.' : 'The report could not be loaded yet.'),
+          icon: !configured ? Icons.settings_outlined : (snap.isOffline ? Icons.cloud_off_outlined : Icons.insert_chart_outlined),
+        ));
+      }
+      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: children);
+    }
+    switch (tab) {
+      case 0:
+        children.add(OverviewSection(summary: summary));
+      case 1:
+        children.add(WorkoutsSection(summary: summary));
+      case 2:
+        children.add(StrengthSectionView(summary: summary));
+      case 3:
+        children.add(BodySectionView(summary: summary));
+      case 4:
+        children.add(LifestyleSectionView(summary: summary));
+      default:
+        children.add(GoalsSectionView(summary: summary));
+    }
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: children);
+  }
+}
+
+class _StatusLine extends StatelessWidget {
+  const _StatusLine({required this.snapshot, required this.configured, required this.onRefresh});
+  final ReportSnapshot snapshot;
+  final bool configured;
+  final VoidCallback? onRefresh;
 
   @override
   Widget build(BuildContext context) {
     final p = context.pal;
-    Widget col(String v, String l, String d) => Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(v, style: TextStyle(color: p.text, fontSize: 24, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 4),
-            Text(l, style: TextStyle(color: p.muted, fontSize: 14)),
-            Text(d, style: TextStyle(color: p.muted, fontSize: 14)),
-          ]),
-        );
-    return TitledCard(title: 'Body changes', sample: true, link: 'Details', children: [
-      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        col('78.0 kg', 'Weight', '▼ 0.6 kg'),
-        col('18.4 %', 'Body fat', '▼ 0.4 %'),
-      ]),
-      const SizedBox(height: 14),
-      const MutedText('Body-fat readings are compared only within the same method.', size: 15),
+    final String text;
+    var warn = false;
+    if (snapshot.refreshing) {
+      text = 'Updating from the server…';
+    } else if (snapshot.error != null) {
+      warn = true;
+      text = snapshot.hasData
+          ? '${snapshot.isOffline ? 'Offline' : 'Could not update'}. Showing the report from ${ageText(snapshot.fetchedAt)}. ${snapshot.isOffline ? '' : snapshot.error!.message}'.trim()
+          : snapshot.error!.message;
+    } else if (snapshot.hasData) {
+      final old = snapshot.freshness == InsightFreshness.stale;
+      text = 'Calculated by the server. Updated ${ageText(snapshot.fetchedAt)}${old ? ' (may be out of date)' : ''}.';
+    } else {
+      text = 'Not loaded yet.';
+    }
+    return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Expanded(child: Text(text, style: TextStyle(color: warn ? p.amber : p.muted, fontSize: 13, height: 1.35))),
+      if (configured && onRefresh != null) Padding(padding: const EdgeInsets.only(left: 12), child: LinkText('Refresh', onTap: onRefresh!)),
     ]);
   }
 }
 
-class _MuscleRadar extends StatelessWidget {
-  const _MuscleRadar();
-
-  @override
-  Widget build(BuildContext context) {
-    return const TitledCard(title: 'Muscle development · self-assessed', sample: true, link: 'Details', children: [
-      RadarChartView(
-        labels: ['Chest', 'Shoulders', 'Back', 'Arms', 'Abs', 'Forearms', 'Calves', 'Glutes'],
-        values: [0.8, 0.7, 0.55, 0.3, 0.2, 0.5, 0.25, 0.2],
-      ),
-      MutedText('Your own 1–5 ratings, not measured growth.', size: 15),
-    ]);
-  }
-}
-
-class _CompareCard extends StatefulWidget {
-  const _CompareCard({required this.title});
+class _Message extends StatelessWidget {
+  const _Message({required this.title, required this.text, required this.icon});
   final String title;
-
-  @override
-  State<_CompareCard> createState() => _CompareCardState();
-}
-
-class _CompareCardState extends State<_CompareCard> {
-  int _mode = 0;
-
-  @override
-  Widget build(BuildContext context) {
-    return TitledCard(title: widget.title, sample: true, children: [
-      PillTabs(labels: const ['Month vs month', 'Custom'], index: _mode, onChanged: (i) => setState(() => _mode = i)),
-      const SizedBox(height: 8),
-      const RowList([
-        RowItem(title: 'Workouts', subtitle: '12 vs 11', trailing: '+1'),
-        RowItem(title: 'Volume', subtitle: 'Oct vs Sep', trailing: '+6.2%'),
-        RowItem(title: 'Avg sleep', trailing: '6.8 vs 6.5 h'),
-      ]),
-    ]);
-  }
-}
-
-class _DetailedReports extends StatelessWidget {
-  const _DetailedReports();
-
-  @override
-  Widget build(BuildContext context) {
-    return const TitledCard(title: 'Detailed reports', children: [
-      RowList([
-        RowItem(title: 'Workout report', subtitle: 'Sessions, volume, attendance', chevron: true),
-        RowItem(title: 'Strength progression', subtitle: 'Lifts, PRs, estimated 1RM', chevron: true),
-        RowItem(title: 'Body composition', subtitle: 'Weight, body fat, measurements', chevron: true),
-        RowItem(title: 'Muscle development', subtitle: 'Self-assessment history', chevron: true),
-        RowItem(title: 'Lifestyle & nutrition', subtitle: 'Sleep, meals, supplements, activity', chevron: true),
-        RowItem(title: 'Goal achievement', subtitle: 'Milestones and dates', chevron: true),
-      ]),
-    ]);
-  }
-}
-
-// ---- Export ----
-
-class _ExportReports extends StatefulWidget {
-  const _ExportReports();
-
-  @override
-  State<_ExportReports> createState() => _ExportReportsState();
-}
-
-class _ExportReportsState extends State<_ExportReports> {
-  int _format = 0;
-
-  @override
-  Widget build(BuildContext context) {
-    return TitledCard(title: 'Export reports', children: [
-      const Row(children: [
-        Expanded(child: LabeledField('Start', initial: 'Oct 1')),
-        SizedBox(width: 12),
-        Expanded(child: LabeledField('End', initial: 'Nov 4')),
-      ]),
-      const SizedBox(height: 10),
-      const MutedText('End date should be on or after the start date.', size: 14),
-      const SizedBox(height: 12),
-      ButtonPair(AppButton('Monthly', onPressed: () {}), AppButton('Yearly', onPressed: () {})),
-      const SizedBox(height: 10),
-      AppButton('Custom range', onPressed: () {}),
-      const SizedBox(height: 12),
-      PillTabs(labels: const ['Excel .xlsx', 'PDF'], index: _format, onChanged: (i) => setState(() => _format = i)),
-      const SizedBox(height: 12),
-      AppButton.primary('Generate report', onPressed: () {}),
-    ]);
-  }
-}
-
-class _ReportingPeriod extends StatefulWidget {
-  const _ReportingPeriod();
-
-  @override
-  State<_ReportingPeriod> createState() => _ReportingPeriodState();
-}
-
-class _ReportingPeriodState extends State<_ReportingPeriod> {
-  int _i = 4;
-
-  @override
-  Widget build(BuildContext context) {
-    return TitledCard(title: 'Reporting period', children: [
-      const InnerTile(
-        child: Text(
-          'Oct 1 – Nov 4, 2026\nChoose an existing range or make a custom report',
-          textAlign: TextAlign.center,
-        ),
-      ),
-      const SizedBox(height: 12),
-      PillTabs(
-        labels: const ['This week', 'This month', 'Quarter', 'Year', 'Custom'],
-        index: _i,
-        layout: PillLayout.scroll,
-        onChanged: (v) => setState(() => _i = v),
-      ),
-    ]);
-  }
-}
-
-class _Categories extends StatefulWidget {
-  const _Categories();
-
-  @override
-  State<_Categories> createState() => _CategoriesState();
-}
-
-class _CategoriesState extends State<_Categories> {
-  static const _items = [
-    ('Workouts', 'Sessions and attendance'),
-    ('Strength progression', 'Lifts and PRs'),
-    ('Body composition', 'Weight, body fat, measurements'),
-    ('Muscle development', 'Self-assessment'),
-    ('Lifestyle & nutrition', 'Sleep, meals, supplements'),
-    ('Goal achievement', 'Goals and milestones'),
-  ];
-  final List<bool> _on = [true, true, true, true, false, true];
+  final String text;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
     final p = context.pal;
-    return TitledCard(title: 'Report categories', children: [
-      Text('Oct 1 – Nov 4', style: TextStyle(color: p.link, fontSize: 15)),
-      const SizedBox(height: 8),
-      for (var i = 0; i < _items.length; i++) ...[
-        if (i > 0) Divider(height: 1, color: p.divider),
-        ToggleRow(
-          title: _items[i].$1,
-          subtitle: _items[i].$2,
-          value: _on[i],
-          onChanged: (v) => setState(() => _on[i] = v),
-        ),
-      ],
-      const SizedBox(height: 12),
-      ButtonPair(AppButton('Preview', onPressed: () {}), AppButton.primary('Generate', onPressed: () {})),
-    ]);
-  }
-}
-
-class _IncludeInExport extends StatelessWidget {
-  const _IncludeInExport();
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.pal;
-    Widget dot(bool on) => Container(
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(shape: BoxShape.circle, color: on ? p.greenFill : p.tile),
-          child: on ? Icon(Icons.check, size: 15, color: p.green) : null,
-        );
-    return TitledCard(title: 'Include in export', children: [
-      RowList([
-        RowItem(title: 'Workouts', leading: dot(true)),
-        RowItem(title: 'Strength progression', leading: dot(true)),
-        RowItem(title: 'Body composition', leading: dot(true)),
-        RowItem(title: 'Muscle development', leading: dot(true)),
-        RowItem(title: 'Lifestyle & nutrition', leading: dot(false)),
-        RowItem(title: 'Goal achievement', leading: dot(false)),
+    return AppCard(
+      child: Column(children: [
+        Icon(icon, size: 36, color: p.muted),
+        const SizedBox(height: 10),
+        Text(title, textAlign: TextAlign.center, style: TextStyle(color: p.text, fontSize: 16, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 6),
+        MutedText(text, align: TextAlign.center),
       ]),
-    ]);
-  }
-}
-
-class _ReportPreview extends StatelessWidget {
-  const _ReportPreview();
-
-  @override
-  Widget build(BuildContext context) {
-    return TitledCard(title: 'Report preview', sample: true, children: [
-      const Text('Workout report · Oct 1 – Nov 4', style: TextStyle(fontWeight: FontWeight.w700)),
-      const SizedBox(height: 8),
-      const MutedText('12 sessions · 48,320 kg · 3 PRs'),
-      const SizedBox(height: 12),
-      ButtonPair(AppButton('Excel', onPressed: () {}), AppButton('PDF', onPressed: () {})),
-    ]);
-  }
-}
-
-class _ExportHistory extends StatelessWidget {
-  const _ExportHistory();
-
-  @override
-  Widget build(BuildContext context) {
-    return const TitledCard(title: 'Export history', sample: true, children: [
-      RowList([
-        RowItem(title: 'Monthly report · Oct 2026', subtitle: 'PDF · Nov 1', trailing: 'Open'),
-        RowItem(title: 'Custom · Sep 1 – Oct 15', subtitle: 'Excel · Oct 16', trailing: 'Open'),
-      ]),
-    ]);
-  }
-}
-
-class _Backup extends StatelessWidget {
-  const _Backup();
-
-  @override
-  Widget build(BuildContext context) {
-    return TitledCard(title: 'Backup & restore', children: [
-      const MutedText('Full app data, separate from Excel / PDF reports.', size: 15),
-      const SizedBox(height: 6),
-      const RowList([RowItem(title: 'Last backup', subtitle: 'Not yet made')]),
-      const SizedBox(height: 12),
-      ButtonPair(AppButton('Back up now', onPressed: () {}), AppButton('Restore…', onPressed: () {})),
-    ]);
+    );
   }
 }

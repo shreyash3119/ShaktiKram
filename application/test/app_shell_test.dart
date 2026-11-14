@@ -181,7 +181,9 @@ void main() {
 
     await tester.tap(_navLabel('Reports'));
     await tester.pumpAndSettle();
-    expect(find.text('Performance overview'), findsOneWidget);
+    // No reporting service is set up in tests, so the screen says so instead of showing sample numbers.
+    expect(find.text('Reports are not set up'), findsOneWidget);
+    expect(find.text('Performance overview'), findsNothing);
   });
 }
 

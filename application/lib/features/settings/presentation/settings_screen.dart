@@ -10,6 +10,7 @@ import '../../../core/sync/sync_status.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/cards.dart';
 import '../../../core/widgets/controls.dart';
+import '../../reports/presentation/backup_screen.dart' show lastBackupProvider;
 import 'sync_check_card.dart';
 
 /// Settings. Account, devices, sign out, sync status and the theme work now.
@@ -207,14 +208,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               RowItem(
                 title: 'Export data',
-                subtitle: 'Download monthly or yearly reports (Excel / PDF)',
+                subtitle: 'Download a report as Excel or PDF',
                 chevron: true,
-                onTap: () => context.go(AppRoutes.reports),
+                onTap: () => context.go('${AppRoutes.reports}?tab=export'),
               ),
-              const RowItem(
-                title: 'Backup & restore',
-                subtitle: 'Local backup, not cloud sync',
+              RowItem(
+                title: 'Backup & data export',
+                subtitle: 'Full backup, CSV export, check a backup file',
                 chevron: true,
+                onTap: () => context.push(AppRoutes.backup),
               ),
             ]),
           ],
@@ -446,20 +448,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ],
         ),
-        TitledCard(
-          title: 'Backup & restore',
-          children: [
-            const MutedText(
-              'Last backup: not yet made. Auto-backup: every 7 days.',
-              size: 15,
-            ),
-            const SizedBox(height: 12),
-            ButtonPair(
-              AppButton('Back up now', onPressed: () {}),
-              AppButton('Restore…', onPressed: () {}),
-            ),
-          ],
-        ),
+        const _BackupCard(),
       ],
     );
   }
@@ -469,4 +458,27 @@ String _clock(DateTime t) {
   final h = t.hour % 12 == 0 ? 12 : t.hour % 12;
   final m = t.minute.toString().padLeft(2, '0');
   return '$h:$m ${t.hour < 12 ? 'am' : 'pm'}';
+}
+
+/// Where backups are made, and the date of the last one made from this phone. No automatic backup exists.
+class _BackupCard extends ConsumerWidget {
+  const _BackupCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final last = ref.watch(lastBackupProvider).valueOrNull;
+    return TitledCard(
+      title: 'Backup',
+      children: [
+        MutedText(
+          last == null
+              ? 'No backup has been made from this phone yet. Backups are never made automatically.'
+              : 'Last backup made from this phone: ${last.createdAt.toLocal().toString().substring(0, 16)}. Backups are never made automatically.',
+          size: 15,
+        ),
+        const SizedBox(height: 12),
+        AppButton('Backup & data export', onPressed: () => context.push(AppRoutes.backup)),
+      ],
+    );
+  }
 }

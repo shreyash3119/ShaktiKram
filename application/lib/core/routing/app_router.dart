@@ -9,6 +9,7 @@ import '../../features/auth/presentation/splash_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/lifestyle/presentation/lifestyle_screen.dart';
 import '../../features/progress/presentation/progress_screen.dart';
+import '../../features/reports/presentation/backup_screen.dart';
 import '../../features/reports/presentation/reports_screen.dart';
 import '../../features/settings/presentation/devices_screen.dart';
 import '../../features/training/presentation/workout_session_screen.dart';
@@ -27,6 +28,7 @@ class AppRoutes {
   static const reports = '/reports';
   static const settings = '/settings';
   static const devices = '/settings/devices';
+  static const backup = '/settings/backup';
   static const session = '/workout'; // full screen, outside the bottom bar
 
   // Outside the main navigation: shown while there is no usable session.
@@ -91,7 +93,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             GoRoute(path: AppRoutes.lifestyle, builder: (context, state) => const LifestyleScreen()),
           ]),
           StatefulShellBranch(routes: [
-            GoRoute(path: AppRoutes.reports, builder: (context, state) => const ReportsScreen()),
+            GoRoute(path: AppRoutes.reports, builder: (context, state) => ReportsScreen(initialTab: state.uri.queryParameters['tab'])),
           ]),
           StatefulShellBranch(routes: [
             GoRoute(
@@ -99,6 +101,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               builder: (context, state) => const SettingsScreen(),
               routes: [
                 GoRoute(path: 'devices', builder: (context, state) => const DevicesScreen()),
+                GoRoute(path: 'backup', builder: (context, state) => const BackupScreen()),
               ],
             ),
           ]),
