@@ -8,307 +8,16 @@ import '../../../core/widgets/editor_sheet.dart';
 import '../data/training_management_service.dart';
 import '../data/training_models.dart';
 import '../data/training_providers.dart';
+import 'training_editor_widgets.dart';
+
+export 'training_exercise_screens.dart'
+    show showExerciseEditor, showExerciseDetail;
 
 int? _int(String s) => int.tryParse(s.trim());
 
 // double? _num(String s) => double.tryParse(s.trim().replaceAll(',', '.'));
 
 // const _decimal = TextInputType.numberWithOptions(decimal: true);
-
-String _label(Map<String, String> byId, String? id) =>
-    id == null ? '' : (byId[id] ?? '');
-
-// ---------------------------------------------------------------------------------------------------------------
-// Exercises
-// ---------------------------------------------------------------------------------------------------------------
-
-/// Adds an exercise (no [exercise]) or edits one.
-Future<void> showExerciseEditor(BuildContext context, {Exercise? exercise}) =>
-    showEditorSheet<void>(
-      context,
-      title: exercise == null ? 'Add exercise' : 'Edit exercise',
-      builder: (_) => _ExerciseEditor(exercise: exercise),
-    );
-
-class _ExerciseEditor extends ConsumerStatefulWidget {
-  const _ExerciseEditor({this.exercise});
-
-  final Exercise? exercise;
-
-  @override
-  ConsumerState<_ExerciseEditor> createState() => _ExerciseEditorState();
-}
-
-class _ExerciseEditorState extends ConsumerState<_ExerciseEditor> {
-  late String _name = widget.exercise?.name ?? '';
-  late String _notes = widget.exercise?.notes ?? '';
-  late String? _category = widget.exercise?.category;
-  late String? _equipment = widget.exercise?.equipmentId;
-  final Set<String> _primary = {};
-  final Set<String> _secondary = {};
-  String? _error;
-  bool _busy = false;
-
-  @override
-  void initState() {
-    super.initState();
-    final e = widget.exercise;
-    if (e != null) {
-      ref.read(trainingRepositoryProvider).exerciseMuscles(e.id).then((rows) {
-        if (!mounted) return;
-        setState(() {
-          for (final r in rows) {
-            (r.role == 'primary' ? _primary : _secondary).add(r.muscleId);
-          }
-        });
-      });
-    }
-  }
-
-  Future<void> _save() async {
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    try {
-      final service = ref.read(trainingManagementServiceProvider);
-      final e = widget.exercise;
-      if (e == null) {
-        await service.createExercise(
-          name: _name,
-          category: _category,
-          equipmentId: _equipment,
-          notes: _notes,
-          primaryMuscleIds: _primary.toList(),
-          secondaryMuscleIds: _secondary.toList(),
-        );
-      } else {
-        await service.updateExercise(
-          e.id,
-          name: _name,
-          category: _category,
-          equipmentId: _equipment,
-          notes: _notes,
-          primaryMuscleIds: _primary.toList(),
-          secondaryMuscleIds: _secondary.toList(),
-        );
-      }
-      if (mounted) Navigator.of(context).pop();
-    } catch (e) {
-      if (mounted) setState(() => _error = saveErrorText(e));
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final muscles =
-        ref.watch(musclesProvider).valueOrNull ?? const <MuscleRef>[];
-    final equipment =
-        ref.watch(equipmentProvider).valueOrNull ?? const <EquipmentRef>[];
-    final options = [for (final m in muscles) (m.id, m.label)];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const FieldLabel('Name'),
-        FieldBox(
-          initial: _name,
-          hint: 'e.g. Incline dumbbell press',
-          fieldKey: const Key('exercise-name'),
-          onChanged: (v) => _name = v,
-        ),
-        const SizedBox(height: 12),
-        const FieldLabel('Category'),
-        PillTabs(
-          labels: const ['Not set', 'Compound', 'Isolation'],
-          index: _category == null ? 0 : (_category == 'compound' ? 1 : 2),
-          onChanged:
-              (i) => setState(
-                () =>
-                    _category =
-                        i == 0 ? null : (i == 1 ? 'compound' : 'isolation'),
-              ),
-        ),
-        const SizedBox(height: 12),
-        const FieldLabel('Main muscles (at least one)'),
-        ChoiceWrap(
-          options: options,
-          selected: _primary,
-          onToggle:
-              (id) => setState(() {
-                if (!_primary.remove(id)) {
-                  _primary.add(id);
-                  _secondary.remove(id);
-                }
-              }),
-        ),
-        const SizedBox(height: 12),
-        const FieldLabel('Helping muscles (optional)'),
-        ChoiceWrap(
-          options: options,
-          selected: _secondary,
-          onToggle:
-              (id) => setState(() {
-                if (!_secondary.remove(id)) {
-                  _secondary.add(id);
-                  _primary.remove(id);
-                }
-              }),
-        ),
-        if (equipment.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          const FieldLabel('Equipment (optional)'),
-          ChoiceWrap(
-            options: [for (final q in equipment) (q.id, q.label)],
-            selected: {if (_equipment != null) _equipment!},
-            onToggle:
-                (id) =>
-                    setState(() => _equipment = _equipment == id ? null : id),
-          ),
-        ],
-        const SizedBox(height: 12),
-        const FieldLabel('Notes (optional)'),
-        FieldBox(
-          initial: _notes,
-          hint: 'Setup, cues, machine number…',
-          onChanged: (v) => _notes = v,
-        ),
-        const SizedBox(height: 16),
-        FormError(_error),
-        AppButton.primary('Save exercise', onPressed: _busy ? null : _save),
-      ],
-    );
-  }
-}
-
-/// What the app knows about an exercise, with edit and deactivate.
-Future<void> showExerciseDetail(BuildContext context, String exerciseId) =>
-    showEditorSheet<void>(
-      context,
-      title: 'Exercise',
-      builder: (_) => _ExerciseDetail(exerciseId: exerciseId),
-    );
-
-class _ExerciseDetail extends ConsumerWidget {
-  const _ExerciseDetail({required this.exerciseId});
-
-  final String exerciseId;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final p = context.pal;
-    final exercise =
-        [
-          for (final e
-              in ref.watch(exerciseLibraryProvider).valueOrNull ??
-                  const <Exercise>[])
-            if (e.id == exerciseId) e,
-        ].firstOrNull;
-    if (exercise == null) {
-      return const MutedText('This exercise is not on this phone.');
-    }
-    final muscles = {
-      for (final m
-          in ref.watch(musclesProvider).valueOrNull ?? const <MuscleRef>[])
-        m.id: m.label,
-    };
-    final equipment = {
-      for (final q
-          in ref.watch(equipmentProvider).valueOrNull ?? const <EquipmentRef>[])
-        q.id: q.label,
-    };
-    final links =
-        ref.watch(exerciseMusclesProvider(exerciseId)).valueOrNull ??
-        const <({String muscleId, String role})>[];
-    String names(String role) => [
-      for (final l in links)
-        if (l.role == role) _label(muscles, l.muscleId),
-    ].where((t) => t.isNotEmpty).join(', ');
-    Widget line(String k, String v) =>
-        v.isEmpty
-            ? const SizedBox.shrink()
-            : Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: 110,
-                    child: Text(
-                      k,
-                      style: TextStyle(color: p.muted, fontSize: 14),
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      v,
-                      style: TextStyle(
-                        color: p.text,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          exercise.name,
-          style: TextStyle(
-            color: p.text,
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 12),
-        line(
-          'Category',
-          exercise.category == null
-              ? ''
-              : '${exercise.category![0].toUpperCase()}${exercise.category!.substring(1)}',
-        ),
-        line('Main muscles', names('primary')),
-        line('Helping', names('secondary')),
-        line('Equipment', _label(equipment, exercise.equipmentId)),
-        line('Notes', exercise.notes ?? ''),
-        line(
-          'Status',
-          exercise.isInactive
-              ? 'Not in use since ${exercise.removedOn}'
-              : 'In use',
-        ),
-        const SizedBox(height: 8),
-        AppButton.primary(
-          'Edit',
-          onPressed: () {
-            Navigator.of(context).pop();
-            showExerciseEditor(context, exercise: exercise);
-          },
-        ),
-        const SizedBox(height: 10),
-        AppButton(
-          exercise.isInactive
-              ? 'Use this exercise again'
-              : 'Stop using this exercise',
-          onPressed: () async {
-            await ref
-                .read(trainingManagementServiceProvider)
-                .setExerciseInactive(exercise.id, !exercise.isInactive);
-            if (context.mounted) Navigator.of(context).pop();
-          },
-        ),
-        const SizedBox(height: 8),
-        const MutedText(
-          'Past workouts keep the exercise either way. Nothing is deleted.',
-        ),
-      ],
-    );
-  }
-}
 
 /// Lets the person pick one exercise (not in [exclude]); returns its id.
 Future<String?> pickExercise(
@@ -519,19 +228,28 @@ class _TemplateEditorState extends ConsumerState<_TemplateEditor> {
               const <Exercise>[])
         e.id: e.name,
     };
-    Widget small(
-      String hint,
+    final totalSets = _lines.fold<int>(0, (n, l) => n + (_int(l.sets) ?? 0));
+    Widget field(
+      String label,
       String initial,
       ValueChanged<String> onChanged, {
       Key? key,
+      String? suffix,
     }) => Expanded(
-      child: FieldBox(
-        initial: initial,
-        hint: hint,
-        keyboard: TextInputType.number,
-        height: 48,
-        fieldKey: key,
-        onChanged: onChanged,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FieldLabel(label),
+          FieldBox(
+            initial: initial,
+            keyboard: TextInputType.number,
+            height: 52,
+            fieldKey: key,
+            textAlign: TextAlign.start,
+            suffix: suffix,
+            onChanged: onChanged,
+          ),
+        ],
       ),
     );
     return Column(
@@ -542,17 +260,42 @@ class _TemplateEditorState extends ConsumerState<_TemplateEditor> {
           initial: _name,
           hint: 'e.g. Push day',
           fieldKey: const Key('template-name'),
+          textAlign: TextAlign.start,
           onChanged: (v) => _name = v,
         ),
-        const SizedBox(height: 12),
-        const FieldLabel('Exercises'),
-        if (_lines.isEmpty) const MutedText('No exercises yet.'),
+        const SizedBox(height: 18),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'EXERCISES',
+                style: TextStyle(
+                  color: p.muted,
+                  fontSize: 13.5,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ),
+            if (_lines.isNotEmpty)
+              Text(
+                '${_lines.length} ${_lines.length == 1 ? 'exercise' : 'exercises'} · $totalSets ${totalSets == 1 ? 'set' : 'sets'}',
+                key: const Key('template-summary'),
+                style: TextStyle(color: p.muted, fontSize: 14),
+              ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        if (_lines.isEmpty)
+          const Padding(
+            padding: EdgeInsets.only(bottom: 12),
+            child: MutedText('No exercises yet.'),
+          ),
         for (var i = 0; i < _lines.length; i++)
           Padding(
             key: ValueKey('line-${_lines[i].exerciseId}'),
             padding: const EdgeInsets.only(bottom: 12),
-            child: InnerTile(
-              padding: const EdgeInsets.all(12),
+            child: EditorPanel(
+              padding: const EdgeInsets.all(18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -563,12 +306,13 @@ class _TemplateEditorState extends ConsumerState<_TemplateEditor> {
                           '${i + 1}. ${names[_lines[i].exerciseId] ?? 'Exercise'}',
                           style: TextStyle(
                             color: p.text,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
                       ),
-                      IconButton(
+                      SquareIconButton(
+                        icon: Icons.arrow_upward,
                         tooltip: 'Move up',
                         onPressed:
                             i == 0
@@ -577,9 +321,10 @@ class _TemplateEditorState extends ConsumerState<_TemplateEditor> {
                                   () =>
                                       _lines.insert(i - 1, _lines.removeAt(i)),
                                 ),
-                        icon: const Icon(Icons.arrow_upward, size: 20),
                       ),
-                      IconButton(
+                      const SizedBox(width: 8),
+                      SquareIconButton(
+                        icon: Icons.arrow_downward,
                         tooltip: 'Move down',
                         onPressed:
                             i == _lines.length - 1
@@ -588,35 +333,42 @@ class _TemplateEditorState extends ConsumerState<_TemplateEditor> {
                                   () =>
                                       _lines.insert(i + 1, _lines.removeAt(i)),
                                 ),
-                        icon: const Icon(Icons.arrow_downward, size: 20),
                       ),
-                      IconButton(
+                      const SizedBox(width: 8),
+                      SquareIconButton(
+                        icon: Icons.close,
                         tooltip: 'Remove',
+                        danger: true,
                         onPressed: () => setState(() => _lines.removeAt(i)),
-                        icon: Icon(Icons.close, size: 20, color: p.red),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 12),
                   Row(
                     children: [
-                      small('Sets', _lines[i].sets, (v) => _lines[i].sets = v),
-                      const SizedBox(width: 8),
-                      small(
-                        'Reps min',
+                      field('Sets', _lines[i].sets, (v) => _lines[i].sets = v),
+                      const SizedBox(width: 14),
+                      field(
+                        'Rest',
+                        _lines[i].rest,
+                        (v) => _lines[i].rest = v,
+                        suffix: 's',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      field(
+                        'Min reps',
                         _lines[i].repMin,
                         (v) => _lines[i].repMin = v,
                       ),
-                      const SizedBox(width: 8),
-                      small(
-                        'Reps max',
+                      const SizedBox(width: 14),
+                      field(
+                        'Max reps',
                         _lines[i].repMax,
                         (v) => _lines[i].repMax = v,
-                      ),
-                      const SizedBox(width: 8),
-                      small(
-                        'Rest s',
-                        _lines[i].rest,
-                        (v) => _lines[i].rest = v,
                       ),
                     ],
                   ),
@@ -624,7 +376,7 @@ class _TemplateEditorState extends ConsumerState<_TemplateEditor> {
               ),
             ),
           ),
-        AppButton('Add exercise', onPressed: _add),
+        DashedButton('+ Add exercise', onPressed: _add),
         const SizedBox(height: 16),
         FormError(_error),
         AppButton.primary('Save template', onPressed: _busy ? null : _save),
@@ -770,6 +522,8 @@ class _SplitEditorState extends ConsumerState<_SplitEditor> {
               const <TemplateVersion>[])
         t.templateId: t.name,
     };
+    final weekly = _pattern == 'fixed_weekly';
+    final full = weekly && _days.length >= 7;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -778,30 +532,76 @@ class _SplitEditorState extends ConsumerState<_SplitEditor> {
           initial: _name,
           hint: 'e.g. Push Pull Legs',
           fieldKey: const Key('split-name'),
+          textAlign: TextAlign.start,
           onChanged: (v) => _name = v,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 18),
         const FieldLabel('How the days repeat'),
         PillTabs(
           labels: const ['Weekly', 'Rolling', 'Custom'],
           index: _patterns.indexOf(_pattern),
+          container: true,
           onChanged: (i) => setState(() => _pattern = _patterns[i]),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         MutedText(
-          _pattern == 'fixed_weekly'
-              ? 'Day 1 is Monday, day 2 Tuesday and so on (up to 7 days).'
+          weekly
+              ? 'Day 1 is Monday, day 2 is Tuesday and so on, up to 7 days.'
               : 'The days repeat in order, one after another, whatever the weekday.',
+          size: 15,
         ),
-        const SizedBox(height: 12),
-        const FieldLabel('Days'),
-        if (_days.isEmpty) const MutedText('No days yet. Add your first day.'),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            const Expanded(child: FieldLabel('Days')),
+            Text(
+              weekly
+                  ? '${_days.length} of 7'
+                  : '${_days.length} ${_days.length == 1 ? 'day' : 'days'}',
+              key: const Key('split-day-count'),
+              style: TextStyle(color: p.muted, fontSize: 14),
+            ),
+          ],
+        ),
+        if (_days.isEmpty)
+          EditorPanel(
+            padding: const EdgeInsets.fromLTRB(18, 22, 18, 18),
+            child: Column(
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: p.card,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(Icons.info_outline, color: p.link),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'No days yet',
+                  style: TextStyle(
+                    color: p.text,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const MutedText(
+                  'Add your first training or rest day.',
+                  size: 15,
+                ),
+                const SizedBox(height: 16),
+                DashedButton('+ Add day', onPressed: _addDay),
+              ],
+            ),
+          ),
         for (var i = 0; i < _days.length; i++)
           Padding(
             key: ObjectKey(_days[i]),
             padding: const EdgeInsets.only(bottom: 12),
-            child: InnerTile(
-              padding: const EdgeInsets.all(12),
+            child: EditorPanel(
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -812,12 +612,13 @@ class _SplitEditorState extends ConsumerState<_SplitEditor> {
                           'Day ${i + 1}',
                           style: TextStyle(
                             color: p.muted,
-                            fontSize: 13,
+                            fontSize: 14,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
-                      IconButton(
+                      SquareIconButton(
+                        icon: Icons.arrow_upward,
                         tooltip: 'Move up',
                         onPressed:
                             i == 0
@@ -825,9 +626,10 @@ class _SplitEditorState extends ConsumerState<_SplitEditor> {
                                 : () => setState(
                                   () => _days.insert(i - 1, _days.removeAt(i)),
                                 ),
-                        icon: const Icon(Icons.arrow_upward, size: 20),
                       ),
-                      IconButton(
+                      const SizedBox(width: 8),
+                      SquareIconButton(
+                        icon: Icons.arrow_downward,
                         tooltip: 'Move down',
                         onPressed:
                             i == _days.length - 1
@@ -835,19 +637,22 @@ class _SplitEditorState extends ConsumerState<_SplitEditor> {
                                 : () => setState(
                                   () => _days.insert(i + 1, _days.removeAt(i)),
                                 ),
-                        icon: const Icon(Icons.arrow_downward, size: 20),
                       ),
-                      IconButton(
+                      const SizedBox(width: 8),
+                      SquareIconButton(
+                        icon: Icons.close,
                         tooltip: 'Remove day',
+                        danger: true,
                         onPressed: () => setState(() => _days.removeAt(i)),
-                        icon: Icon(Icons.close, size: 20, color: p.red),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 10),
                   FieldBox(
                     initial: _days[i].label,
                     hint: 'Day name, e.g. Chest + Shoulders',
                     height: 48,
+                    textAlign: TextAlign.start,
                     fieldKey: Key('day-name-$i'),
                     onChanged: (v) => _days[i].label = v,
                   ),
@@ -868,29 +673,38 @@ class _SplitEditorState extends ConsumerState<_SplitEditor> {
               ),
             ),
           ),
-        AppButton(
-          'Add day',
-          onPressed:
-              () => setState(
-                () => _days.add(_DayLine(label: 'Day ${_days.length + 1}')),
-              ),
+        if (_days.isNotEmpty) DashedButton('+ Add day', onPressed: full ? null : _addDay),
+        const SizedBox(height: 18),
+        const FieldLabel('Notes · optional'),
+        FieldBox(
+          initial: _notes,
+          hint: 'Anything to remember about this split',
+          height: 104,
+          multiline: true,
+          fieldKey: const Key('split-notes'),
+          onChanged: (v) => _notes = v,
         ),
-        const SizedBox(height: 12),
-        const FieldLabel('Notes (optional)'),
-        FieldBox(initial: _notes, onChanged: (v) => _notes = v),
-        if (widget.split == null)
-          ToggleRow(
-            title: 'Make this the active split',
-            subtitle: 'The split you follow now. Only one is active.',
-            value: _activate,
-            onChanged: (v) => setState(() => _activate = v),
+        if (widget.split == null) ...[
+          const SizedBox(height: 14),
+          EditorPanel(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+            child: ToggleRow(
+              title: 'Make this the active split',
+              subtitle: 'The split you follow now. Only one is active.',
+              value: _activate,
+              onChanged: (v) => setState(() => _activate = v),
+            ),
           ),
-        const SizedBox(height: 12),
+        ],
+        const SizedBox(height: 16),
         FormError(_error),
         AppButton.primary('Save split', onPressed: _busy ? null : _save),
       ],
     );
   }
+
+  void _addDay() =>
+      setState(() => _days.add(_DayLine(label: 'Day ${_days.length + 1}')));
 }
 
 class _TemplatePicker extends ConsumerWidget {

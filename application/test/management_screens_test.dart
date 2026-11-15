@@ -69,15 +69,8 @@ void main() {
       find.byKey(const Key('exercise-name')),
       'Incline press',
     );
-    await _tapVisible(
-      tester,
-      find
-          .descendant(
-            of: find.byType(BottomSheet),
-            matching: find.text('Chest'),
-          )
-          .first,
-    );
+    await _tapVisible(tester, find.byKey(const Key('muscle-group-chest')));
+    await _tapVisible(tester, find.byKey(Key('muscle-${uid(1)}')));
     await _tapVisible(tester, find.text('Save exercise'));
 
     expect((await h.local.list('exercises')).single['name'], 'Incline press');
@@ -114,7 +107,7 @@ void main() {
 
     await _tapVisible(tester, find.text('Create a split'));
     await tester.enterText(find.byKey(const Key('split-name')), 'PPL');
-    await _tapVisible(tester, find.text('Add day'));
+    await _tapVisible(tester, find.text('+ Add day'));
     await tester.enterText(find.byKey(const Key('day-name-0')), 'Push');
     await _tapVisible(tester, find.text('Save split'));
 

@@ -360,4 +360,117 @@ void main() {
       await expectLater(management.assignTemplate('not-a-date', version), throwsA(isA<ManagementError>()));
     });
   });
+
+  group('Training stage 2: editors and exercise details', () {
+    Future<Harness> seeded() async {
+      final h = Harness.ready();
+      await h.local.applyPulled([
+        pulled('muscles', 1, {'id': uid(1), 'key': 'quadriceps', 'label': 'Quadriceps', 'group_key': 'legs'}),
+        pulled('muscles', 2, {'id': uid(2), 'key': 'glutes', 'label': 'Glutes', 'group_key': 'legs'}),
+        pulled('equipment', 3, {'id': uid(3), 'key': 'barbell', 'label': 'Barbell'}),
+        pulled('exercises', 4, {'id': uid(4), 'name': 'Front Squat', 'category': 'compound', 'equipment_id': uid(3), 'notes': 'Bar racked on the front shoulders.', 'is_custom': false}),
+        pulled('exercise_muscles', 5, {'id': uid(5), 'exercise_id': uid(4), 'muscle_id': uid(1), 'role': 'primary'}),
+        pulled('exercise_muscles', 6, {'id': uid(6), 'exercise_id': uid(4), 'muscle_id': uid(2), 'role': 'secondary'}),
+        pulled('personal_records', 7, {'id': uid(7), 'kind': 'max_weight', 'value': 100, 'achieved_on': '2026-11-01', 'session_id': uid(9), 'exercise_id': uid(4), 'weight_kg': 100, 'reps': 5}),
+        pulled('personal_records', 8, {'id': uid(8), 'kind': 'est_1rm', 'value': 116.7, 'achieved_on': '2026-11-01', 'session_id': uid(9), 'exercise_id': uid(4)}),
+      ], 8);
+      return h;
+    }
+
+    testWidgets('exercise details page shows tags, muscles, personal records and notes', (tester) async {
+      final h = await seeded();
+      await _open(tester, h);
+      await _pill(tester, 'Exercises');
+      await _tap(tester, find.byKey(Key('exercise-${uid(4)}')));
+
+      expect(find.text('Exercise details'), findsOneWidget);
+      expect(find.text('Front Squat'), findsWidgets);
+      expect(find.text('Compound'), findsOneWidget);
+      expect(find.text('Barbell'), findsOneWidget);
+      expect(find.text('Quadriceps'), findsOneWidget);
+      expect(find.text('Glutes'), findsOneWidget);
+      expect(find.text('100 kg × 5'), findsOneWidget);
+      expect(find.text('116.7 kg'), findsOneWidget);
+      expect(find.text('Bar racked on the front shoulders.'), findsOneWidget);
+      expect(find.text('Archive exercise'), findsOneWidget);
+    });
+
+    testWidgets('archiving from the details page takes the exercise out of use', (tester) async {
+      final h = await seeded();
+      await _open(tester, h);
+      await _pill(tester, 'Exercises');
+      await _tap(tester, find.byKey(Key('exercise-${uid(4)}')));
+      await _tap(tester, find.text('Archive exercise'));
+
+      final row = (await h.local.list('exercises')).singleWhere((r) => r['id'] == uid(4));
+      expect(row['removed_on'], isNotNull);
+    });
+
+    testWidgets('edit exercise opens as a page with the current values and saves a change', (tester) async {
+      final h = await seeded();
+      await _open(tester, h);
+      await _pill(tester, 'Exercises');
+      await _tap(tester, find.byKey(Key('exercise-${uid(4)}')));
+      await _tap(tester, find.byKey(const Key('exercise-edit')));
+
+      expect(find.text('Edit exercise'), findsOneWidget);
+      expect(find.text('Movement type'), findsOneWidget);
+      expect(find.text('Primary'), findsOneWidget);
+      expect(find.text('Secondary'), findsOneWidget);
+
+      await tester.enterText(find.byKey(const Key('exercise-name')), 'Barbell Front Squat');
+      await _tap(tester, find.text('Save exercise'));
+
+      expect((await h.local.list('exercises')).singleWhere((r) => r['id'] == uid(4))['name'], 'Barbell Front Squat');
+    });
+
+    testWidgets('add exercise: the muscle group tabs switch the chips and the badge counts the choice', (tester) async {
+      final h = await seeded();
+      await h.local.applyPulled([
+        pulled('muscles', 20, {'id': uid(20), 'key': 'upper_chest', 'label': 'Upper chest', 'group_key': 'chest'}),
+      ], 20);
+      await _open(tester, h);
+      await _pill(tester, 'Exercises');
+      await _tap(tester, find.byKey(const Key('exercise-new')));
+
+      expect(find.text('required'), findsOneWidget);
+      await _tap(tester, find.byKey(const Key('muscle-group-chest')));
+      expect(find.byKey(Key('muscle-${uid(20)}')), findsOneWidget);
+      expect(find.byKey(Key('muscle-${uid(1)}')), findsNothing);
+      await _tap(tester, find.byKey(Key('muscle-${uid(20)}')));
+      expect(find.text('1 selected · required'), findsOneWidget);
+      expect(find.text('Optional · none selected'), findsOneWidget);
+    });
+
+    testWidgets('new template shows the exercise and set totals', (tester) async {
+      final h = Harness.ready();
+      final container = await _open(tester, h);
+      await _exercise(container);
+      await _pill(tester, 'Splits');
+      await _tap(tester, find.text('New template'));
+      expect(find.text('EXERCISES'), findsOneWidget);
+      expect(find.byKey(const Key('template-summary')), findsNothing);
+
+      await _tap(tester, find.text('+ Add exercise'));
+      await _tap(tester, find.text('Bench'));
+      expect(find.text('1 exercise · 3 sets'), findsOneWidget);
+      expect(find.text('Min reps'), findsOneWidget);
+      expect(find.text('Max reps'), findsOneWidget);
+      expect(find.text('Rest'), findsOneWidget);
+    });
+
+    testWidgets('new split shows the empty state and counts days out of seven', (tester) async {
+      await _open(tester, Harness.ready());
+      await _pill(tester, 'Splits');
+      await _tap(tester, find.text('Create a split'));
+
+      expect(find.text('No days yet'), findsOneWidget);
+      expect(find.text('0 of 7'), findsOneWidget);
+      await _tap(tester, find.text('+ Add day'));
+      expect(find.text('No days yet'), findsNothing);
+      expect(find.text('1 of 7'), findsOneWidget);
+      await _tap(tester, find.text('Rolling'));
+      expect(find.text('1 day'), findsOneWidget);
+    });
+  });
 }

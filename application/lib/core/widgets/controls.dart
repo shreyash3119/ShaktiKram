@@ -267,6 +267,9 @@ class FieldBox extends StatefulWidget {
     this.onChanged,
     this.fieldKey,
     this.height = 56,
+    this.textAlign = TextAlign.center,
+    this.suffix,
+    this.multiline = false,
   });
 
   final String initial;
@@ -274,7 +277,18 @@ class FieldBox extends StatefulWidget {
   final TextInputType? keyboard;
   final ValueChanged<String>? onChanged;
   final Key? fieldKey;
+
+  /// The height, or with [multiline] the minimum height.
   final double height;
+
+  /// Centred by default; forms that follow the new designs pass [TextAlign.start].
+  final TextAlign textAlign;
+
+  /// A unit shown at the right edge, such as "s".
+  final String? suffix;
+
+  /// A free-text box that grows with what is typed.
+  final bool multiline;
 
   @override
   State<FieldBox> createState() => _FieldBoxState();
@@ -294,18 +308,25 @@ class _FieldBoxState extends State<FieldBox> {
   @override
   Widget build(BuildContext context) {
     final p = context.pal;
+    final start = widget.textAlign == TextAlign.start || widget.multiline;
     return Container(
-      height: widget.height,
+      height: widget.multiline ? null : widget.height,
+      constraints:
+          widget.multiline ? BoxConstraints(minHeight: widget.height) : null,
       decoration: BoxDecoration(
         color: p.tile,
         borderRadius: BorderRadius.circular(AppTheme.radius),
+        border: start ? Border.all(color: p.divider) : null,
       ),
-      alignment: Alignment.center,
+      alignment: widget.multiline ? Alignment.topLeft : Alignment.center,
       child: TextField(
         key: widget.fieldKey,
         controller: _controller,
-        keyboardType: widget.keyboard,
-        textAlign: TextAlign.center,
+        keyboardType:
+            widget.multiline ? TextInputType.multiline : widget.keyboard,
+        minLines: widget.multiline ? 3 : null,
+        maxLines: widget.multiline ? null : 1,
+        textAlign: widget.multiline ? TextAlign.start : widget.textAlign,
         onChanged: widget.onChanged,
         style: TextStyle(
           color: p.text,
@@ -324,7 +345,12 @@ class _FieldBoxState extends State<FieldBox> {
           focusedBorder: InputBorder.none,
           filled: false,
           isDense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+          suffixText: widget.suffix,
+          suffixStyle: TextStyle(color: p.muted, fontSize: 15),
+          contentPadding:
+              widget.multiline
+                  ? const EdgeInsets.all(16)
+                  : EdgeInsets.symmetric(horizontal: start ? 16 : 8),
         ),
       ),
     );
