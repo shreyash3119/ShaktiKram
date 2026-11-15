@@ -554,6 +554,23 @@ class TrainingManagementService {
     await writer.delete('schedule_entries', existing.id);
   }
 
+  /// Plans [localDate] as a one-off workout from a template, with no split involved. An unfinished entry on that date
+  /// is replaced. A finished one is left alone.
+  Future<void> assignTemplate(String localDate, TemplateVersion template) async {
+    if (DateTime.tryParse(localDate) == null) throw const ManagementError('That date is not valid.');
+    final existing = await repository.scheduleFor(localDate);
+    if (existing != null && existing.status == 'completed') throw const ManagementError('That workout is already done, so it stays on the schedule.');
+    await writer.apply([
+      if (existing != null) PendingChange.delete('schedule_entries', existing.id),
+      PendingChange.upsert('schedule_entries', {
+        'local_date': localDate,
+        'is_rest_day': false,
+        'status': 'planned',
+        'template_version_id': template.id,
+      }),
+    ]);
+  }
+
   /// Fills [days] dates from [from] following the split's pattern. Dates that already have an entry are left alone.
   /// Returns how many days were planned.
   Future<int> planFromSplit(ActiveSplit split, String from, int days) async {

@@ -146,7 +146,8 @@ void main() {
     await _tapPill(tester, 'Splits');
     expect(find.text('Your splits'), findsOneWidget);
     await _tapPill(tester, 'Exercises');
-    expect(find.text('Exercise library'), findsOneWidget);
+    expect(find.text('Browse and search movements'), findsOneWidget);
+    expect(find.byKey(const Key('exercise-search')), findsOneWidget);
     await _tapPill(tester, 'History');
     expect(
       find.textContaining('Finished workouts show up here'),
@@ -163,12 +164,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(scheduleHeading, findsOneWidget);
-    expect(
-      find.text(
-        'Planned rest days and approved breaks do not count as missed.',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('No split active'), findsOneWidget);
+    expect(find.text('THIS WEEK'), findsOneWidget);
   });
 
   testWidgets('Progress, Lifestyle and Reports sub-tabs switch the content', (

@@ -64,7 +64,7 @@ void main() {
     await _open(tester, h, 'Training');
     await _pill(tester, 'Exercises');
 
-    await _tapVisible(tester, find.text('Add an exercise'));
+    await _tapVisible(tester, find.byKey(const Key('exercise-new')));
     await tester.enterText(
       find.byKey(const Key('exercise-name')),
       'Incline press',
@@ -93,7 +93,7 @@ void main() {
       await _open(tester, h, 'Training');
       await _pill(tester, 'Exercises');
 
-      await _tapVisible(tester, find.text('Add an exercise'));
+      await _tapVisible(tester, find.byKey(const Key('exercise-new')));
       await tester.enterText(
         find.byKey(const Key('exercise-name')),
         'Incline press',
@@ -145,15 +145,11 @@ void main() {
       await _open(tester, h, 'Training');
       await _pill(tester, 'History');
 
-      expect(
-        find.textContaining('No sets logged, not counted'),
-        findsOneWidget,
-      );
-      await tester.tap(find.text('Test session'));
-      await tester.pumpAndSettle();
+      expect(find.text('0 sets · not counted'), findsOneWidget);
+      await _tapVisible(tester, find.text('Open'));
       expect(find.textContaining('not counted in your totals'), findsWidgets);
 
-      await _tapVisible(tester, find.text('Discard this workout'));
+      await _tapVisible(tester, find.text('Discard workout'));
       await tester.tap(find.text('Discard').last);
       await tester.pumpAndSettle();
       expect(await h.local.list('workout_sessions'), isEmpty);

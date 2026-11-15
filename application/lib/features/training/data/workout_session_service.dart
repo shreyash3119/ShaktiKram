@@ -266,6 +266,28 @@ class WorkoutSessionService {
     await writer.apply(changes);
   }
 
+  /// Opens a finished workout again so sets can be added. Only for a workout with no logged working sets (a workout
+  /// that counts is never reopened). Exercises that were marked "Not done" when it was finished are restored, and a
+  /// linked schedule entry goes back to planned. Throws [SessionAlreadyActive] when another workout is in progress.
+  Future<void> reopenSession(String sessionId) async {
+    final session = await repository.session(sessionId);
+    if (session == null) throw StateError('That workout is not on this phone.');
+    if (session.isActive) return;
+    final active = await repository.activeSession();
+    if (active != null) throw SessionAlreadyActive(active.id);
+    final exercises = await repository.sessionExercises(sessionId);
+    for (final e in exercises) {
+      if ((await repository.sets(e.id)).any((s) => s.isWorking)) throw StateError('This workout has logged sets, so it cannot be reopened.');
+    }
+    final changes = <PendingChange>[
+      for (final e in exercises)
+        if (e.isSkipped) PendingChange.upsert(_exercise, {'status': e.templateExerciseId == null ? 'added' : 'done', 'skip_reason': null}, id: e.id),
+      PendingChange.upsert(_session, {'status': 'in_progress', 'ended_at': null}, id: sessionId),
+      if (session.scheduleEntryId != null) PendingChange.upsert('schedule_entries', {'status': 'planned', 'session_id': null}, id: session.scheduleEntryId),
+    ];
+    await writer.apply(changes);
+  }
+
   /// Throws the workout away: its sets, exercises and the session itself are soft-deleted.
   Future<void> discardSession(String sessionId) async {
     final changes = <PendingChange>[];
