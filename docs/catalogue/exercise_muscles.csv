@@ -1,0 +1,420 @@
+exercise_key,exercise_name,muscle_key,muscle_group,role
+bench_press,Bench press,middle_chest,chest,primary
+bench_press,Bench press,front_delts,shoulders,secondary
+bench_press,Bench press,triceps_lateral_head,arms,secondary
+bench_press,Bench press,triceps_medial_head,arms,secondary
+incline_bench_press,Incline bench press,upper_chest,chest,primary
+incline_bench_press,Incline bench press,front_delts,shoulders,secondary
+incline_bench_press,Incline bench press,triceps_lateral_head,arms,secondary
+incline_bench_press,Incline bench press,triceps_medial_head,arms,secondary
+decline_bench_press,Decline bench press,lower_chest,chest,primary
+decline_bench_press,Decline bench press,triceps_lateral_head,arms,secondary
+decline_bench_press,Decline bench press,triceps_medial_head,arms,secondary
+decline_bench_press,Decline bench press,front_delts,shoulders,secondary
+dumbbell_bench_press,Dumbbell bench press,middle_chest,chest,primary
+dumbbell_bench_press,Dumbbell bench press,front_delts,shoulders,secondary
+dumbbell_bench_press,Dumbbell bench press,triceps_lateral_head,arms,secondary
+dumbbell_bench_press,Dumbbell bench press,triceps_medial_head,arms,secondary
+incline_dumbbell_press,Incline dumbbell press,upper_chest,chest,primary
+incline_dumbbell_press,Incline dumbbell press,front_delts,shoulders,secondary
+incline_dumbbell_press,Incline dumbbell press,triceps_lateral_head,arms,secondary
+incline_dumbbell_press,Incline dumbbell press,triceps_medial_head,arms,secondary
+decline_dumbbell_press,Decline dumbbell press,lower_chest,chest,primary
+decline_dumbbell_press,Decline dumbbell press,triceps_lateral_head,arms,secondary
+decline_dumbbell_press,Decline dumbbell press,triceps_medial_head,arms,secondary
+decline_dumbbell_press,Decline dumbbell press,front_delts,shoulders,secondary
+smith_machine_bench_press,Smith machine bench press,middle_chest,chest,primary
+smith_machine_bench_press,Smith machine bench press,front_delts,shoulders,secondary
+smith_machine_bench_press,Smith machine bench press,triceps_lateral_head,arms,secondary
+smith_machine_bench_press,Smith machine bench press,triceps_medial_head,arms,secondary
+smith_machine_incline_press,Smith machine incline press,upper_chest,chest,primary
+smith_machine_incline_press,Smith machine incline press,front_delts,shoulders,secondary
+smith_machine_incline_press,Smith machine incline press,triceps_lateral_head,arms,secondary
+smith_machine_incline_press,Smith machine incline press,triceps_medial_head,arms,secondary
+machine_chest_press,Machine chest press,middle_chest,chest,primary
+machine_chest_press,Machine chest press,front_delts,shoulders,secondary
+machine_chest_press,Machine chest press,triceps_lateral_head,arms,secondary
+machine_chest_press,Machine chest press,triceps_medial_head,arms,secondary
+dumbbell_fly,Dumbbell fly,middle_chest,chest,primary
+dumbbell_fly,Dumbbell fly,front_delts,shoulders,secondary
+incline_dumbbell_fly,Incline dumbbell fly,upper_chest,chest,primary
+incline_dumbbell_fly,Incline dumbbell fly,front_delts,shoulders,secondary
+cable_crossover,Cable crossover,middle_chest,chest,primary
+cable_crossover,Cable crossover,front_delts,shoulders,secondary
+low_to_high_cable_fly,Low-to-high cable fly,upper_chest,chest,primary
+low_to_high_cable_fly,Low-to-high cable fly,front_delts,shoulders,secondary
+high_to_low_cable_fly,High-to-low cable fly,lower_chest,chest,primary
+high_to_low_cable_fly,High-to-low cable fly,front_delts,shoulders,secondary
+pec_deck_fly,Pec deck fly,middle_chest,chest,primary
+pec_deck_fly,Pec deck fly,front_delts,shoulders,secondary
+push_ups,Push-ups,middle_chest,chest,primary
+push_ups,Push-ups,front_delts,shoulders,secondary
+push_ups,Push-ups,triceps_lateral_head,arms,secondary
+push_ups,Push-ups,triceps_medial_head,arms,secondary
+decline_push_ups,Decline push-ups,upper_chest,chest,primary
+decline_push_ups,Decline push-ups,front_delts,shoulders,secondary
+decline_push_ups,Decline push-ups,triceps_lateral_head,arms,secondary
+decline_push_ups,Decline push-ups,triceps_medial_head,arms,secondary
+chest_dips,Chest dips,lower_chest,chest,primary
+chest_dips,Chest dips,triceps_lateral_head,arms,secondary
+chest_dips,Chest dips,triceps_medial_head,arms,secondary
+chest_dips,Chest dips,front_delts,shoulders,secondary
+resistance_band_chest_press,Resistance band chest press,middle_chest,chest,primary
+resistance_band_chest_press,Resistance band chest press,front_delts,shoulders,secondary
+resistance_band_chest_press,Resistance band chest press,triceps_lateral_head,arms,secondary
+resistance_band_chest_press,Resistance band chest press,triceps_medial_head,arms,secondary
+pull_ups,Pull-ups,lats,back,primary
+pull_ups,Pull-ups,biceps,arms,secondary
+pull_ups,Pull-ups,brachialis,arms,secondary
+pull_ups,Pull-ups,rhomboids,back,secondary
+chin_ups,Chin-ups,lats,back,primary
+chin_ups,Chin-ups,biceps,arms,secondary
+chin_ups,Chin-ups,brachialis,arms,secondary
+neutral_grip_pull_ups,Neutral-grip pull-ups,lats,back,primary
+neutral_grip_pull_ups,Neutral-grip pull-ups,biceps,arms,secondary
+neutral_grip_pull_ups,Neutral-grip pull-ups,brachialis,arms,secondary
+neutral_grip_pull_ups,Neutral-grip pull-ups,rhomboids,back,secondary
+assisted_pull_ups,Assisted pull-ups,lats,back,primary
+assisted_pull_ups,Assisted pull-ups,biceps,arms,secondary
+assisted_pull_ups,Assisted pull-ups,brachialis,arms,secondary
+lat_pulldown,Lat pulldown,lats,back,primary
+lat_pulldown,Lat pulldown,biceps,arms,secondary
+lat_pulldown,Lat pulldown,brachialis,arms,secondary
+lat_pulldown,Lat pulldown,rhomboids,back,secondary
+close_grip_lat_pulldown,Close-grip lat pulldown,lats,back,primary
+close_grip_lat_pulldown,Close-grip lat pulldown,biceps,arms,secondary
+close_grip_lat_pulldown,Close-grip lat pulldown,brachialis,arms,secondary
+underhand_lat_pulldown,Underhand lat pulldown,lats,back,primary
+underhand_lat_pulldown,Underhand lat pulldown,biceps,arms,secondary
+underhand_lat_pulldown,Underhand lat pulldown,brachialis,arms,secondary
+straight_arm_pulldown,Straight-arm pulldown,lats,back,primary
+straight_arm_pulldown,Straight-arm pulldown,triceps_long_head,arms,secondary
+barbell_row,Barbell row,lats,back,primary
+barbell_row,Barbell row,rhomboids,back,secondary
+barbell_row,Barbell row,middle_traps,back,secondary
+barbell_row,Barbell row,rear_delts,shoulders,secondary
+barbell_row,Barbell row,biceps,arms,secondary
+barbell_row,Barbell row,spinal_erectors,back,secondary
+pendlay_row,Pendlay row,lats,back,primary
+pendlay_row,Pendlay row,rhomboids,back,secondary
+pendlay_row,Pendlay row,middle_traps,back,secondary
+pendlay_row,Pendlay row,rear_delts,shoulders,secondary
+pendlay_row,Pendlay row,biceps,arms,secondary
+pendlay_row,Pendlay row,spinal_erectors,back,secondary
+underhand_barbell_row,Underhand barbell row,lats,back,primary
+underhand_barbell_row,Underhand barbell row,biceps,arms,secondary
+underhand_barbell_row,Underhand barbell row,rhomboids,back,secondary
+underhand_barbell_row,Underhand barbell row,spinal_erectors,back,secondary
+t_bar_row,T-bar row,lats,back,primary
+t_bar_row,T-bar row,rhomboids,back,secondary
+t_bar_row,T-bar row,middle_traps,back,secondary
+t_bar_row,T-bar row,rear_delts,shoulders,secondary
+t_bar_row,T-bar row,biceps,arms,secondary
+seated_cable_row,Seated cable row,lats,back,primary
+seated_cable_row,Seated cable row,rhomboids,back,secondary
+seated_cable_row,Seated cable row,middle_traps,back,secondary
+seated_cable_row,Seated cable row,rear_delts,shoulders,secondary
+seated_cable_row,Seated cable row,biceps,arms,secondary
+wide_grip_seated_cable_row,Wide-grip seated cable row,middle_traps,back,primary
+wide_grip_seated_cable_row,Wide-grip seated cable row,rhomboids,back,secondary
+wide_grip_seated_cable_row,Wide-grip seated cable row,rear_delts,shoulders,secondary
+wide_grip_seated_cable_row,Wide-grip seated cable row,lats,back,secondary
+wide_grip_seated_cable_row,Wide-grip seated cable row,biceps,arms,secondary
+machine_row,Machine row,lats,back,primary
+machine_row,Machine row,rhomboids,back,secondary
+machine_row,Machine row,middle_traps,back,secondary
+machine_row,Machine row,rear_delts,shoulders,secondary
+machine_row,Machine row,biceps,arms,secondary
+single_arm_dumbbell_row,Single-arm dumbbell row,lats,back,primary
+single_arm_dumbbell_row,Single-arm dumbbell row,rhomboids,back,secondary
+single_arm_dumbbell_row,Single-arm dumbbell row,rear_delts,shoulders,secondary
+single_arm_dumbbell_row,Single-arm dumbbell row,biceps,arms,secondary
+chest_supported_dumbbell_row,Chest-supported dumbbell row,middle_traps,back,primary
+chest_supported_dumbbell_row,Chest-supported dumbbell row,rhomboids,back,secondary
+chest_supported_dumbbell_row,Chest-supported dumbbell row,lats,back,secondary
+chest_supported_dumbbell_row,Chest-supported dumbbell row,rear_delts,shoulders,secondary
+chest_supported_dumbbell_row,Chest-supported dumbbell row,biceps,arms,secondary
+single_arm_cable_row,Single-arm cable row,lats,back,primary
+single_arm_cable_row,Single-arm cable row,rhomboids,back,secondary
+single_arm_cable_row,Single-arm cable row,biceps,arms,secondary
+inverted_row,Inverted row,lats,back,primary
+inverted_row,Inverted row,rhomboids,back,secondary
+inverted_row,Inverted row,rear_delts,shoulders,secondary
+inverted_row,Inverted row,biceps,arms,secondary
+resistance_band_row,Resistance band row,lats,back,primary
+resistance_band_row,Resistance band row,rhomboids,back,secondary
+resistance_band_row,Resistance band row,biceps,arms,secondary
+dumbbell_pullover,Dumbbell pullover,lats,back,primary
+dumbbell_pullover,Dumbbell pullover,middle_chest,chest,secondary
+dumbbell_pullover,Dumbbell pullover,triceps_long_head,arms,secondary
+barbell_shrug,Barbell shrug,upper_traps,back,primary
+barbell_shrug,Barbell shrug,forearms,arms,secondary
+dumbbell_shrug,Dumbbell shrug,upper_traps,back,primary
+dumbbell_shrug,Dumbbell shrug,forearms,arms,secondary
+face_pull,Face pull,rear_delts,shoulders,primary
+face_pull,Face pull,middle_traps,back,secondary
+face_pull,Face pull,rhomboids,back,secondary
+band_pull_apart,Band pull-apart,rear_delts,shoulders,primary
+band_pull_apart,Band pull-apart,rhomboids,back,secondary
+band_pull_apart,Band pull-apart,middle_traps,back,secondary
+rack_pull,Rack pull,spinal_erectors,back,primary
+rack_pull,Rack pull,glutes,legs,secondary
+rack_pull,Rack pull,upper_traps,back,secondary
+rack_pull,Rack pull,forearms,arms,secondary
+rack_pull,Rack pull,hamstrings,legs,secondary
+back_extension,Back extension,spinal_erectors,back,primary
+back_extension,Back extension,glutes,legs,secondary
+back_extension,Back extension,hamstrings,legs,secondary
+superman,Superman,spinal_erectors,back,primary
+superman,Superman,glutes,legs,secondary
+overhead_press,Overhead press,front_delts,shoulders,primary
+overhead_press,Overhead press,side_delts,shoulders,secondary
+overhead_press,Overhead press,triceps_lateral_head,arms,secondary
+overhead_press,Overhead press,triceps_medial_head,arms,secondary
+overhead_press,Overhead press,upper_chest,chest,secondary
+dumbbell_shoulder_press,Dumbbell shoulder press,front_delts,shoulders,primary
+dumbbell_shoulder_press,Dumbbell shoulder press,side_delts,shoulders,secondary
+dumbbell_shoulder_press,Dumbbell shoulder press,triceps_lateral_head,arms,secondary
+dumbbell_shoulder_press,Dumbbell shoulder press,triceps_medial_head,arms,secondary
+arnold_press,Arnold press,front_delts,shoulders,primary
+arnold_press,Arnold press,side_delts,shoulders,secondary
+arnold_press,Arnold press,triceps_lateral_head,arms,secondary
+arnold_press,Arnold press,triceps_medial_head,arms,secondary
+machine_shoulder_press,Machine shoulder press,front_delts,shoulders,primary
+machine_shoulder_press,Machine shoulder press,side_delts,shoulders,secondary
+machine_shoulder_press,Machine shoulder press,triceps_lateral_head,arms,secondary
+machine_shoulder_press,Machine shoulder press,triceps_medial_head,arms,secondary
+smith_machine_shoulder_press,Smith machine shoulder press,front_delts,shoulders,primary
+smith_machine_shoulder_press,Smith machine shoulder press,side_delts,shoulders,secondary
+smith_machine_shoulder_press,Smith machine shoulder press,triceps_lateral_head,arms,secondary
+smith_machine_shoulder_press,Smith machine shoulder press,triceps_medial_head,arms,secondary
+kettlebell_press,Kettlebell press,front_delts,shoulders,primary
+kettlebell_press,Kettlebell press,side_delts,shoulders,secondary
+kettlebell_press,Kettlebell press,triceps_lateral_head,arms,secondary
+kettlebell_press,Kettlebell press,triceps_medial_head,arms,secondary
+pike_push_ups,Pike push-ups,front_delts,shoulders,primary
+pike_push_ups,Pike push-ups,side_delts,shoulders,secondary
+pike_push_ups,Pike push-ups,triceps_lateral_head,arms,secondary
+pike_push_ups,Pike push-ups,triceps_medial_head,arms,secondary
+lateral_raise,Lateral raise,side_delts,shoulders,primary
+cable_lateral_raise,Cable lateral raise,side_delts,shoulders,primary
+resistance_band_lateral_raise,Resistance band lateral raise,side_delts,shoulders,primary
+front_raise,Front raise,front_delts,shoulders,primary
+front_raise,Front raise,upper_chest,chest,secondary
+cable_front_raise,Cable front raise,front_delts,shoulders,primary
+cable_front_raise,Cable front raise,upper_chest,chest,secondary
+reverse_dumbbell_fly,Reverse dumbbell fly,rear_delts,shoulders,primary
+reverse_dumbbell_fly,Reverse dumbbell fly,rhomboids,back,secondary
+reverse_dumbbell_fly,Reverse dumbbell fly,middle_traps,back,secondary
+reverse_pec_deck_fly,Reverse pec deck fly,rear_delts,shoulders,primary
+reverse_pec_deck_fly,Reverse pec deck fly,rhomboids,back,secondary
+reverse_pec_deck_fly,Reverse pec deck fly,middle_traps,back,secondary
+cable_rear_delt_fly,Cable rear delt fly,rear_delts,shoulders,primary
+cable_rear_delt_fly,Cable rear delt fly,rhomboids,back,secondary
+band_face_pull,Resistance band face pull,rear_delts,shoulders,primary
+band_face_pull,Resistance band face pull,middle_traps,back,secondary
+band_face_pull,Resistance band face pull,rhomboids,back,secondary
+upright_row,Upright row,side_delts,shoulders,primary
+upright_row,Upright row,upper_traps,back,secondary
+upright_row,Upright row,front_delts,shoulders,secondary
+barbell_curl,Barbell curl,biceps,arms,primary
+barbell_curl,Barbell curl,brachialis,arms,secondary
+barbell_curl,Barbell curl,forearms,arms,secondary
+ez_bar_curl,EZ-bar curl,biceps,arms,primary
+ez_bar_curl,EZ-bar curl,brachialis,arms,secondary
+ez_bar_curl,EZ-bar curl,forearms,arms,secondary
+dumbbell_curl,Dumbbell curl,biceps,arms,primary
+dumbbell_curl,Dumbbell curl,brachialis,arms,secondary
+dumbbell_curl,Dumbbell curl,forearms,arms,secondary
+hammer_curl,Hammer curl,brachialis,arms,primary
+hammer_curl,Hammer curl,biceps,arms,secondary
+hammer_curl,Hammer curl,forearms,arms,secondary
+preacher_curl,Preacher curl,biceps,arms,primary
+preacher_curl,Preacher curl,brachialis,arms,secondary
+dumbbell_preacher_curl,Dumbbell preacher curl,biceps,arms,primary
+dumbbell_preacher_curl,Dumbbell preacher curl,brachialis,arms,secondary
+incline_dumbbell_curl,Incline dumbbell curl,biceps,arms,primary
+incline_dumbbell_curl,Incline dumbbell curl,brachialis,arms,secondary
+concentration_curl,Concentration curl,biceps,arms,primary
+concentration_curl,Concentration curl,brachialis,arms,secondary
+cable_curl,Cable curl,biceps,arms,primary
+cable_curl,Cable curl,brachialis,arms,secondary
+cable_curl,Cable curl,forearms,arms,secondary
+cable_rope_hammer_curl,Cable rope hammer curl,brachialis,arms,primary
+cable_rope_hammer_curl,Cable rope hammer curl,biceps,arms,secondary
+cable_rope_hammer_curl,Cable rope hammer curl,forearms,arms,secondary
+reverse_curl,Reverse curl,forearms,arms,primary
+reverse_curl,Reverse curl,brachialis,arms,secondary
+reverse_curl,Reverse curl,biceps,arms,secondary
+resistance_band_curl,Resistance band curl,biceps,arms,primary
+resistance_band_curl,Resistance band curl,brachialis,arms,secondary
+cable_triceps_pushdown,Cable triceps pushdown,triceps_lateral_head,arms,primary
+cable_triceps_pushdown,Cable triceps pushdown,triceps_medial_head,arms,secondary
+cable_triceps_pushdown,Cable triceps pushdown,triceps_long_head,arms,secondary
+rope_triceps_pushdown,Rope triceps pushdown,triceps_lateral_head,arms,primary
+rope_triceps_pushdown,Rope triceps pushdown,triceps_medial_head,arms,secondary
+rope_triceps_pushdown,Rope triceps pushdown,triceps_long_head,arms,secondary
+reverse_grip_triceps_pushdown,Reverse-grip triceps pushdown,triceps_medial_head,arms,primary
+reverse_grip_triceps_pushdown,Reverse-grip triceps pushdown,triceps_lateral_head,arms,secondary
+reverse_grip_triceps_pushdown,Reverse-grip triceps pushdown,triceps_long_head,arms,secondary
+overhead_triceps_extension,Overhead triceps extension,triceps_long_head,arms,primary
+overhead_triceps_extension,Overhead triceps extension,triceps_lateral_head,arms,secondary
+overhead_triceps_extension,Overhead triceps extension,triceps_medial_head,arms,secondary
+cable_overhead_triceps_extension,Cable overhead triceps extension,triceps_long_head,arms,primary
+cable_overhead_triceps_extension,Cable overhead triceps extension,triceps_lateral_head,arms,secondary
+cable_overhead_triceps_extension,Cable overhead triceps extension,triceps_medial_head,arms,secondary
+skull_crushers,Skull crushers,triceps_long_head,arms,primary
+skull_crushers,Skull crushers,triceps_lateral_head,arms,secondary
+skull_crushers,Skull crushers,triceps_medial_head,arms,secondary
+close_grip_bench_press,Close-grip bench press,triceps_lateral_head,arms,primary
+close_grip_bench_press,Close-grip bench press,triceps_medial_head,arms,secondary
+close_grip_bench_press,Close-grip bench press,triceps_long_head,arms,secondary
+close_grip_bench_press,Close-grip bench press,middle_chest,chest,secondary
+close_grip_bench_press,Close-grip bench press,front_delts,shoulders,secondary
+bench_dips,Bench dips,triceps_lateral_head,arms,primary
+bench_dips,Bench dips,triceps_medial_head,arms,secondary
+bench_dips,Bench dips,triceps_long_head,arms,secondary
+bench_dips,Bench dips,front_delts,shoulders,secondary
+triceps_dips,Triceps dips,triceps_lateral_head,arms,primary
+triceps_dips,Triceps dips,triceps_medial_head,arms,secondary
+triceps_dips,Triceps dips,triceps_long_head,arms,secondary
+triceps_dips,Triceps dips,lower_chest,chest,secondary
+triceps_dips,Triceps dips,front_delts,shoulders,secondary
+diamond_push_ups,Diamond push-ups,triceps_lateral_head,arms,primary
+diamond_push_ups,Diamond push-ups,triceps_medial_head,arms,secondary
+diamond_push_ups,Diamond push-ups,middle_chest,chest,secondary
+diamond_push_ups,Diamond push-ups,front_delts,shoulders,secondary
+triceps_kickback,Triceps kickback,triceps_lateral_head,arms,primary
+triceps_kickback,Triceps kickback,triceps_medial_head,arms,secondary
+triceps_kickback,Triceps kickback,triceps_long_head,arms,secondary
+resistance_band_triceps_pushdown,Resistance band triceps pushdown,triceps_lateral_head,arms,primary
+resistance_band_triceps_pushdown,Resistance band triceps pushdown,triceps_medial_head,arms,secondary
+resistance_band_triceps_pushdown,Resistance band triceps pushdown,triceps_long_head,arms,secondary
+barbell_wrist_curl,Barbell wrist curl,forearms,arms,primary
+reverse_wrist_curl,Reverse wrist curl,forearms,arms,primary
+farmers_carry,Farmer's carry,forearms,arms,primary
+farmers_carry,Farmer's carry,upper_traps,back,secondary
+farmers_carry,Farmer's carry,transverse_abdominis,core,secondary
+dead_hang,Dead hang,forearms,arms,primary
+dead_hang,Dead hang,lats,back,secondary
+barbell_squat,Barbell squat,quadriceps,legs,primary
+barbell_squat,Barbell squat,glutes,legs,secondary
+barbell_squat,Barbell squat,adductors,legs,secondary
+barbell_squat,Barbell squat,spinal_erectors,back,secondary
+front_squat,Front squat,quadriceps,legs,primary
+front_squat,Front squat,glutes,legs,secondary
+front_squat,Front squat,adductors,legs,secondary
+front_squat,Front squat,spinal_erectors,back,secondary
+goblet_squat,Goblet squat,quadriceps,legs,primary
+goblet_squat,Goblet squat,glutes,legs,secondary
+goblet_squat,Goblet squat,adductors,legs,secondary
+smith_machine_squat,Smith machine squat,quadriceps,legs,primary
+smith_machine_squat,Smith machine squat,glutes,legs,secondary
+smith_machine_squat,Smith machine squat,adductors,legs,secondary
+bodyweight_squat,Bodyweight squat,quadriceps,legs,primary
+bodyweight_squat,Bodyweight squat,glutes,legs,secondary
+leg_press,Leg press,quadriceps,legs,primary
+leg_press,Leg press,glutes,legs,secondary
+leg_press,Leg press,adductors,legs,secondary
+leg_extension,Leg extension,quadriceps,legs,primary
+bulgarian_split_squat,Bulgarian split squat,quadriceps,legs,primary
+bulgarian_split_squat,Bulgarian split squat,glutes,legs,secondary
+bulgarian_split_squat,Bulgarian split squat,adductors,legs,secondary
+walking_lunges,Walking lunges,quadriceps,legs,primary
+walking_lunges,Walking lunges,glutes,legs,secondary
+walking_lunges,Walking lunges,adductors,legs,secondary
+reverse_lunge,Reverse lunge,quadriceps,legs,primary
+reverse_lunge,Reverse lunge,glutes,legs,secondary
+reverse_lunge,Reverse lunge,adductors,legs,secondary
+step_ups,Step-ups,quadriceps,legs,primary
+step_ups,Step-ups,glutes,legs,secondary
+sumo_squat,Sumo squat,quadriceps,legs,primary
+sumo_squat,Sumo squat,glutes,legs,secondary
+sumo_squat,Sumo squat,adductors,legs,secondary
+sissy_squat,Sissy squat,quadriceps,legs,primary
+romanian_deadlift,Romanian deadlift,hamstrings,legs,primary
+romanian_deadlift,Romanian deadlift,glutes,legs,secondary
+romanian_deadlift,Romanian deadlift,spinal_erectors,back,secondary
+romanian_deadlift,Romanian deadlift,forearms,arms,secondary
+dumbbell_romanian_deadlift,Dumbbell Romanian deadlift,hamstrings,legs,primary
+dumbbell_romanian_deadlift,Dumbbell Romanian deadlift,glutes,legs,secondary
+dumbbell_romanian_deadlift,Dumbbell Romanian deadlift,spinal_erectors,back,secondary
+stiff_leg_deadlift,Stiff-leg deadlift,hamstrings,legs,primary
+stiff_leg_deadlift,Stiff-leg deadlift,glutes,legs,secondary
+stiff_leg_deadlift,Stiff-leg deadlift,spinal_erectors,back,secondary
+single_leg_romanian_deadlift,Single-leg Romanian deadlift,hamstrings,legs,primary
+single_leg_romanian_deadlift,Single-leg Romanian deadlift,glutes,legs,secondary
+single_leg_romanian_deadlift,Single-leg Romanian deadlift,spinal_erectors,back,secondary
+conventional_deadlift,Conventional deadlift,glutes,legs,primary
+conventional_deadlift,Conventional deadlift,hamstrings,legs,secondary
+conventional_deadlift,Conventional deadlift,spinal_erectors,back,secondary
+conventional_deadlift,Conventional deadlift,quadriceps,legs,secondary
+conventional_deadlift,Conventional deadlift,forearms,arms,secondary
+sumo_deadlift,Sumo deadlift,glutes,legs,primary
+sumo_deadlift,Sumo deadlift,adductors,legs,secondary
+sumo_deadlift,Sumo deadlift,quadriceps,legs,secondary
+sumo_deadlift,Sumo deadlift,hamstrings,legs,secondary
+sumo_deadlift,Sumo deadlift,spinal_erectors,back,secondary
+kettlebell_deadlift,Kettlebell deadlift,glutes,legs,primary
+kettlebell_deadlift,Kettlebell deadlift,hamstrings,legs,secondary
+kettlebell_deadlift,Kettlebell deadlift,spinal_erectors,back,secondary
+kettlebell_deadlift,Kettlebell deadlift,quadriceps,legs,secondary
+kettlebell_swing,Kettlebell swing,glutes,legs,primary
+kettlebell_swing,Kettlebell swing,hamstrings,legs,secondary
+kettlebell_swing,Kettlebell swing,spinal_erectors,back,secondary
+barbell_hip_thrust,Barbell hip thrust,glutes,legs,primary
+barbell_hip_thrust,Barbell hip thrust,hamstrings,legs,secondary
+glute_bridge,Glute bridge,glutes,legs,primary
+glute_bridge,Glute bridge,hamstrings,legs,secondary
+cable_pull_through,Cable pull-through,glutes,legs,primary
+cable_pull_through,Cable pull-through,hamstrings,legs,secondary
+cable_pull_through,Cable pull-through,spinal_erectors,back,secondary
+cable_glute_kickback,Cable glute kickback,glutes,legs,primary
+cable_glute_kickback,Cable glute kickback,hamstrings,legs,secondary
+lying_leg_curl,Lying leg curl,hamstrings,legs,primary
+seated_leg_curl,Seated leg curl,hamstrings,legs,primary
+nordic_hamstring_curl,Nordic hamstring curl,hamstrings,legs,primary
+banded_lateral_walk,Banded lateral walk,abductors,legs,primary
+banded_lateral_walk,Banded lateral walk,glutes,legs,secondary
+cable_hip_abduction,Cable hip abduction,abductors,legs,primary
+cable_hip_abduction,Cable hip abduction,glutes,legs,secondary
+cable_hip_adduction,Cable hip adduction,adductors,legs,primary
+standing_calf_raise,Standing calf raise,calves,legs,primary
+seated_calf_raise,Seated calf raise,calves,legs,primary
+leg_press_calf_raise,Leg press calf raise,calves,legs,primary
+single_leg_dumbbell_calf_raise,Single-leg dumbbell calf raise,calves,legs,primary
+bodyweight_calf_raise,Bodyweight calf raise,calves,legs,primary
+crunches,Crunches,upper_abs,core,primary
+weighted_crunches,Weighted crunches,upper_abs,core,primary
+cable_crunch,Cable crunch,upper_abs,core,primary
+reverse_crunches,Reverse crunches,lower_abs,core,primary
+hanging_leg_raise,Hanging leg raise,lower_abs,core,primary
+hanging_leg_raise,Hanging leg raise,upper_abs,core,secondary
+hanging_knee_raise,Hanging knee raise,lower_abs,core,primary
+hanging_knee_raise,Hanging knee raise,upper_abs,core,secondary
+lying_leg_raise,Lying leg raise,lower_abs,core,primary
+plank,Plank,transverse_abdominis,core,primary
+plank,Plank,upper_abs,core,secondary
+plank,Plank,external_obliques,core,secondary
+side_plank,Side plank,external_obliques,core,primary
+side_plank,Side plank,internal_obliques,core,secondary
+side_plank,Side plank,transverse_abdominis,core,secondary
+russian_twists,Russian twists,external_obliques,core,primary
+russian_twists,Russian twists,internal_obliques,core,secondary
+russian_twists,Russian twists,upper_abs,core,secondary
+bicycle_crunch,Bicycle crunch,upper_abs,core,primary
+bicycle_crunch,Bicycle crunch,external_obliques,core,secondary
+bicycle_crunch,Bicycle crunch,internal_obliques,core,secondary
+cable_woodchopper,Cable woodchopper,external_obliques,core,primary
+cable_woodchopper,Cable woodchopper,internal_obliques,core,secondary
+cable_woodchopper,Cable woodchopper,upper_abs,core,secondary
+pallof_press,Pallof press,external_obliques,core,primary
+pallof_press,Pallof press,internal_obliques,core,secondary
+pallof_press,Pallof press,transverse_abdominis,core,secondary
+dumbbell_side_bend,Dumbbell side bend,external_obliques,core,primary
+dumbbell_side_bend,Dumbbell side bend,internal_obliques,core,secondary
+dead_bug,Dead bug,transverse_abdominis,core,primary
+dead_bug,Dead bug,lower_abs,core,secondary
+barbell_rollout,Barbell rollout,upper_abs,core,primary
+barbell_rollout,Barbell rollout,transverse_abdominis,core,secondary
+barbell_rollout,Barbell rollout,lats,back,secondary

@@ -1,0 +1,1984 @@
+[
+ {
+  "key": "bench_press",
+  "name": "Bench press",
+  "category": "compound",
+  "equipment": "barbell",
+  "primary_muscle": "middle_chest",
+  "secondary_muscles": [
+   "front_delts",
+   "triceps_lateral_head",
+   "triceps_medial_head"
+  ],
+  "uncertain": "",
+  "notes": "Lie on a flat bench, lower the bar to the mid chest with the elbows tucked slightly, then press it back up.",
+  "existing_uuid": "a2aa281c-377b-7519-250e-f6a179ecb16a"
+ },
+ {
+  "key": "incline_bench_press",
+  "name": "Incline bench press",
+  "category": "compound",
+  "equipment": "barbell",
+  "primary_muscle": "upper_chest",
+  "secondary_muscles": [
+   "front_delts",
+   "triceps_lateral_head",
+   "triceps_medial_head"
+  ],
+  "uncertain": "",
+  "notes": "Barbell press on a bench set to a moderate incline, bar touching the upper chest.",
+  "existing_uuid": null
+ },
+ {
+  "key": "decline_bench_press",
+  "name": "Decline bench press",
+  "category": "compound",
+  "equipment": "barbell",
+  "primary_muscle": "lower_chest",
+  "secondary_muscles": [
+   "triceps_lateral_head",
+   "triceps_medial_head",
+   "front_delts"
+  ],
+  "uncertain": "",
+  "notes": "Barbell press on a decline bench, bar lowering to the lower chest.",
+  "existing_uuid": null
+ },
+ {
+  "key": "dumbbell_bench_press",
+  "name": "Dumbbell bench press",
+  "category": "compound",
+  "equipment": "dumbbell",
+  "primary_muscle": "middle_chest",
+  "secondary_muscles": [
+   "front_delts",
+   "triceps_lateral_head",
+   "triceps_medial_head"
+  ],
+  "uncertain": "",
+  "notes": "Flat-bench press with a dumbbell in each hand, allowing a deeper stretch than a bar.",
+  "existing_uuid": null
+ },
+ {
+  "key": "incline_dumbbell_press",
+  "name": "Incline dumbbell press",
+  "category": "compound",
+  "equipment": "dumbbell",
+  "primary_muscle": "upper_chest",
+  "secondary_muscles": [
+   "front_delts",
+   "triceps_lateral_head",
+   "triceps_medial_head"
+  ],
+  "uncertain": "",
+  "notes": "Dumbbell press on an inclined bench, working the upper chest through a full range.",
+  "existing_uuid": null
+ },
+ {
+  "key": "decline_dumbbell_press",
+  "name": "Decline dumbbell press",
+  "category": "compound",
+  "equipment": "dumbbell",
+  "primary_muscle": "lower_chest",
+  "secondary_muscles": [
+   "triceps_lateral_head",
+   "triceps_medial_head",
+   "front_delts"
+  ],
+  "uncertain": "",
+  "notes": "Dumbbell press on a decline bench, aimed at the lower chest.",
+  "existing_uuid": null
+ },
+ {
+  "key": "smith_machine_bench_press",
+  "name": "Smith machine bench press",
+  "category": "compound",
+  "equipment": "smith_machine",
+  "primary_muscle": "middle_chest",
+  "secondary_muscles": [
+   "front_delts",
+   "triceps_lateral_head",
+   "triceps_medial_head"
+  ],
+  "uncertain": "",
+  "notes": "Flat bench press on a fixed bar path, useful for training close to failure with less balance demand.",
+  "existing_uuid": null
+ },
+ {
+  "key": "smith_machine_incline_press",
+  "name": "Smith machine incline press",
+  "category": "compound",
+  "equipment": "smith_machine",
+  "primary_muscle": "upper_chest",
+  "secondary_muscles": [
+   "front_delts",
+   "triceps_lateral_head",
+   "triceps_medial_head"
+  ],
+  "uncertain": "",
+  "notes": "Incline press on the Smith machine with the bench set at a moderate angle.",
+  "existing_uuid": null
+ },
+ {
+  "key": "machine_chest_press",
+  "name": "Machine chest press",
+  "category": "compound",
+  "equipment": "chest_press_machine",
+  "primary_muscle": "middle_chest",
+  "secondary_muscles": [
+   "front_delts",
+   "triceps_lateral_head",
+   "triceps_medial_head"
+  ],
+  "uncertain": "",
+  "notes": "Seated press on a chest press machine with a guided path.",
+  "existing_uuid": null
+ },
+ {
+  "key": "dumbbell_fly",
+  "name": "Dumbbell fly",
+  "category": "isolation",
+  "equipment": "dumbbell",
+  "primary_muscle": "middle_chest",
+  "secondary_muscles": [
+   "front_delts"
+  ],
+  "uncertain": "",
+  "notes": "On a flat bench, open the arms wide with soft elbows and bring the dumbbells together over the chest.",
+  "existing_uuid": null
+ },
+ {
+  "key": "incline_dumbbell_fly",
+  "name": "Incline dumbbell fly",
+  "category": "isolation",
+  "equipment": "dumbbell",
+  "primary_muscle": "upper_chest",
+  "secondary_muscles": [
+   "front_delts"
+  ],
+  "uncertain": "",
+  "notes": "Fly movement on an inclined bench to emphasise the upper chest.",
+  "existing_uuid": null
+ },
+ {
+  "key": "cable_crossover",
+  "name": "Cable crossover",
+  "category": "isolation",
+  "equipment": "cable_machine",
+  "primary_muscle": "middle_chest",
+  "secondary_muscles": [
+   "front_delts"
+  ],
+  "uncertain": "",
+  "notes": "Standing between high pulleys, sweep the handles down and together in front of the body.",
+  "existing_uuid": null
+ },
+ {
+  "key": "low_to_high_cable_fly",
+  "name": "Low-to-high cable fly",
+  "category": "isolation",
+  "equipment": "cable_machine",
+  "primary_muscle": "upper_chest",
+  "secondary_muscles": [
+   "front_delts"
+  ],
+  "uncertain": "",
+  "notes": "Pulleys set low; raise the handles in an arc up to chest height to target the upper chest.",
+  "existing_uuid": null
+ },
+ {
+  "key": "high_to_low_cable_fly",
+  "name": "High-to-low cable fly",
+  "category": "isolation",
+  "equipment": "cable_machine",
+  "primary_muscle": "lower_chest",
+  "secondary_muscles": [
+   "front_delts"
+  ],
+  "uncertain": "",
+  "notes": "Pulleys set high; bring the handles down and across toward the hips to target the lower chest.",
+  "existing_uuid": null
+ },
+ {
+  "key": "pec_deck_fly",
+  "name": "Pec deck fly",
+  "category": "isolation",
+  "equipment": "pec_deck_machine",
+  "primary_muscle": "middle_chest",
+  "secondary_muscles": [
+   "front_delts"
+  ],
+  "uncertain": "",
+  "notes": "Seated machine fly, pressing the pads together in front of the chest.",
+  "existing_uuid": null
+ },
+ {
+  "key": "push_ups",
+  "name": "Push-ups",
+  "category": "compound",
+  "equipment": "bodyweight",
+  "primary_muscle": "middle_chest",
+  "secondary_muscles": [
+   "front_delts",
+   "triceps_lateral_head",
+   "triceps_medial_head"
+  ],
+  "uncertain": "",
+  "notes": "From a straight-body plank position, lower the chest to the floor and press back up.",
+  "existing_uuid": null
+ },
+ {
+  "key": "decline_push_ups",
+  "name": "Decline push-ups",
+  "category": "compound",
+  "equipment": "bodyweight",
+  "primary_muscle": "upper_chest",
+  "secondary_muscles": [
+   "front_delts",
+   "triceps_lateral_head",
+   "triceps_medial_head"
+  ],
+  "uncertain": "",
+  "notes": "Push-up with the feet raised on a bench, shifting load toward the upper chest and shoulders.",
+  "existing_uuid": null
+ },
+ {
+  "key": "chest_dips",
+  "name": "Chest dips",
+  "category": "compound",
+  "equipment": "dip_station",
+  "primary_muscle": "lower_chest",
+  "secondary_muscles": [
+   "triceps_lateral_head",
+   "triceps_medial_head",
+   "front_delts"
+  ],
+  "uncertain": "Chest vs triceps emphasis depends on torso lean.",
+  "notes": "On parallel bars, lean the torso forward and lower until the shoulders are below the elbows, then press up.",
+  "existing_uuid": null
+ },
+ {
+  "key": "resistance_band_chest_press",
+  "name": "Resistance band chest press",
+  "category": "compound",
+  "equipment": "resistance_bands",
+  "primary_muscle": "middle_chest",
+  "secondary_muscles": [
+   "front_delts",
+   "triceps_lateral_head",
+   "triceps_medial_head"
+  ],
+  "uncertain": "",
+  "notes": "Press a band forward from the chest while standing or lying, with the band anchored behind you.",
+  "existing_uuid": null
+ },
+ {
+  "key": "pull_ups",
+  "name": "Pull-ups",
+  "category": "compound",
+  "equipment": "pull_up_bar",
+  "primary_muscle": "lats",
+  "secondary_muscles": [
+   "biceps",
+   "brachialis",
+   "rhomboids"
+  ],
+  "uncertain": "",
+  "notes": "Hang from a bar with an overhand grip and pull the chest toward it, then lower under control.",
+  "existing_uuid": null
+ },
+ {
+  "key": "chin_ups",
+  "name": "Chin-ups",
+  "category": "compound",
+  "equipment": "pull_up_bar",
+  "primary_muscle": "lats",
+  "secondary_muscles": [
+   "biceps",
+   "brachialis"
+  ],
+  "uncertain": "",
+  "notes": "Pull-up with an underhand, shoulder-width grip, which brings the biceps in more.",
+  "existing_uuid": null
+ },
+ {
+  "key": "neutral_grip_pull_ups",
+  "name": "Neutral-grip pull-ups",
+  "category": "compound",
+  "equipment": "pull_up_bar",
+  "primary_muscle": "lats",
+  "secondary_muscles": [
+   "biceps",
+   "brachialis",
+   "rhomboids"
+  ],
+  "uncertain": "",
+  "notes": "Pull-up with palms facing each other on parallel handles.",
+  "existing_uuid": null
+ },
+ {
+  "key": "assisted_pull_ups",
+  "name": "Assisted pull-ups",
+  "category": "compound",
+  "equipment": "assisted_pullup_machine",
+  "primary_muscle": "lats",
+  "secondary_muscles": [
+   "biceps",
+   "brachialis"
+  ],
+  "uncertain": "",
+  "notes": "Pull-up on a machine that offsets part of your body weight with a counterweight.",
+  "existing_uuid": null
+ },
+ {
+  "key": "lat_pulldown",
+  "name": "Lat pulldown",
+  "category": "compound",
+  "equipment": "lat_pulldown_machine",
+  "primary_muscle": "lats",
+  "secondary_muscles": [
+   "biceps",
+   "brachialis",
+   "rhomboids"
+  ],
+  "uncertain": "",
+  "notes": "Seated, pull the bar to the upper chest while keeping the chest up and elbows moving down.",
+  "existing_uuid": "17f2d66c-4c80-e1c5-a446-d445e3ff0e30"
+ },
+ {
+  "key": "close_grip_lat_pulldown",
+  "name": "Close-grip lat pulldown",
+  "category": "compound",
+  "equipment": "lat_pulldown_machine",
+  "primary_muscle": "lats",
+  "secondary_muscles": [
+   "biceps",
+   "brachialis"
+  ],
+  "uncertain": "",
+  "notes": "Pulldown with a narrow neutral handle, keeping the elbows close to the sides.",
+  "existing_uuid": null
+ },
+ {
+  "key": "underhand_lat_pulldown",
+  "name": "Underhand lat pulldown",
+  "category": "compound",
+  "equipment": "lat_pulldown_machine",
+  "primary_muscle": "lats",
+  "secondary_muscles": [
+   "biceps",
+   "brachialis"
+  ],
+  "uncertain": "",
+  "notes": "Pulldown with a shoulder-width underhand grip.",
+  "existing_uuid": null
+ },
+ {
+  "key": "straight_arm_pulldown",
+  "name": "Straight-arm pulldown",
+  "category": "isolation",
+  "equipment": "cable_machine",
+  "primary_muscle": "lats",
+  "secondary_muscles": [
+   "triceps_long_head"
+  ],
+  "uncertain": "",
+  "notes": "Standing at a high cable, sweep the bar from overhead to the thighs with nearly straight arms.",
+  "existing_uuid": null
+ },
+ {
+  "key": "barbell_row",
+  "name": "Barbell row",
+  "category": "compound",
+  "equipment": "barbell",
+  "primary_muscle": "lats",
+  "secondary_muscles": [
+   "rhomboids",
+   "middle_traps",
+   "rear_delts",
+   "biceps",
+   "spinal_erectors"
+  ],
+  "uncertain": "",
+  "notes": "Hinged forward with a flat back, pull the bar to the lower ribs and lower it under control.",
+  "existing_uuid": null
+ },
+ {
+  "key": "pendlay_row",
+  "name": "Pendlay row",
+  "category": "compound",
+  "equipment": "barbell",
+  "primary_muscle": "lats",
+  "secondary_muscles": [
+   "rhomboids",
+   "middle_traps",
+   "rear_delts",
+   "biceps",
+   "spinal_erectors"
+  ],
+  "uncertain": "Upper-back emphasis; lats vs mid-back as primary is a judgement call.",
+  "notes": "Barbell row from the floor each rep with the torso parallel to the ground, pulled explosively to the chest.",
+  "existing_uuid": null
+ },
+ {
+  "key": "underhand_barbell_row",
+  "name": "Underhand barbell row",
+  "category": "compound",
+  "equipment": "barbell",
+  "primary_muscle": "lats",
+  "secondary_muscles": [
+   "biceps",
+   "rhomboids",
+   "spinal_erectors"
+  ],
+  "uncertain": "",
+  "notes": "Barbell row with a supinated grip, pulling toward the waist.",
+  "existing_uuid": null
+ },
+ {
+  "key": "t_bar_row",
+  "name": "T-bar row",
+  "category": "compound",
+  "equipment": "barbell",
+  "primary_muscle": "lats",
+  "secondary_muscles": [
+   "rhomboids",
+   "middle_traps",
+   "rear_delts",
+   "biceps"
+  ],
+  "uncertain": "No T-bar/landmine item in the equipment list; mapped to barbell. Lats vs mid-back is approximate.",
+  "notes": "Straddle a bar anchored at one end and row the loaded end to the chest.",
+  "existing_uuid": null
+ },
+ {
+  "key": "seated_cable_row",
+  "name": "Seated cable row",
+  "category": "compound",
+  "equipment": "cable_machine",
+  "primary_muscle": "lats",
+  "secondary_muscles": [
+   "rhomboids",
+   "middle_traps",
+   "rear_delts",
+   "biceps"
+  ],
+  "uncertain": "",
+  "notes": "Seated at a low cable, pull the handle to the stomach with the chest tall and squeeze the shoulder blades together.",
+  "existing_uuid": null
+ },
+ {
+  "key": "wide_grip_seated_cable_row",
+  "name": "Wide-grip seated cable row",
+  "category": "compound",
+  "equipment": "cable_machine",
+  "primary_muscle": "middle_traps",
+  "secondary_muscles": [
+   "rhomboids",
+   "rear_delts",
+   "lats",
+   "biceps"
+  ],
+  "uncertain": "Primary muscle (mid traps vs lats) is approximate.",
+  "notes": "Cable row with a wide bar, elbows flaring out to bias the upper back.",
+  "existing_uuid": null
+ },
+ {
+  "key": "machine_row",
+  "name": "Machine row",
+  "category": "compound",
+  "equipment": "seated_row_machine",
+  "primary_muscle": "lats",
+  "secondary_muscles": [
+   "rhomboids",
+   "middle_traps",
+   "rear_delts",
+   "biceps"
+  ],
+  "uncertain": "",
+  "notes": "Chest-supported row on a plate-loaded or selectorised row machine.",
+  "existing_uuid": null
+ },
+ {
+  "key": "single_arm_dumbbell_row",
+  "name": "Single-arm dumbbell row",
+  "category": "compound",
+  "equipment": "dumbbell",
+  "primary_muscle": "lats",
+  "secondary_muscles": [
+   "rhomboids",
+   "rear_delts",
+   "biceps"
+  ],
+  "uncertain": "",
+  "notes": "With one hand and knee on a bench, row a dumbbell to the hip.",
+  "existing_uuid": null
+ },
+ {
+  "key": "chest_supported_dumbbell_row",
+  "name": "Chest-supported dumbbell row",
+  "category": "compound",
+  "equipment": "dumbbell",
+  "primary_muscle": "middle_traps",
+  "secondary_muscles": [
+   "rhomboids",
+   "lats",
+   "rear_delts",
+   "biceps"
+  ],
+  "uncertain": "Primary muscle (mid traps vs lats) depends on elbow angle.",
+  "notes": "Lying chest-down on an incline bench, row a dumbbell in each hand toward the ribs.",
+  "existing_uuid": null
+ },
+ {
+  "key": "single_arm_cable_row",
+  "name": "Single-arm cable row",
+  "category": "compound",
+  "equipment": "cable_machine",
+  "primary_muscle": "lats",
+  "secondary_muscles": [
+   "rhomboids",
+   "biceps"
+  ],
+  "uncertain": "",
+  "notes": "Seated or standing, row one cable handle to the side of the torso.",
+  "existing_uuid": null
+ },
+ {
+  "key": "inverted_row",
+  "name": "Inverted row",
+  "category": "compound",
+  "equipment": "bodyweight",
+  "primary_muscle": "lats",
+  "secondary_muscles": [
+   "rhomboids",
+   "rear_delts",
+   "biceps"
+  ],
+  "uncertain": "Needs a low bar or rack; no matching equipment item, so mapped to bodyweight.",
+  "notes": "Hang under a fixed bar with the body straight and pull the chest up to the bar.",
+  "existing_uuid": null
+ },
+ {
+  "key": "resistance_band_row",
+  "name": "Resistance band row",
+  "category": "compound",
+  "equipment": "resistance_bands",
+  "primary_muscle": "lats",
+  "secondary_muscles": [
+   "rhomboids",
+   "biceps"
+  ],
+  "uncertain": "",
+  "notes": "Seated or standing, pull an anchored band toward the stomach.",
+  "existing_uuid": null
+ },
+ {
+  "key": "dumbbell_pullover",
+  "name": "Dumbbell pullover",
+  "category": "isolation",
+  "equipment": "dumbbell",
+  "primary_muscle": "lats",
+  "secondary_muscles": [
+   "middle_chest",
+   "triceps_long_head"
+  ],
+  "uncertain": "Lat vs chest emphasis is debated; categorised as isolation.",
+  "notes": "Lying across or along a bench, move one dumbbell in an arc from over the chest to behind the head and back.",
+  "existing_uuid": null
+ },
+ {
+  "key": "barbell_shrug",
+  "name": "Barbell shrug",
+  "category": "isolation",
+  "equipment": "barbell",
+  "primary_muscle": "upper_traps",
+  "secondary_muscles": [
+   "forearms"
+  ],
+  "uncertain": "",
+  "notes": "Holding a bar at the thighs, lift the shoulders straight up toward the ears and lower slowly.",
+  "existing_uuid": null
+ },
+ {
+  "key": "dumbbell_shrug",
+  "name": "Dumbbell shrug",
+  "category": "isolation",
+  "equipment": "dumbbell",
+  "primary_muscle": "upper_traps",
+  "secondary_muscles": [
+   "forearms"
+  ],
+  "uncertain": "",
+  "notes": "Hold a dumbbell in each hand at the sides and shrug the shoulders upward.",
+  "existing_uuid": null
+ },
+ {
+  "key": "face_pull",
+  "name": "Face pull",
+  "category": "isolation",
+  "equipment": "cable_machine",
+  "primary_muscle": "rear_delts",
+  "secondary_muscles": [
+   "middle_traps",
+   "rhomboids"
+  ],
+  "uncertain": "Often called a compound pull; categorised as isolation for rear delts.",
+  "notes": "Pull a rope attachment from a high cable toward the face, hands splitting apart at the end.",
+  "existing_uuid": null
+ },
+ {
+  "key": "band_pull_apart",
+  "name": "Band pull-apart",
+  "category": "isolation",
+  "equipment": "resistance_bands",
+  "primary_muscle": "rear_delts",
+  "secondary_muscles": [
+   "rhomboids",
+   "middle_traps"
+  ],
+  "uncertain": "",
+  "notes": "Hold a band in front at shoulder height and pull it apart until it touches the chest.",
+  "existing_uuid": null
+ },
+ {
+  "key": "rack_pull",
+  "name": "Rack pull",
+  "category": "compound",
+  "equipment": "barbell",
+  "primary_muscle": "spinal_erectors",
+  "secondary_muscles": [
+   "glutes",
+   "upper_traps",
+   "forearms",
+   "hamstrings"
+  ],
+  "uncertain": "Primary muscle (erectors vs glutes vs traps) is approximate.",
+  "notes": "Deadlift from pins set around knee height, focusing on the upper back and lockout.",
+  "existing_uuid": null
+ },
+ {
+  "key": "back_extension",
+  "name": "Back extension",
+  "category": "isolation",
+  "equipment": "bodyweight",
+  "primary_muscle": "spinal_erectors",
+  "secondary_muscles": [
+   "glutes",
+   "hamstrings"
+  ],
+  "uncertain": "Normally done on a back-extension bench, which is not in the equipment list; mapped to bodyweight.",
+  "notes": "On a hyperextension bench, hinge at the hips to lower the torso then raise it back to straight.",
+  "existing_uuid": null
+ },
+ {
+  "key": "superman",
+  "name": "Superman",
+  "category": "isolation",
+  "equipment": "bodyweight",
+  "primary_muscle": "spinal_erectors",
+  "secondary_muscles": [
+   "glutes"
+  ],
+  "uncertain": "",
+  "notes": "Lying face-down, lift the arms and legs off the floor together and hold briefly.",
+  "existing_uuid": null
+ },
+ {
+  "key": "overhead_press",
+  "name": "Overhead press",
+  "category": "compound",
+  "equipment": "barbell",
+  "primary_muscle": "front_delts",
+  "secondary_muscles": [
+   "side_delts",
+   "triceps_lateral_head",
+   "triceps_medial_head",
+   "upper_chest"
+  ],
+  "uncertain": "",
+  "notes": "Standing, press a barbell from the collarbone to overhead with the ribs down and glutes tight.",
+  "existing_uuid": null
+ },
+ {
+  "key": "dumbbell_shoulder_press",
+  "name": "Dumbbell shoulder press",
+  "category": "compound",
+  "equipment": "dumbbell",
+  "primary_muscle": "front_delts",
+  "secondary_muscles": [
+   "side_delts",
+   "triceps_lateral_head",
+   "triceps_medial_head"
+  ],
+  "uncertain": "",
+  "notes": "Seated or standing, press two dumbbells from shoulder height to overhead.",
+  "existing_uuid": null
+ },
+ {
+  "key": "arnold_press",
+  "name": "Arnold press",
+  "category": "compound",
+  "equipment": "dumbbell",
+  "primary_muscle": "front_delts",
+  "secondary_muscles": [
+   "side_delts",
+   "triceps_lateral_head",
+   "triceps_medial_head"
+  ],
+  "uncertain": "",
+  "notes": "Dumbbell press that starts with palms facing you and rotates to palms forward as the weights rise.",
+  "existing_uuid": null
+ },
+ {
+  "key": "machine_shoulder_press",
+  "name": "Machine shoulder press",
+  "category": "compound",
+  "equipment": "shoulder_press_machine",
+  "primary_muscle": "front_delts",
+  "secondary_muscles": [
+   "side_delts",
+   "triceps_lateral_head",
+   "triceps_medial_head"
+  ],
+  "uncertain": "",
+  "notes": "Seated overhead press on a guided machine.",
+  "existing_uuid": null
+ },
+ {
+  "key": "smith_machine_shoulder_press",
+  "name": "Smith machine shoulder press",
+  "category": "compound",
+  "equipment": "smith_machine",
+  "primary_muscle": "front_delts",
+  "secondary_muscles": [
+   "side_delts",
+   "triceps_lateral_head",
+   "triceps_medial_head"
+  ],
+  "uncertain": "",
+  "notes": "Seated press on the Smith machine, bar lowered to chin level.",
+  "existing_uuid": null
+ },
+ {
+  "key": "kettlebell_press",
+  "name": "Kettlebell press",
+  "category": "compound",
+  "equipment": "kettlebell",
+  "primary_muscle": "front_delts",
+  "secondary_muscles": [
+   "side_delts",
+   "triceps_lateral_head",
+   "triceps_medial_head"
+  ],
+  "uncertain": "",
+  "notes": "Press a kettlebell from the rack position at the shoulder to overhead with the wrist stacked.",
+  "existing_uuid": null
+ },
+ {
+  "key": "pike_push_ups",
+  "name": "Pike push-ups",
+  "category": "compound",
+  "equipment": "bodyweight",
+  "primary_muscle": "front_delts",
+  "secondary_muscles": [
+   "side_delts",
+   "triceps_lateral_head",
+   "triceps_medial_head"
+  ],
+  "uncertain": "",
+  "notes": "From a hips-high push-up position, bend the elbows to bring the head toward the floor and press back up.",
+  "existing_uuid": null
+ },
+ {
+  "key": "lateral_raise",
+  "name": "Lateral raise",
+  "category": "isolation",
+  "equipment": "dumbbell",
+  "primary_muscle": "side_delts",
+  "secondary_muscles": [],
+  "uncertain": "",
+  "notes": "Standing with dumbbells at the sides, raise the arms out to shoulder height with a slight elbow bend.",
+  "existing_uuid": null
+ },
+ {
+  "key": "cable_lateral_raise",
+  "name": "Cable lateral raise",
+  "category": "isolation",
+  "equipment": "cable_machine",
+  "primary_muscle": "side_delts",
+  "secondary_muscles": [],
+  "uncertain": "",
+  "notes": "Raise one arm out to the side against a low cable for constant tension.",
+  "existing_uuid": null
+ },
+ {
+  "key": "resistance_band_lateral_raise",
+  "name": "Resistance band lateral raise",
+  "category": "isolation",
+  "equipment": "resistance_bands",
+  "primary_muscle": "side_delts",
+  "secondary_muscles": [],
+  "uncertain": "",
+  "notes": "Stand on a band and raise the arms out to the sides to shoulder height.",
+  "existing_uuid": null
+ },
+ {
+  "key": "front_raise",
+  "name": "Front raise",
+  "category": "isolation",
+  "equipment": "dumbbell",
+  "primary_muscle": "front_delts",
+  "secondary_muscles": [
+   "upper_chest"
+  ],
+  "uncertain": "",
+  "notes": "Raise dumbbells in front of the body to shoulder height with straight-ish arms.",
+  "existing_uuid": null
+ },
+ {
+  "key": "cable_front_raise",
+  "name": "Cable front raise",
+  "category": "isolation",
+  "equipment": "cable_machine",
+  "primary_muscle": "front_delts",
+  "secondary_muscles": [
+   "upper_chest"
+  ],
+  "uncertain": "",
+  "notes": "Facing away from a low cable, raise the handle forward to shoulder height.",
+  "existing_uuid": null
+ },
+ {
+  "key": "reverse_dumbbell_fly",
+  "name": "Reverse dumbbell fly",
+  "category": "isolation",
+  "equipment": "dumbbell",
+  "primary_muscle": "rear_delts",
+  "secondary_muscles": [
+   "rhomboids",
+   "middle_traps"
+  ],
+  "uncertain": "",
+  "notes": "Hinged forward, raise dumbbells out to the sides to work the rear shoulders.",
+  "existing_uuid": null
+ },
+ {
+  "key": "reverse_pec_deck_fly",
+  "name": "Reverse pec deck fly",
+  "category": "isolation",
+  "equipment": "pec_deck_machine",
+  "primary_muscle": "rear_delts",
+  "secondary_muscles": [
+   "rhomboids",
+   "middle_traps"
+  ],
+  "uncertain": "",
+  "notes": "Facing the pad on a pec deck, pull the handles backward and out.",
+  "existing_uuid": null
+ },
+ {
+  "key": "cable_rear_delt_fly",
+  "name": "Cable rear delt fly",
+  "category": "isolation",
+  "equipment": "cable_machine",
+  "primary_muscle": "rear_delts",
+  "secondary_muscles": [
+   "rhomboids"
+  ],
+  "uncertain": "",
+  "notes": "With crossed cables at chest height, pull each handle out and back in an arc.",
+  "existing_uuid": null
+ },
+ {
+  "key": "band_face_pull",
+  "name": "Resistance band face pull",
+  "category": "isolation",
+  "equipment": "resistance_bands",
+  "primary_muscle": "rear_delts",
+  "secondary_muscles": [
+   "middle_traps",
+   "rhomboids"
+  ],
+  "uncertain": "",
+  "notes": "Pull an anchored band toward the face with the elbows high.",
+  "existing_uuid": null
+ },
+ {
+  "key": "upright_row",
+  "name": "Upright row",
+  "category": "compound",
+  "equipment": "barbell",
+  "primary_muscle": "side_delts",
+  "secondary_muscles": [
+   "upper_traps",
+   "front_delts"
+  ],
+  "uncertain": "Some lifters find this uncomfortable for the shoulders; muscle split is approximate.",
+  "notes": "Pull a bar up the front of the body to chest height, elbows leading.",
+  "existing_uuid": null
+ },
+ {
+  "key": "barbell_curl",
+  "name": "Barbell curl",
+  "category": "isolation",
+  "equipment": "barbell",
+  "primary_muscle": "biceps",
+  "secondary_muscles": [
+   "brachialis",
+   "forearms"
+  ],
+  "uncertain": "",
+  "notes": "Standing, curl a straight bar up with the elbows pinned to the sides.",
+  "existing_uuid": null
+ },
+ {
+  "key": "ez_bar_curl",
+  "name": "EZ-bar curl",
+  "category": "isolation",
+  "equipment": "ez_bar",
+  "primary_muscle": "biceps",
+  "secondary_muscles": [
+   "brachialis",
+   "forearms"
+  ],
+  "uncertain": "",
+  "notes": "Curl with an EZ bar, which angles the wrists for comfort.",
+  "existing_uuid": null
+ },
+ {
+  "key": "dumbbell_curl",
+  "name": "Dumbbell curl",
+  "category": "isolation",
+  "equipment": "dumbbell",
+  "primary_muscle": "biceps",
+  "secondary_muscles": [
+   "brachialis",
+   "forearms"
+  ],
+  "uncertain": "",
+  "notes": "Curl dumbbells with the palms turning up as the weights rise.",
+  "existing_uuid": null
+ },
+ {
+  "key": "hammer_curl",
+  "name": "Hammer curl",
+  "category": "isolation",
+  "equipment": "dumbbell",
+  "primary_muscle": "brachialis",
+  "secondary_muscles": [
+   "biceps",
+   "forearms"
+  ],
+  "uncertain": "Brachialis chosen as primary; biceps and brachioradialis share the work.",
+  "notes": "Curl dumbbells with the palms facing each other throughout.",
+  "existing_uuid": null
+ },
+ {
+  "key": "preacher_curl",
+  "name": "Preacher curl",
+  "category": "isolation",
+  "equipment": "ez_bar",
+  "primary_muscle": "biceps",
+  "secondary_muscles": [
+   "brachialis"
+  ],
+  "uncertain": "",
+  "notes": "Curl an EZ bar with the upper arms resting on an angled pad.",
+  "existing_uuid": null
+ },
+ {
+  "key": "dumbbell_preacher_curl",
+  "name": "Dumbbell preacher curl",
+  "category": "isolation",
+  "equipment": "dumbbell",
+  "primary_muscle": "biceps",
+  "secondary_muscles": [
+   "brachialis"
+  ],
+  "uncertain": "",
+  "notes": "One-arm curl with the upper arm supported on a preacher pad.",
+  "existing_uuid": null
+ },
+ {
+  "key": "incline_dumbbell_curl",
+  "name": "Incline dumbbell curl",
+  "category": "isolation",
+  "equipment": "dumbbell",
+  "primary_muscle": "biceps",
+  "secondary_muscles": [
+   "brachialis"
+  ],
+  "uncertain": "",
+  "notes": "Curl with the back on an inclined bench so the arms hang behind the body for a longer stretch.",
+  "existing_uuid": null
+ },
+ {
+  "key": "concentration_curl",
+  "name": "Concentration curl",
+  "category": "isolation",
+  "equipment": "dumbbell",
+  "primary_muscle": "biceps",
+  "secondary_muscles": [
+   "brachialis"
+  ],
+  "uncertain": "",
+  "notes": "Seated, brace the elbow against the inner thigh and curl a single dumbbell.",
+  "existing_uuid": null
+ },
+ {
+  "key": "cable_curl",
+  "name": "Cable curl",
+  "category": "isolation",
+  "equipment": "cable_machine",
+  "primary_muscle": "biceps",
+  "secondary_muscles": [
+   "brachialis",
+   "forearms"
+  ],
+  "uncertain": "",
+  "notes": "Curl a straight or EZ attachment from a low pulley for steady tension.",
+  "existing_uuid": null
+ },
+ {
+  "key": "cable_rope_hammer_curl",
+  "name": "Cable rope hammer curl",
+  "category": "isolation",
+  "equipment": "cable_machine",
+  "primary_muscle": "brachialis",
+  "secondary_muscles": [
+   "biceps",
+   "forearms"
+  ],
+  "uncertain": "",
+  "notes": "Curl a rope attachment from a low pulley with the thumbs up.",
+  "existing_uuid": null
+ },
+ {
+  "key": "reverse_curl",
+  "name": "Reverse curl",
+  "category": "isolation",
+  "equipment": "ez_bar",
+  "primary_muscle": "forearms",
+  "secondary_muscles": [
+   "brachialis",
+   "biceps"
+  ],
+  "uncertain": "Forearms (brachioradialis) chosen as primary.",
+  "notes": "Curl an EZ bar with an overhand grip to load the forearms and brachialis.",
+  "existing_uuid": null
+ },
+ {
+  "key": "resistance_band_curl",
+  "name": "Resistance band curl",
+  "category": "isolation",
+  "equipment": "resistance_bands",
+  "primary_muscle": "biceps",
+  "secondary_muscles": [
+   "brachialis"
+  ],
+  "uncertain": "",
+  "notes": "Stand on a band and curl the handles toward the shoulders.",
+  "existing_uuid": null
+ },
+ {
+  "key": "cable_triceps_pushdown",
+  "name": "Cable triceps pushdown",
+  "category": "isolation",
+  "equipment": "cable_machine",
+  "primary_muscle": "triceps_lateral_head",
+  "secondary_muscles": [
+   "triceps_medial_head",
+   "triceps_long_head"
+  ],
+  "uncertain": "Head emphasis between the three triceps heads is approximate.",
+  "notes": "Facing a high pulley, press a bar down until the arms are straight, keeping the elbows at the sides.",
+  "existing_uuid": null
+ },
+ {
+  "key": "rope_triceps_pushdown",
+  "name": "Rope triceps pushdown",
+  "category": "isolation",
+  "equipment": "cable_machine",
+  "primary_muscle": "triceps_lateral_head",
+  "secondary_muscles": [
+   "triceps_medial_head",
+   "triceps_long_head"
+  ],
+  "uncertain": "",
+  "notes": "Pushdown with a rope, spreading the ends apart at the bottom.",
+  "existing_uuid": null
+ },
+ {
+  "key": "reverse_grip_triceps_pushdown",
+  "name": "Reverse-grip triceps pushdown",
+  "category": "isolation",
+  "equipment": "cable_machine",
+  "primary_muscle": "triceps_medial_head",
+  "secondary_muscles": [
+   "triceps_lateral_head",
+   "triceps_long_head"
+  ],
+  "uncertain": "Head emphasis is approximate.",
+  "notes": "Pushdown with an underhand grip, which shifts load toward the medial head.",
+  "existing_uuid": null
+ },
+ {
+  "key": "overhead_triceps_extension",
+  "name": "Overhead triceps extension",
+  "category": "isolation",
+  "equipment": "dumbbell",
+  "primary_muscle": "triceps_long_head",
+  "secondary_muscles": [
+   "triceps_lateral_head",
+   "triceps_medial_head"
+  ],
+  "uncertain": "",
+  "notes": "Hold one dumbbell overhead with both hands and bend the elbows to lower it behind the head.",
+  "existing_uuid": null
+ },
+ {
+  "key": "cable_overhead_triceps_extension",
+  "name": "Cable overhead triceps extension",
+  "category": "isolation",
+  "equipment": "cable_machine",
+  "primary_muscle": "triceps_long_head",
+  "secondary_muscles": [
+   "triceps_lateral_head",
+   "triceps_medial_head"
+  ],
+  "uncertain": "",
+  "notes": "Facing away from a pulley, extend the arms overhead against the cable.",
+  "existing_uuid": null
+ },
+ {
+  "key": "skull_crushers",
+  "name": "Skull crushers",
+  "category": "isolation",
+  "equipment": "ez_bar",
+  "primary_muscle": "triceps_long_head",
+  "secondary_muscles": [
+   "triceps_lateral_head",
+   "triceps_medial_head"
+  ],
+  "uncertain": "",
+  "notes": "Lying on a bench, lower an EZ bar toward the forehead by bending only the elbows, then extend.",
+  "existing_uuid": null
+ },
+ {
+  "key": "close_grip_bench_press",
+  "name": "Close-grip bench press",
+  "category": "compound",
+  "equipment": "barbell",
+  "primary_muscle": "triceps_lateral_head",
+  "secondary_muscles": [
+   "triceps_medial_head",
+   "triceps_long_head",
+   "middle_chest",
+   "front_delts"
+  ],
+  "uncertain": "Triceps vs chest primary is a judgement call.",
+  "notes": "Bench press with the hands about shoulder-width apart to shift work to the triceps.",
+  "existing_uuid": null
+ },
+ {
+  "key": "bench_dips",
+  "name": "Bench dips",
+  "category": "compound",
+  "equipment": "flat_bench",
+  "primary_muscle": "triceps_lateral_head",
+  "secondary_muscles": [
+   "triceps_medial_head",
+   "triceps_long_head",
+   "front_delts"
+  ],
+  "uncertain": "",
+  "notes": "With hands on a bench behind you, lower the hips by bending the elbows, then press up.",
+  "existing_uuid": null
+ },
+ {
+  "key": "triceps_dips",
+  "name": "Triceps dips",
+  "category": "compound",
+  "equipment": "dip_station",
+  "primary_muscle": "triceps_lateral_head",
+  "secondary_muscles": [
+   "triceps_medial_head",
+   "triceps_long_head",
+   "lower_chest",
+   "front_delts"
+  ],
+  "uncertain": "",
+  "notes": "On parallel bars with an upright torso, lower and press up to emphasise the triceps.",
+  "existing_uuid": null
+ },
+ {
+  "key": "diamond_push_ups",
+  "name": "Diamond push-ups",
+  "category": "compound",
+  "equipment": "bodyweight",
+  "primary_muscle": "triceps_lateral_head",
+  "secondary_muscles": [
+   "triceps_medial_head",
+   "middle_chest",
+   "front_delts"
+  ],
+  "uncertain": "",
+  "notes": "Push-up with the hands close together under the chest.",
+  "existing_uuid": null
+ },
+ {
+  "key": "triceps_kickback",
+  "name": "Triceps kickback",
+  "category": "isolation",
+  "equipment": "dumbbell",
+  "primary_muscle": "triceps_lateral_head",
+  "secondary_muscles": [
+   "triceps_medial_head",
+   "triceps_long_head"
+  ],
+  "uncertain": "",
+  "notes": "Hinged forward with the upper arm parallel to the floor, straighten the elbow to extend the dumbbell back.",
+  "existing_uuid": null
+ },
+ {
+  "key": "resistance_band_triceps_pushdown",
+  "name": "Resistance band triceps pushdown",
+  "category": "isolation",
+  "equipment": "resistance_bands",
+  "primary_muscle": "triceps_lateral_head",
+  "secondary_muscles": [
+   "triceps_medial_head",
+   "triceps_long_head"
+  ],
+  "uncertain": "",
+  "notes": "Anchor a band high and press it down until the elbows are straight.",
+  "existing_uuid": null
+ },
+ {
+  "key": "barbell_wrist_curl",
+  "name": "Barbell wrist curl",
+  "category": "isolation",
+  "equipment": "barbell",
+  "primary_muscle": "forearms",
+  "secondary_muscles": [],
+  "uncertain": "",
+  "notes": "Forearms resting on a bench, curl the bar upward using only the wrists.",
+  "existing_uuid": null
+ },
+ {
+  "key": "reverse_wrist_curl",
+  "name": "Reverse wrist curl",
+  "category": "isolation",
+  "equipment": "dumbbell",
+  "primary_muscle": "forearms",
+  "secondary_muscles": [],
+  "uncertain": "",
+  "notes": "Forearms resting on a bench palms down, lift the dumbbell with the back of the wrist.",
+  "existing_uuid": null
+ },
+ {
+  "key": "farmers_carry",
+  "name": "Farmer's carry",
+  "category": "compound",
+  "equipment": "dumbbell",
+  "primary_muscle": "forearms",
+  "secondary_muscles": [
+   "upper_traps",
+   "transverse_abdominis"
+  ],
+  "uncertain": "Whole-body carry; forearms chosen as primary for grip work.",
+  "notes": "Walk with a heavy dumbbell in each hand, standing tall and keeping the shoulders level.",
+  "existing_uuid": null
+ },
+ {
+  "key": "dead_hang",
+  "name": "Dead hang",
+  "category": "isolation",
+  "equipment": "pull_up_bar",
+  "primary_muscle": "forearms",
+  "secondary_muscles": [
+   "lats"
+  ],
+  "uncertain": "",
+  "notes": "Hang from a bar with a firm grip for time to build grip endurance.",
+  "existing_uuid": null
+ },
+ {
+  "key": "barbell_squat",
+  "name": "Barbell squat",
+  "category": "compound",
+  "equipment": "barbell",
+  "primary_muscle": "quadriceps",
+  "secondary_muscles": [
+   "glutes",
+   "adductors",
+   "spinal_erectors"
+  ],
+  "uncertain": "Squat rack not captured because an exercise has one equipment item.",
+  "notes": "Bar across the upper back, squat until the thighs are at least parallel, then stand.",
+  "existing_uuid": null
+ },
+ {
+  "key": "front_squat",
+  "name": "Front squat",
+  "category": "compound",
+  "equipment": "barbell",
+  "primary_muscle": "quadriceps",
+  "secondary_muscles": [
+   "glutes",
+   "adductors",
+   "spinal_erectors"
+  ],
+  "uncertain": "",
+  "notes": "Bar racked on the front shoulders, squat with an upright torso.",
+  "existing_uuid": null
+ },
+ {
+  "key": "goblet_squat",
+  "name": "Goblet squat",
+  "category": "compound",
+  "equipment": "dumbbell",
+  "primary_muscle": "quadriceps",
+  "secondary_muscles": [
+   "glutes",
+   "adductors"
+  ],
+  "uncertain": "",
+  "notes": "Hold one dumbbell against the chest and squat between the knees.",
+  "existing_uuid": null
+ },
+ {
+  "key": "smith_machine_squat",
+  "name": "Smith machine squat",
+  "category": "compound",
+  "equipment": "smith_machine",
+  "primary_muscle": "quadriceps",
+  "secondary_muscles": [
+   "glutes",
+   "adductors"
+  ],
+  "uncertain": "",
+  "notes": "Squat on the Smith machine with the feet slightly forward of the bar.",
+  "existing_uuid": null
+ },
+ {
+  "key": "bodyweight_squat",
+  "name": "Bodyweight squat",
+  "category": "compound",
+  "equipment": "bodyweight",
+  "primary_muscle": "quadriceps",
+  "secondary_muscles": [
+   "glutes"
+  ],
+  "uncertain": "",
+  "notes": "Squat to depth with no load, arms forward for balance.",
+  "existing_uuid": null
+ },
+ {
+  "key": "leg_press",
+  "name": "Leg press",
+  "category": "compound",
+  "equipment": "leg_press_machine",
+  "primary_muscle": "quadriceps",
+  "secondary_muscles": [
+   "glutes",
+   "adductors"
+  ],
+  "uncertain": "",
+  "notes": "Seated, press the platform away with both feet and lower under control.",
+  "existing_uuid": null
+ },
+ {
+  "key": "leg_extension",
+  "name": "Leg extension",
+  "category": "isolation",
+  "equipment": "leg_extension_machine",
+  "primary_muscle": "quadriceps",
+  "secondary_muscles": [],
+  "uncertain": "",
+  "notes": "Seated machine movement straightening the knees against a pad.",
+  "existing_uuid": null
+ },
+ {
+  "key": "bulgarian_split_squat",
+  "name": "Bulgarian split squat",
+  "category": "compound",
+  "equipment": "dumbbell",
+  "primary_muscle": "quadriceps",
+  "secondary_muscles": [
+   "glutes",
+   "adductors"
+  ],
+  "uncertain": "",
+  "notes": "Rear foot on a bench, lower the front knee toward the floor holding dumbbells.",
+  "existing_uuid": null
+ },
+ {
+  "key": "walking_lunges",
+  "name": "Walking lunges",
+  "category": "compound",
+  "equipment": "dumbbell",
+  "primary_muscle": "quadriceps",
+  "secondary_muscles": [
+   "glutes",
+   "adductors"
+  ],
+  "uncertain": "",
+  "notes": "Step forward into a lunge and alternate legs, travelling across the floor.",
+  "existing_uuid": null
+ },
+ {
+  "key": "reverse_lunge",
+  "name": "Reverse lunge",
+  "category": "compound",
+  "equipment": "dumbbell",
+  "primary_muscle": "quadriceps",
+  "secondary_muscles": [
+   "glutes",
+   "adductors"
+  ],
+  "uncertain": "Quads vs glutes primary is a judgement call.",
+  "notes": "Step backward into a lunge and return to standing, alternating legs.",
+  "existing_uuid": null
+ },
+ {
+  "key": "step_ups",
+  "name": "Step-ups",
+  "category": "compound",
+  "equipment": "dumbbell",
+  "primary_muscle": "quadriceps",
+  "secondary_muscles": [
+   "glutes"
+  ],
+  "uncertain": "",
+  "notes": "Step onto a box or bench with one leg and stand tall, holding dumbbells.",
+  "existing_uuid": null
+ },
+ {
+  "key": "sumo_squat",
+  "name": "Sumo squat",
+  "category": "compound",
+  "equipment": "dumbbell",
+  "primary_muscle": "quadriceps",
+  "secondary_muscles": [
+   "glutes",
+   "adductors"
+  ],
+  "uncertain": "",
+  "notes": "Wide stance with the toes out, hold a dumbbell between the legs and squat.",
+  "existing_uuid": null
+ },
+ {
+  "key": "sissy_squat",
+  "name": "Sissy squat",
+  "category": "isolation",
+  "equipment": "bodyweight",
+  "primary_muscle": "quadriceps",
+  "secondary_muscles": [],
+  "uncertain": "",
+  "notes": "Lean back while bending the knees forward over the toes to isolate the quads.",
+  "existing_uuid": null
+ },
+ {
+  "key": "romanian_deadlift",
+  "name": "Romanian deadlift",
+  "category": "compound",
+  "equipment": "barbell",
+  "primary_muscle": "hamstrings",
+  "secondary_muscles": [
+   "glutes",
+   "spinal_erectors",
+   "forearms"
+  ],
+  "uncertain": "",
+  "notes": "Hinge at the hips with a soft knee bend, lowering the bar down the thighs, then drive the hips forward.",
+  "existing_uuid": null
+ },
+ {
+  "key": "dumbbell_romanian_deadlift",
+  "name": "Dumbbell Romanian deadlift",
+  "category": "compound",
+  "equipment": "dumbbell",
+  "primary_muscle": "hamstrings",
+  "secondary_muscles": [
+   "glutes",
+   "spinal_erectors"
+  ],
+  "uncertain": "",
+  "notes": "Romanian deadlift with a dumbbell in each hand.",
+  "existing_uuid": null
+ },
+ {
+  "key": "stiff_leg_deadlift",
+  "name": "Stiff-leg deadlift",
+  "category": "compound",
+  "equipment": "barbell",
+  "primary_muscle": "hamstrings",
+  "secondary_muscles": [
+   "glutes",
+   "spinal_erectors"
+  ],
+  "uncertain": "",
+  "notes": "Hip hinge with nearly straight legs, stretching the hamstrings at the bottom.",
+  "existing_uuid": null
+ },
+ {
+  "key": "single_leg_romanian_deadlift",
+  "name": "Single-leg Romanian deadlift",
+  "category": "compound",
+  "equipment": "dumbbell",
+  "primary_muscle": "hamstrings",
+  "secondary_muscles": [
+   "glutes",
+   "spinal_erectors"
+  ],
+  "uncertain": "",
+  "notes": "Balance on one leg and hinge forward while the other leg lifts behind.",
+  "existing_uuid": null
+ },
+ {
+  "key": "conventional_deadlift",
+  "name": "Conventional deadlift",
+  "category": "compound",
+  "equipment": "barbell",
+  "primary_muscle": "glutes",
+  "secondary_muscles": [
+   "hamstrings",
+   "spinal_erectors",
+   "quadriceps",
+   "forearms"
+  ],
+  "uncertain": "Prime mover is shared by glutes, hamstrings and erectors; glutes chosen as primary.",
+  "notes": "Lift a bar from the floor to a standing lockout with a flat back and hips and knees extending together.",
+  "existing_uuid": null
+ },
+ {
+  "key": "sumo_deadlift",
+  "name": "Sumo deadlift",
+  "category": "compound",
+  "equipment": "barbell",
+  "primary_muscle": "glutes",
+  "secondary_muscles": [
+   "adductors",
+   "quadriceps",
+   "hamstrings",
+   "spinal_erectors"
+  ],
+  "uncertain": "Primary muscle is approximate.",
+  "notes": "Deadlift with a wide stance and hands inside the knees.",
+  "existing_uuid": null
+ },
+ {
+  "key": "kettlebell_deadlift",
+  "name": "Kettlebell deadlift",
+  "category": "compound",
+  "equipment": "kettlebell",
+  "primary_muscle": "glutes",
+  "secondary_muscles": [
+   "hamstrings",
+   "spinal_erectors",
+   "quadriceps"
+  ],
+  "uncertain": "",
+  "notes": "Hip hinge to lift a kettlebell from the floor between the feet.",
+  "existing_uuid": null
+ },
+ {
+  "key": "kettlebell_swing",
+  "name": "Kettlebell swing",
+  "category": "compound",
+  "equipment": "kettlebell",
+  "primary_muscle": "glutes",
+  "secondary_muscles": [
+   "hamstrings",
+   "spinal_erectors"
+  ],
+  "uncertain": "",
+  "notes": "Hinge and snap the hips forward to swing a kettlebell to chest height.",
+  "existing_uuid": null
+ },
+ {
+  "key": "barbell_hip_thrust",
+  "name": "Barbell hip thrust",
+  "category": "compound",
+  "equipment": "barbell",
+  "primary_muscle": "glutes",
+  "secondary_muscles": [
+   "hamstrings"
+  ],
+  "uncertain": "",
+  "notes": "Upper back on a bench, drive the hips up with a barbell across them until the body is straight.",
+  "existing_uuid": null
+ },
+ {
+  "key": "glute_bridge",
+  "name": "Glute bridge",
+  "category": "compound",
+  "equipment": "bodyweight",
+  "primary_muscle": "glutes",
+  "secondary_muscles": [
+   "hamstrings"
+  ],
+  "uncertain": "",
+  "notes": "Lying on the back with knees bent, lift the hips and squeeze the glutes at the top.",
+  "existing_uuid": null
+ },
+ {
+  "key": "cable_pull_through",
+  "name": "Cable pull-through",
+  "category": "compound",
+  "equipment": "cable_machine",
+  "primary_muscle": "glutes",
+  "secondary_muscles": [
+   "hamstrings",
+   "spinal_erectors"
+  ],
+  "uncertain": "",
+  "notes": "Facing away from a low cable, hinge and thrust the hips forward against the rope.",
+  "existing_uuid": null
+ },
+ {
+  "key": "cable_glute_kickback",
+  "name": "Cable glute kickback",
+  "category": "isolation",
+  "equipment": "cable_machine",
+  "primary_muscle": "glutes",
+  "secondary_muscles": [
+   "hamstrings"
+  ],
+  "uncertain": "",
+  "notes": "With an ankle strap on a low pulley, extend the leg behind you.",
+  "existing_uuid": null
+ },
+ {
+  "key": "lying_leg_curl",
+  "name": "Lying leg curl",
+  "category": "isolation",
+  "equipment": "leg_curl_machine",
+  "primary_muscle": "hamstrings",
+  "secondary_muscles": [],
+  "uncertain": "",
+  "notes": "Face-down on the machine, curl the heels toward the glutes.",
+  "existing_uuid": null
+ },
+ {
+  "key": "seated_leg_curl",
+  "name": "Seated leg curl",
+  "category": "isolation",
+  "equipment": "leg_curl_machine",
+  "primary_muscle": "hamstrings",
+  "secondary_muscles": [],
+  "uncertain": "",
+  "notes": "Seated version of the leg curl with the pad above the heels.",
+  "existing_uuid": null
+ },
+ {
+  "key": "nordic_hamstring_curl",
+  "name": "Nordic hamstring curl",
+  "category": "isolation",
+  "equipment": "bodyweight",
+  "primary_muscle": "hamstrings",
+  "secondary_muscles": [],
+  "uncertain": "Needs a partner or anchor; no matching equipment item.",
+  "notes": "Kneeling with the ankles anchored, lower the torso forward slowly using the hamstrings.",
+  "existing_uuid": null
+ },
+ {
+  "key": "banded_lateral_walk",
+  "name": "Banded lateral walk",
+  "category": "isolation",
+  "equipment": "resistance_bands",
+  "primary_muscle": "abductors",
+  "secondary_muscles": [
+   "glutes"
+  ],
+  "uncertain": "",
+  "notes": "With a band around the legs and knees slightly bent, step sideways keeping tension.",
+  "existing_uuid": null
+ },
+ {
+  "key": "cable_hip_abduction",
+  "name": "Cable hip abduction",
+  "category": "isolation",
+  "equipment": "cable_machine",
+  "primary_muscle": "abductors",
+  "secondary_muscles": [
+   "glutes"
+  ],
+  "uncertain": "",
+  "notes": "With an ankle strap on a low pulley, lift the leg out to the side.",
+  "existing_uuid": null
+ },
+ {
+  "key": "cable_hip_adduction",
+  "name": "Cable hip adduction",
+  "category": "isolation",
+  "equipment": "cable_machine",
+  "primary_muscle": "adductors",
+  "secondary_muscles": [],
+  "uncertain": "",
+  "notes": "With an ankle strap on a low pulley, pull the leg across the body.",
+  "existing_uuid": null
+ },
+ {
+  "key": "standing_calf_raise",
+  "name": "Standing calf raise",
+  "category": "isolation",
+  "equipment": "calf_raise_machine",
+  "primary_muscle": "calves",
+  "secondary_muscles": [],
+  "uncertain": "",
+  "notes": "Rise onto the toes against the machine pads and lower the heels below the platform.",
+  "existing_uuid": null
+ },
+ {
+  "key": "seated_calf_raise",
+  "name": "Seated calf raise",
+  "category": "isolation",
+  "equipment": "calf_raise_machine",
+  "primary_muscle": "calves",
+  "secondary_muscles": [],
+  "uncertain": "Seated variants bias the soleus; the muscle list has a single calves entry.",
+  "notes": "Seated with the knees bent, raise the heels against the pad.",
+  "existing_uuid": null
+ },
+ {
+  "key": "leg_press_calf_raise",
+  "name": "Leg press calf raise",
+  "category": "isolation",
+  "equipment": "leg_press_machine",
+  "primary_muscle": "calves",
+  "secondary_muscles": [],
+  "uncertain": "",
+  "notes": "On the leg press, push the platform with the balls of the feet and flex the ankles.",
+  "existing_uuid": null
+ },
+ {
+  "key": "single_leg_dumbbell_calf_raise",
+  "name": "Single-leg dumbbell calf raise",
+  "category": "isolation",
+  "equipment": "dumbbell",
+  "primary_muscle": "calves",
+  "secondary_muscles": [],
+  "uncertain": "",
+  "notes": "On a step with a dumbbell in one hand, raise and lower on one foot.",
+  "existing_uuid": null
+ },
+ {
+  "key": "bodyweight_calf_raise",
+  "name": "Bodyweight calf raise",
+  "category": "isolation",
+  "equipment": "bodyweight",
+  "primary_muscle": "calves",
+  "secondary_muscles": [],
+  "uncertain": "",
+  "notes": "Rise onto the toes and lower slowly, optionally from the edge of a step.",
+  "existing_uuid": null
+ },
+ {
+  "key": "crunches",
+  "name": "Crunches",
+  "category": "isolation",
+  "equipment": "bodyweight",
+  "primary_muscle": "upper_abs",
+  "secondary_muscles": [],
+  "uncertain": "",
+  "notes": "Lying on the back with knees bent, curl the ribs toward the pelvis.",
+  "existing_uuid": null
+ },
+ {
+  "key": "weighted_crunches",
+  "name": "Weighted crunches",
+  "category": "isolation",
+  "equipment": "dumbbell",
+  "primary_muscle": "upper_abs",
+  "secondary_muscles": [],
+  "uncertain": "",
+  "notes": "Crunch while holding a dumbbell against the chest.",
+  "existing_uuid": null
+ },
+ {
+  "key": "cable_crunch",
+  "name": "Cable crunch",
+  "category": "isolation",
+  "equipment": "cable_machine",
+  "primary_muscle": "upper_abs",
+  "secondary_muscles": [],
+  "uncertain": "",
+  "notes": "Kneeling at a high pulley, curl the torso down so the elbows move toward the knees.",
+  "existing_uuid": null
+ },
+ {
+  "key": "reverse_crunches",
+  "name": "Reverse crunches",
+  "category": "isolation",
+  "equipment": "bodyweight",
+  "primary_muscle": "lower_abs",
+  "secondary_muscles": [],
+  "uncertain": "",
+  "notes": "Lying on the back, curl the hips off the floor by bringing the knees toward the chest.",
+  "existing_uuid": null
+ },
+ {
+  "key": "hanging_leg_raise",
+  "name": "Hanging leg raise",
+  "category": "isolation",
+  "equipment": "pull_up_bar",
+  "primary_muscle": "lower_abs",
+  "secondary_muscles": [
+   "upper_abs"
+  ],
+  "uncertain": "",
+  "notes": "Hang from a bar and raise straight legs toward it without swinging.",
+  "existing_uuid": null
+ },
+ {
+  "key": "hanging_knee_raise",
+  "name": "Hanging knee raise",
+  "category": "isolation",
+  "equipment": "pull_up_bar",
+  "primary_muscle": "lower_abs",
+  "secondary_muscles": [
+   "upper_abs"
+  ],
+  "uncertain": "",
+  "notes": "Hang from a bar and raise the bent knees to hip height or higher.",
+  "existing_uuid": null
+ },
+ {
+  "key": "lying_leg_raise",
+  "name": "Lying leg raise",
+  "category": "isolation",
+  "equipment": "bodyweight",
+  "primary_muscle": "lower_abs",
+  "secondary_muscles": [],
+  "uncertain": "",
+  "notes": "Lying flat, raise straight legs to vertical and lower them with control.",
+  "existing_uuid": null
+ },
+ {
+  "key": "plank",
+  "name": "Plank",
+  "category": "isolation",
+  "equipment": "bodyweight",
+  "primary_muscle": "transverse_abdominis",
+  "secondary_muscles": [
+   "upper_abs",
+   "external_obliques"
+  ],
+  "uncertain": "Isometric; primary muscle (deep core vs rectus) is a judgement call.",
+  "notes": "Hold a straight line from head to heels on the forearms and toes.",
+  "existing_uuid": null
+ },
+ {
+  "key": "side_plank",
+  "name": "Side plank",
+  "category": "isolation",
+  "equipment": "bodyweight",
+  "primary_muscle": "external_obliques",
+  "secondary_muscles": [
+   "internal_obliques",
+   "transverse_abdominis"
+  ],
+  "uncertain": "",
+  "notes": "Hold a straight line from head to feet on one forearm, body side-on.",
+  "existing_uuid": null
+ },
+ {
+  "key": "russian_twists",
+  "name": "Russian twists",
+  "category": "isolation",
+  "equipment": "bodyweight",
+  "primary_muscle": "external_obliques",
+  "secondary_muscles": [
+   "internal_obliques",
+   "upper_abs"
+  ],
+  "uncertain": "",
+  "notes": "Seated and leaning back, rotate the torso from side to side.",
+  "existing_uuid": null
+ },
+ {
+  "key": "bicycle_crunch",
+  "name": "Bicycle crunch",
+  "category": "isolation",
+  "equipment": "bodyweight",
+  "primary_muscle": "upper_abs",
+  "secondary_muscles": [
+   "external_obliques",
+   "internal_obliques"
+  ],
+  "uncertain": "",
+  "notes": "Lying down, alternate bringing opposite elbow and knee together in a pedalling motion.",
+  "existing_uuid": null
+ },
+ {
+  "key": "cable_woodchopper",
+  "name": "Cable woodchopper",
+  "category": "isolation",
+  "equipment": "cable_machine",
+  "primary_muscle": "external_obliques",
+  "secondary_muscles": [
+   "internal_obliques",
+   "upper_abs"
+  ],
+  "uncertain": "",
+  "notes": "Rotate the torso to pull a cable diagonally across the body from high to low.",
+  "existing_uuid": null
+ },
+ {
+  "key": "pallof_press",
+  "name": "Pallof press",
+  "category": "isolation",
+  "equipment": "cable_machine",
+  "primary_muscle": "external_obliques",
+  "secondary_muscles": [
+   "internal_obliques",
+   "transverse_abdominis"
+  ],
+  "uncertain": "",
+  "notes": "Standing side-on to a cable, press the handle forward and resist the pull to rotate.",
+  "existing_uuid": null
+ },
+ {
+  "key": "dumbbell_side_bend",
+  "name": "Dumbbell side bend",
+  "category": "isolation",
+  "equipment": "dumbbell",
+  "primary_muscle": "external_obliques",
+  "secondary_muscles": [
+   "internal_obliques"
+  ],
+  "uncertain": "",
+  "notes": "Hold a dumbbell at one side and bend sideways at the waist, then return upright.",
+  "existing_uuid": null
+ },
+ {
+  "key": "dead_bug",
+  "name": "Dead bug",
+  "category": "isolation",
+  "equipment": "bodyweight",
+  "primary_muscle": "transverse_abdominis",
+  "secondary_muscles": [
+   "lower_abs"
+  ],
+  "uncertain": "",
+  "notes": "Lying on the back, extend opposite arm and leg while keeping the lower back flat.",
+  "existing_uuid": null
+ },
+ {
+  "key": "barbell_rollout",
+  "name": "Barbell rollout",
+  "category": "isolation",
+  "equipment": "barbell",
+  "primary_muscle": "upper_abs",
+  "secondary_muscles": [
+   "transverse_abdominis",
+   "lats"
+  ],
+  "uncertain": "Usually done with an ab wheel, which is not in the equipment list.",
+  "notes": "Kneeling, roll a loaded barbell forward and back, keeping the hips from sagging.",
+  "existing_uuid": null
+ }
+]

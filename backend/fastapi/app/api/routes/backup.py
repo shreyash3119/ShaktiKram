@@ -17,7 +17,7 @@ def _media_fetcher(token: str):
     """Downloads a media file from private storage with the owner's own session (never a service key)."""
     def fetch(ref: str) -> bytes:
         r = httpx.get(f"{settings.SUPABASE_URL}/storage/v1/object/authenticated/media/{ref}", timeout=60,
-                      headers={"Authorization": f"Bearer {token}", "apikey": settings.SUPABASE_ANON_KEY})
+                      headers={"Authorization": f"Bearer {token}", "apikey": settings.SUPABASE_PUBLISHABLE_KEY})
         r.raise_for_status()
         return r.content
     return fetch
