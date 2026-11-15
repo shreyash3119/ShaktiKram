@@ -2,14 +2,23 @@
 library;
 
 /// The record as it should look right after the user's change, before the server confirms it.
-Map<String, dynamic> overlayUpsert(Map<String, dynamic>? current, String id, Map<String, dynamic> payload) {
+Map<String, dynamic> overlayUpsert(
+  Map<String, dynamic>? current,
+  String id,
+  Map<String, dynamic> payload,
+) {
   return {...?current, ...payload, 'id': id};
 }
 
 /// The row a `new_version` change will become on the server, as shown on the phone until the server confirms it.
 /// [siblings] are the versions of the same entity already held (including ones not yet synced). The earlier version is
 /// left as it is: readers take the highest version as the current one, so a refused change simply disappears.
-Map<String, dynamic> overlayNewVersion(List<Map<String, dynamic>> siblings, String id, Map<String, dynamic> payload, DateTime at) {
+Map<String, dynamic> overlayNewVersion(
+  List<Map<String, dynamic>> siblings,
+  String id,
+  Map<String, dynamic> payload,
+  DateTime at,
+) {
   var latest = 0;
   String? previousId;
   for (final s in siblings) {
@@ -44,7 +53,8 @@ String? localDateOf(Map<String, dynamic> record) {
 const maxReferenceRetries = 5;
 
 /// What to do with a refused operation: retry later or give up.
-bool shouldRetry(String? errorCode, int attemptsSoFar) => errorCode == 'reference_missing' && attemptsSoFar + 1 < maxReferenceRetries;
+bool shouldRetry(String? errorCode, int attemptsSoFar) =>
+    errorCode == 'reference_missing' && attemptsSoFar + 1 < maxReferenceRetries;
 
 /// Newest first by `occurred_at`, then by id (UUIDv7 ids are time ordered).
 int compareNewestFirst(Map<String, dynamic> a, Map<String, dynamic> b) {
@@ -61,17 +71,28 @@ String? occurredAtOf(Map<String, dynamic> record) {
   return value is String ? value : null;
 }
 
-final _uuidPattern = RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
+final _uuidPattern = RegExp(
+  r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+);
 
 /// Fields that hold ids which are not links to another record.
-const _notRecordLinks = {'id', 'device_id', 'op_id', 'request_id', 'auth_user_id'};
+const _notRecordLinks = {
+  'id',
+  'device_id',
+  'op_id',
+  'request_id',
+  'auth_user_id',
+};
 
 /// The links from a record to other records: every `*_id` field holding a uuid (`session_id`, `exercise_id`,
 /// `entity_id`, `previous_version_id`, ...). Indexed so child records can be found quickly.
 Map<String, String> extractRefs(Map<String, dynamic> record) {
   return {
     for (final e in record.entries)
-      if (e.key.endsWith('_id') && !_notRecordLinks.contains(e.key) && e.value is String && _uuidPattern.hasMatch(e.value as String))
+      if (e.key.endsWith('_id') &&
+          !_notRecordLinks.contains(e.key) &&
+          e.value is String &&
+          _uuidPattern.hasMatch(e.value as String))
         e.key: e.value as String,
   };
 }

@@ -9,7 +9,14 @@ import 'sync_engine.dart';
 enum SyncPhase { synced, syncing, pending, offline, error }
 
 class SyncStatus {
-  const SyncStatus(this.phase, {this.pendingCount = 0, this.issueCount = 0, this.lastSyncAt, this.message, this.pulledCount = 0});
+  const SyncStatus(
+    this.phase, {
+    this.pendingCount = 0,
+    this.issueCount = 0,
+    this.lastSyncAt,
+    this.message,
+    this.pulledCount = 0,
+  });
 
   final SyncPhase phase;
 
@@ -26,7 +33,15 @@ class SyncStatus {
   /// The last problem, in plain words.
   final String? message;
 
-  SyncStatus copyWith({SyncPhase? phase, int? pendingCount, int? issueCount, DateTime? lastSyncAt, String? message, bool clearMessage = false, int? pulledCount}) {
+  SyncStatus copyWith({
+    SyncPhase? phase,
+    int? pendingCount,
+    int? issueCount,
+    DateTime? lastSyncAt,
+    String? message,
+    bool clearMessage = false,
+    int? pulledCount,
+  }) {
     return SyncStatus(
       phase ?? this.phase,
       pendingCount: pendingCount ?? this.pendingCount,
@@ -46,7 +61,9 @@ class DataRevisionNotifier extends Notifier<int> {
   void bump() => state = state + 1;
 }
 
-final dataRevisionProvider = NotifierProvider<DataRevisionNotifier, int>(DataRevisionNotifier.new);
+final dataRevisionProvider = NotifierProvider<DataRevisionNotifier, int>(
+  DataRevisionNotifier.new,
+);
 
 final syncEngineProvider = Provider<SyncEngine>((ref) {
   return SyncEngine(
@@ -80,14 +97,20 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
     ref.read(dataRevisionProvider.notifier).bump();
     if (_running) return;
     state = state.copyWith(
-      phase: pending > 0 ? (state.phase == SyncPhase.offline ? SyncPhase.offline : SyncPhase.pending) : _idlePhase(issues),
+      phase:
+          pending > 0
+              ? (state.phase == SyncPhase.offline
+                  ? SyncPhase.offline
+                  : SyncPhase.pending)
+              : _idlePhase(issues),
       pendingCount: pending,
       issueCount: issues,
       lastSyncAt: last,
     );
   }
 
-  SyncPhase _idlePhase(int issues) => issues > 0 ? SyncPhase.error : SyncPhase.synced;
+  SyncPhase _idlePhase(int issues) =>
+      issues > 0 ? SyncPhase.error : SyncPhase.synced;
 
   /// Runs a sync round now. A call made during a round makes it run once more afterwards, and the returned future
   /// completes when all of it is done.
@@ -107,10 +130,18 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
       do {
         _again = false;
         if (!_alive) return;
-        state = state.copyWith(phase: SyncPhase.syncing, clearMessage: true, pulledCount: 0);
-        final report = await ref.read(syncEngineProvider).syncOnce(onProgress: (n) {
-          if (_alive) state = state.copyWith(pulledCount: n);
-        });
+        state = state.copyWith(
+          phase: SyncPhase.syncing,
+          clearMessage: true,
+          pulledCount: 0,
+        );
+        final report = await ref
+            .read(syncEngineProvider)
+            .syncOnce(
+              onProgress: (n) {
+                if (_alive) state = state.copyWith(pulledCount: n);
+              },
+            );
         if (!_alive) return;
         final store = ref.read(localStoreProvider);
         final pending = await store.pendingCount();
@@ -119,14 +150,26 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
         if (!_alive) return;
         if (report.changedData) ref.read(dataRevisionProvider.notifier).bump();
         final phase = switch (report.outcome) {
-          SyncOutcome.ok || SyncOutcome.busy => pending > 0 ? SyncPhase.pending : _idlePhase(issues),
+          SyncOutcome.ok || SyncOutcome.busy =>
+            pending > 0 ? SyncPhase.pending : _idlePhase(issues),
           SyncOutcome.offline => SyncPhase.offline,
-          SyncOutcome.error || SyncOutcome.revoked || SyncOutcome.notRegistered => SyncPhase.error,
+          SyncOutcome.error ||
+          SyncOutcome.revoked ||
+          SyncOutcome.notRegistered => SyncPhase.error,
         };
-        state = SyncStatus(phase, pendingCount: pending, issueCount: issues, lastSyncAt: last, message: report.message);
+        state = SyncStatus(
+          phase,
+          pendingCount: pending,
+          issueCount: issues,
+          lastSyncAt: last,
+          message: report.message,
+        );
         if (report.outcome == SyncOutcome.notRegistered && !reRegistered) {
           reRegistered = true;
-          final registered = await ref.read(sessionControllerProvider.notifier).reRegisterDevice();
+          final registered =
+              await ref
+                  .read(sessionControllerProvider.notifier)
+                  .reRegisterDevice();
           if (!_alive) return;
           if (registered) _again = true;
         }
@@ -141,4 +184,6 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
   }
 }
 
-final syncStatusProvider = NotifierProvider<SyncStatusNotifier, SyncStatus>(SyncStatusNotifier.new);
+final syncStatusProvider = NotifierProvider<SyncStatusNotifier, SyncStatus>(
+  SyncStatusNotifier.new,
+);

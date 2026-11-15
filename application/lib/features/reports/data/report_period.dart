@@ -3,7 +3,20 @@
 /// calculation and has the last word: it answers 422 with a reason for anything it refuses.
 library;
 
-const _monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const _monthNames = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
 
 /// The longest custom range the service accepts.
 const maxCustomDays = 3660;
@@ -27,27 +40,47 @@ enum ReportKind {
 
 DateTime _day(DateTime d) => DateTime(d.year, d.month, d.day);
 
-String ymd(DateTime d) => '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+String ymd(DateTime d) =>
+    '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
 DateTime _lastOfMonth(int year, int month) => DateTime(year, month + 1, 0);
 
 /// One report period, with the parameters it is sent as.
 class ReportQuery {
-  const ReportQuery._(this.kind, {this.year, this.month, this.quarter, this.half, this.day, this.weekStart, this.dateFrom, this.dateTo});
+  const ReportQuery._(
+    this.kind, {
+    this.year,
+    this.month,
+    this.quarter,
+    this.half,
+    this.day,
+    this.weekStart,
+    this.dateFrom,
+    this.dateTo,
+  });
 
-  factory ReportQuery.daily(DateTime day) => ReportQuery._(ReportKind.daily, day: _day(day));
+  factory ReportQuery.daily(DateTime day) =>
+      ReportQuery._(ReportKind.daily, day: _day(day));
 
   /// Any date in the week; the week starts on Monday (as the service counts it).
   factory ReportQuery.weekly(DateTime anyDayInWeek) {
     final d = _day(anyDayInWeek);
-    return ReportQuery._(ReportKind.weekly, weekStart: d.subtract(Duration(days: d.weekday - DateTime.monday)));
+    return ReportQuery._(
+      ReportKind.weekly,
+      weekStart: d.subtract(Duration(days: d.weekday - DateTime.monday)),
+    );
   }
 
-  factory ReportQuery.monthly(int year, int month) => ReportQuery._(ReportKind.monthly, year: year, month: month);
-  factory ReportQuery.quarterly(int year, int quarter) => ReportQuery._(ReportKind.quarterly, year: year, quarter: quarter);
-  factory ReportQuery.halfYearly(int year, int half) => ReportQuery._(ReportKind.halfYearly, year: year, half: half);
-  factory ReportQuery.yearly(int year) => ReportQuery._(ReportKind.yearly, year: year);
-  factory ReportQuery.custom(DateTime from, DateTime to) => ReportQuery._(ReportKind.custom, dateFrom: _day(from), dateTo: _day(to));
+  factory ReportQuery.monthly(int year, int month) =>
+      ReportQuery._(ReportKind.monthly, year: year, month: month);
+  factory ReportQuery.quarterly(int year, int quarter) =>
+      ReportQuery._(ReportKind.quarterly, year: year, quarter: quarter);
+  factory ReportQuery.halfYearly(int year, int half) =>
+      ReportQuery._(ReportKind.halfYearly, year: year, half: half);
+  factory ReportQuery.yearly(int year) =>
+      ReportQuery._(ReportKind.yearly, year: year);
+  factory ReportQuery.custom(DateTime from, DateTime to) =>
+      ReportQuery._(ReportKind.custom, dateFrom: _day(from), dateTo: _day(to));
   const ReportQuery.complete() : this._(ReportKind.complete);
 
   /// The period of [kind] that contains [now]. A custom range starts as the last 30 days.
@@ -89,9 +122,13 @@ class ReportQuery {
       case ReportKind.daily:
         return day == null ? null : (day!, day!);
       case ReportKind.weekly:
-        return weekStart == null ? null : (weekStart!, weekStart!.add(const Duration(days: 6)));
+        return weekStart == null
+            ? null
+            : (weekStart!, weekStart!.add(const Duration(days: 6)));
       case ReportKind.monthly:
-        return (year == null || month == null) ? null : (DateTime(year!, month!, 1), _lastOfMonth(year!, month!));
+        return (year == null || month == null)
+            ? null
+            : (DateTime(year!, month!, 1), _lastOfMonth(year!, month!));
       case ReportKind.quarterly:
         if (year == null || quarter == null) return null;
         final first = 3 * (quarter! - 1) + 1;
@@ -101,9 +138,13 @@ class ReportQuery {
         final first = half == 1 ? 1 : 7;
         return (DateTime(year!, first, 1), _lastOfMonth(year!, first + 5));
       case ReportKind.yearly:
-        return year == null ? null : (DateTime(year!, 1, 1), DateTime(year!, 12, 31));
+        return year == null
+            ? null
+            : (DateTime(year!, 1, 1), DateTime(year!, 12, 31));
       case ReportKind.custom:
-        return (dateFrom == null || dateTo == null) ? null : (dateFrom!, dateTo!);
+        return (dateFrom == null || dateTo == null)
+            ? null
+            : (dateFrom!, dateTo!);
       case ReportKind.complete:
         return null;
     }
@@ -118,7 +159,9 @@ class ReportQuery {
       case ReportKind.weekly:
         return weekStart == null ? 'Week' : 'Week of ${ymd(weekStart!)}';
       case ReportKind.monthly:
-        return (year == null || month == null || month! < 1 || month! > 12) ? 'Month' : '${_monthNames[month! - 1]} $year';
+        return (year == null || month == null || month! < 1 || month! > 12)
+            ? 'Month'
+            : '${_monthNames[month! - 1]} $year';
       case ReportKind.quarterly:
         return 'Q$quarter $year';
       case ReportKind.halfYearly:
@@ -143,19 +186,26 @@ class ReportQuery {
         return weekStart == null ? 'Choose a week.' : null;
       case ReportKind.monthly:
         if (year == null) return 'Choose a year.';
-        return (month == null || month! < 1 || month! > 12) ? 'The month must be 1 to 12.' : null;
+        return (month == null || month! < 1 || month! > 12)
+            ? 'The month must be 1 to 12.'
+            : null;
       case ReportKind.quarterly:
         if (year == null) return 'Choose a year.';
-        return (quarter == null || quarter! < 1 || quarter! > 4) ? 'The quarter must be 1 to 4.' : null;
+        return (quarter == null || quarter! < 1 || quarter! > 4)
+            ? 'The quarter must be 1 to 4.'
+            : null;
       case ReportKind.halfYearly:
         if (year == null) return 'Choose a year.';
         return (half != 1 && half != 2) ? 'The half must be 1 or 2.' : null;
       case ReportKind.yearly:
         return year == null ? 'Choose a year.' : null;
       case ReportKind.custom:
-        if (dateFrom == null || dateTo == null) return 'Choose a first and a last day.';
-        if (dateTo!.isBefore(dateFrom!)) return 'The last day must not be before the first day.';
-        if (dateTo!.difference(dateFrom!).inDays + 1 > maxCustomDays) return 'A custom range can cover at most $maxCustomDays days.';
+        if (dateFrom == null || dateTo == null){
+          return 'Choose a first and a last day.';}
+        if (dateTo!.isBefore(dateFrom!)){
+          return 'The last day must not be before the first day.';}
+        if (dateTo!.difference(dateFrom!).inDays + 1 > maxCustomDays){
+          return 'A custom range can cover at most $maxCustomDays days.';}
         return null;
       case ReportKind.complete:
         return null;
@@ -164,20 +214,30 @@ class ReportQuery {
 
   /// The query parameters, named as the service names them.
   Map<String, String> toParams({bool compare = false}) => {
-        'period': kind.wire,
-        if (year != null && const {ReportKind.monthly, ReportKind.quarterly, ReportKind.halfYearly, ReportKind.yearly}.contains(kind)) 'year': '$year',
-        if (kind == ReportKind.monthly && month != null) 'month': '$month',
-        if (kind == ReportKind.quarterly && quarter != null) 'quarter': '$quarter',
-        if (kind == ReportKind.halfYearly && half != null) 'half': '$half',
-        if (kind == ReportKind.daily && day != null) 'day': ymd(day!),
-        if (kind == ReportKind.weekly && weekStart != null) 'week_start': ymd(weekStart!),
-        if (kind == ReportKind.custom && dateFrom != null) 'date_from': ymd(dateFrom!),
-        if (kind == ReportKind.custom && dateTo != null) 'date_to': ymd(dateTo!),
-        if (compare) 'compare': 'true',
-      };
+    'period': kind.wire,
+    if (year != null &&
+        const {
+          ReportKind.monthly,
+          ReportKind.quarterly,
+          ReportKind.halfYearly,
+          ReportKind.yearly,
+        }.contains(kind))
+      'year': '$year',
+    if (kind == ReportKind.monthly && month != null) 'month': '$month',
+    if (kind == ReportKind.quarterly && quarter != null) 'quarter': '$quarter',
+    if (kind == ReportKind.halfYearly && half != null) 'half': '$half',
+    if (kind == ReportKind.daily && day != null) 'day': ymd(day!),
+    if (kind == ReportKind.weekly && weekStart != null)
+      'week_start': ymd(weekStart!),
+    if (kind == ReportKind.custom && dateFrom != null)
+      'date_from': ymd(dateFrom!),
+    if (kind == ReportKind.custom && dateTo != null) 'date_to': ymd(dateTo!),
+    if (compare) 'compare': 'true',
+  };
 
   /// Stable text for the same period (used as the cache key).
-  String get cacheKey => toParams().entries.map((e) => '${e.key}=${e.value}').join('&');
+  String get cacheKey =>
+      toParams().entries.map((e) => '${e.key}=${e.value}').join('&');
 
   /// Whether stepping to the previous or next period makes sense (not for a custom range or all time).
   bool get canStep => kind != ReportKind.custom && kind != ReportKind.complete;
@@ -186,9 +246,13 @@ class ReportQuery {
   ReportQuery shifted(int steps) {
     switch (kind) {
       case ReportKind.daily:
-        return day == null ? this : ReportQuery.daily(day!.add(Duration(days: steps)));
+        return day == null
+            ? this
+            : ReportQuery.daily(day!.add(Duration(days: steps)));
       case ReportKind.weekly:
-        return weekStart == null ? this : ReportQuery.weekly(weekStart!.add(Duration(days: 7 * steps)));
+        return weekStart == null
+            ? this
+            : ReportQuery.weekly(weekStart!.add(Duration(days: 7 * steps)));
       case ReportKind.monthly:
         if (year == null || month == null) return this;
         final index = year! * 12 + (month! - 1) + steps;
@@ -216,7 +280,8 @@ class ReportQuery {
   }
 
   @override
-  bool operator ==(Object other) => other is ReportQuery && other.cacheKey == cacheKey;
+  bool operator ==(Object other) =>
+      other is ReportQuery && other.cacheKey == cacheKey;
 
   @override
   int get hashCode => cacheKey.hashCode;
@@ -231,10 +296,12 @@ class ReportRequest {
 
   Map<String, String> toParams() => query.toParams(compare: compare);
 
-  String get cacheKey => 'report:summary:${query.toParams(compare: compare).entries.map((e) => '${e.key}=${e.value}').join('&')}';
+  String get cacheKey =>
+      'report:summary:${query.toParams(compare: compare).entries.map((e) => '${e.key}=${e.value}').join('&')}';
 
   @override
-  bool operator ==(Object other) => other is ReportRequest && other.cacheKey == cacheKey;
+  bool operator ==(Object other) =>
+      other is ReportRequest && other.cacheKey == cacheKey;
 
   @override
   int get hashCode => cacheKey.hashCode;

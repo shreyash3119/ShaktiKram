@@ -257,8 +257,12 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
       // not finished. The person goes back to it, or throws it away.
       final choice = await _ask(
         title: 'No sets logged',
-        body: 'This workout has no logged sets, so it would not count. Go back and log a set, or discard it.',
-        choices: const [('Return to workout', 'keep', ButtonKind.primary), ('Discard workout', 'discard', ButtonKind.danger)],
+        body:
+            'This workout has no logged sets, so it would not count. Go back and log a set, or discard it.',
+        choices: const [
+          ('Return to workout', 'keep', ButtonKind.primary),
+          ('Discard workout', 'discard', ButtonKind.danger),
+        ],
       );
       if (!mounted || choice != 'discard') return;
       await _run(() => _service.discardSession(detail.session.id));
@@ -291,16 +295,18 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
   bool _orphanPauseHandled = false;
 
   void _endOrphanPause(WorkoutSession s) {
-    if (_orphanPauseHandled || _pausedAt != null || s.status != 'paused'){
-      return;}
+    if (_orphanPauseHandled || _pausedAt != null || s.status != 'paused') {
+      return;
+    }
     _orphanPauseHandled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       await _run(() => _service.setPaused(s.id, paused: false));
-      if (mounted){
+      if (mounted) {
         _toast(
           'This workout was paused when the app closed. The pause time was not recorded, so the clock kept running.',
-        );}
+        );
+      }
     });
   }
 
@@ -627,8 +633,9 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
       for (final s in sets)
         if (s.isWorking) s,
     ];
-    if (working.isEmpty){
-      return sets.isEmpty ? 'No sets logged' : '${sets.length} warm-up sets';}
+    if (working.isEmpty) {
+      return sets.isEmpty ? 'No sets logged' : '${sets.length} warm-up sets';
+    }
     return working
         .map(
           (s) =>
@@ -643,8 +650,9 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     final session = detail.session;
     final names = _exerciseNames();
     final exercises = detail.exercises;
-    if (_exercise >= exercises.length){
-      _exercise = exercises.isEmpty ? 0 : exercises.length - 1;}
+    if (_exercise >= exercises.length) {
+      _exercise = exercises.isEmpty ? 0 : exercises.length - 1;
+    }
     final current = exercises.isEmpty ? null : exercises[_exercise];
     _endOrphanPause(session);
     final paused = _pausedAt != null;

@@ -8,15 +8,22 @@ import '../db/local_store.dart';
 import 'insight_repository.dart';
 
 final insightRepositoryProvider = Provider<InsightRepository>((ref) {
-  return InsightRepository(store: ref.read(localStoreProvider), gateway: ref.read(backendGatewayProvider));
+  return InsightRepository(
+    store: ref.read(localStoreProvider),
+    gateway: ref.read(backendGatewayProvider),
+  );
 });
 
 /// One cached server calculation. It shows the saved answer at once, then asks the server for a newer one when the
 /// answer is missing or stale and the phone is signed in. `refresh()` asks again on demand (pull to refresh, retry).
 /// Without a connection the saved answer stays and `error` says why it could not be updated.
-final insightProvider = AsyncNotifierProvider.family<InsightNotifier, InsightSnapshot, InsightSpec>(InsightNotifier.new);
+final insightProvider =
+    AsyncNotifierProvider.family<InsightNotifier, InsightSnapshot, InsightSpec>(
+      InsightNotifier.new,
+    );
 
-class InsightNotifier extends FamilyAsyncNotifier<InsightSnapshot, InsightSpec> {
+class InsightNotifier
+    extends FamilyAsyncNotifier<InsightSnapshot, InsightSpec> {
   bool _disposed = false;
 
   @override
@@ -32,7 +39,8 @@ class InsightNotifier extends FamilyAsyncNotifier<InsightSnapshot, InsightSpec> 
     return saved;
   }
 
-  bool get _signedIn => ref.read(sessionControllerProvider).phase == SessionPhase.ready;
+  bool get _signedIn =>
+      ref.read(sessionControllerProvider).phase == SessionPhase.ready;
 
   Future<void> refresh() async {
     final repo = ref.read(insightRepositoryProvider);

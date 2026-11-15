@@ -9,7 +9,11 @@ import 'sync_status.dart';
 /// Starts sync rounds: when the app becomes ready, every minute, and when it returns to the foreground.
 /// Wrapped around the app in `main.dart` only, so tests never start timers.
 class SyncRunner extends ConsumerStatefulWidget {
-  const SyncRunner({super.key, required this.child, this.interval = const Duration(seconds: 60)});
+  const SyncRunner({
+    super.key,
+    required this.child,
+    this.interval = const Duration(seconds: 60),
+  });
 
   final Widget child;
   final Duration interval;
@@ -18,10 +22,12 @@ class SyncRunner extends ConsumerStatefulWidget {
   ConsumerState<SyncRunner> createState() => _SyncRunnerState();
 }
 
-class _SyncRunnerState extends ConsumerState<SyncRunner> with WidgetsBindingObserver {
+class _SyncRunnerState extends ConsumerState<SyncRunner>
+    with WidgetsBindingObserver {
   Timer? _timer;
 
-  bool get _ready => ref.read(sessionControllerProvider).phase == SessionPhase.ready;
+  bool get _ready =>
+      ref.read(sessionControllerProvider).phase == SessionPhase.ready;
 
   void _sync() {
     if (_ready) unawaited(ref.read(syncStatusProvider.notifier).syncNow());
@@ -49,7 +55,9 @@ class _SyncRunnerState extends ConsumerState<SyncRunner> with WidgetsBindingObse
   @override
   Widget build(BuildContext context) {
     ref.listen<SessionState>(sessionControllerProvider, (previous, next) {
-      if (next.phase == SessionPhase.ready && previous?.phase != SessionPhase.ready) _sync();
+      if (next.phase == SessionPhase.ready &&
+          previous?.phase != SessionPhase.ready){
+        _sync();}
     });
     return widget.child;
   }

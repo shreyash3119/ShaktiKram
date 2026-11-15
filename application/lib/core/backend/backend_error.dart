@@ -6,7 +6,8 @@ class BackendError implements Exception {
   const BackendError(this.code, this.message);
 
   /// Cannot reach the server. Uses the contract code `unavailable`.
-  const BackendError.unreachable() : this('unavailable', 'Cannot reach the server.');
+  const BackendError.unreachable()
+    : this('unavailable', 'Cannot reach the server.');
 
   final String code;
   final String message;
@@ -36,9 +37,12 @@ class BackendError implements Exception {
 
   bool get isUnreachable => code == 'unavailable';
   bool get isDeviceRevoked => code == 'device_revoked';
+
   /// The server has no record of this device (for example after the server data was reset).
-  bool get isDeviceNotRegistered => code == 'unauthorized' && message.contains('not registered');
-  bool get isNotOwner => code == 'unauthorized' && message.contains('already has an owner');
+  bool get isDeviceNotRegistered =>
+      code == 'unauthorized' && message.contains('not registered');
+  bool get isNotOwner =>
+      code == 'unauthorized' && message.contains('already has an owner');
 
   /// Wording for the screen.
   String get userMessage {

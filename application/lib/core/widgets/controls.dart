@@ -44,7 +44,11 @@ class PillTabs extends StatelessWidget {
         ),
       ),
     );
-    final tappable = GestureDetector(behavior: HitTestBehavior.opaque, onTap: () => onChanged(i), child: pill);
+    final tappable = GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => onChanged(i),
+      child: pill,
+    );
     return expand ? Expanded(child: tappable) : tappable;
   }
 
@@ -54,19 +58,39 @@ class PillTabs extends StatelessWidget {
     final Widget row;
     switch (layout) {
       case PillLayout.even:
-        row = Row(children: [for (var i = 0; i < labels.length; i++) _pill(context, i, expand: true)]);
+        row = Row(
+          children: [
+            for (var i = 0; i < labels.length; i++)
+              _pill(context, i, expand: true),
+          ],
+        );
       case PillLayout.scroll:
         row = SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          child: Row(children: [for (var i = 0; i < labels.length; i++) _pill(context, i, expand: false)]),
+          child: Row(
+            children: [
+              for (var i = 0; i < labels.length; i++)
+                _pill(context, i, expand: false),
+            ],
+          ),
         );
       case PillLayout.wrap:
-        row = Wrap(spacing: 4, runSpacing: 6, children: [for (var i = 0; i < labels.length; i++) _pill(context, i, expand: false)]);
+        row = Wrap(
+          spacing: 4,
+          runSpacing: 6,
+          children: [
+            for (var i = 0; i < labels.length; i++)
+              _pill(context, i, expand: false),
+          ],
+        );
     }
     if (!container) return row;
     return Container(
       padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(color: p.card, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        color: p.card,
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: row,
     );
   }
@@ -76,9 +100,20 @@ enum ButtonKind { primary, tonal, danger }
 
 /// Full-width rounded button. Primary is blue, tonal sits on a tile, danger is red text on a tile.
 class AppButton extends StatelessWidget {
-  const AppButton(this.label, {super.key, this.onPressed, this.kind = ButtonKind.tonal, this.height = 52});
+  const AppButton(
+    this.label, {
+    super.key,
+    this.onPressed,
+    this.kind = ButtonKind.tonal,
+    this.height = 52,
+  });
 
-  const AppButton.primary(this.label, {super.key, this.onPressed, this.height = 52}) : kind = ButtonKind.primary;
+  const AppButton.primary(
+    this.label, {
+    super.key,
+    this.onPressed,
+    this.height = 52,
+  }) : kind = ButtonKind.primary;
 
   final String label;
   final VoidCallback? onPressed;
@@ -104,7 +139,15 @@ class AppButton extends StatelessWidget {
           height: height,
           alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text(label, textAlign: TextAlign.center, style: TextStyle(color: fg, fontSize: 15, fontWeight: FontWeight.w700)),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: fg,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ),
       ),
     );
@@ -119,7 +162,13 @@ class ButtonPair extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(children: [Expanded(child: left), const SizedBox(width: 12), Expanded(child: right)]);
+    return Row(
+      children: [
+        Expanded(child: left),
+        const SizedBox(width: 12),
+        Expanded(child: right),
+      ],
+    );
   }
 }
 
@@ -137,7 +186,14 @@ class LinkText extends StatelessWidget {
       onTap: onTap ?? () {},
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Text(label, style: TextStyle(color: color ?? context.pal.link, fontSize: 15, fontWeight: FontWeight.w500)),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: color ?? context.pal.link,
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ),
     );
   }
@@ -145,7 +201,13 @@ class LinkText extends StatelessWidget {
 
 /// Settings-style row with a switch.
 class ToggleRow extends StatelessWidget {
-  const ToggleRow({super.key, required this.title, this.subtitle, required this.value, required this.onChanged});
+  const ToggleRow({
+    super.key,
+    required this.title,
+    this.subtitle,
+    required this.value,
+    required this.onChanged,
+  });
 
   final String title;
   final String? subtitle;
@@ -157,25 +219,40 @@ class ToggleRow extends StatelessWidget {
     final p = context.pal;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(children: [
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: TextStyle(color: p.text, fontSize: 15, fontWeight: FontWeight.w700)),
-            if (subtitle != null) ...[
-              const SizedBox(height: 2),
-              Text(subtitle!, style: TextStyle(color: p.muted, fontSize: 13.5)),
-            ],
-          ]),
-        ),
-        Switch(
-          value: value,
-          onChanged: onChanged,
-          thumbColor: WidgetStatePropertyAll(p.onPrimary),
-          activeTrackColor: p.primary,
-          inactiveTrackColor: p.tile,
-          trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
-        ),
-      ]),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: p.text,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle!,
+                    style: TextStyle(color: p.muted, fontSize: 13.5),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            thumbColor: WidgetStatePropertyAll(p.onPrimary),
+            activeTrackColor: p.primary,
+            inactiveTrackColor: p.tile,
+            trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -204,7 +281,9 @@ class FieldBox extends StatefulWidget {
 }
 
 class _FieldBoxState extends State<FieldBox> {
-  late final TextEditingController _controller = TextEditingController(text: widget.initial);
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.initial,
+  );
 
   @override
   void dispose() {
@@ -217,7 +296,10 @@ class _FieldBoxState extends State<FieldBox> {
     final p = context.pal;
     return Container(
       height: widget.height,
-      decoration: BoxDecoration(color: p.tile, borderRadius: BorderRadius.circular(AppTheme.radius)),
+      decoration: BoxDecoration(
+        color: p.tile,
+        borderRadius: BorderRadius.circular(AppTheme.radius),
+      ),
       alignment: Alignment.center,
       child: TextField(
         key: widget.fieldKey,
@@ -225,10 +307,18 @@ class _FieldBoxState extends State<FieldBox> {
         keyboardType: widget.keyboard,
         textAlign: TextAlign.center,
         onChanged: widget.onChanged,
-        style: TextStyle(color: p.text, fontSize: 17, fontWeight: FontWeight.w700),
+        style: TextStyle(
+          color: p.text,
+          fontSize: 17,
+          fontWeight: FontWeight.w700,
+        ),
         decoration: InputDecoration(
           hintText: widget.hint,
-          hintStyle: TextStyle(color: p.muted, fontSize: 15, fontWeight: FontWeight.w600),
+          hintStyle: TextStyle(
+            color: p.muted,
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
@@ -250,14 +340,23 @@ class FieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
-      child: Text(text, style: TextStyle(color: context.pal.muted, fontSize: 13.5)),
+      child: Text(
+        text,
+        style: TextStyle(color: context.pal.muted, fontSize: 13.5),
+      ),
     );
   }
 }
 
 /// A field with its caption, for two-up form rows.
 class LabeledField extends StatelessWidget {
-  const LabeledField(this.label, {super.key, this.initial = '', this.hint, this.keyboard});
+  const LabeledField(
+    this.label, {
+    super.key,
+    this.initial = '',
+    this.hint,
+    this.keyboard,
+  });
   final String label;
   final String initial;
   final String? hint;
@@ -265,9 +364,12 @@ class LabeledField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      FieldLabel(label),
-      FieldBox(initial: initial, hint: hint, keyboard: keyboard),
-    ]);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FieldLabel(label),
+        FieldBox(initial: initial, hint: hint, keyboard: keyboard),
+      ],
+    );
   }
 }

@@ -112,12 +112,14 @@ class _GoalEditorState extends ConsumerState<_GoalEditor> {
     });
     try {
       if ((_metric == 'est_1rm' || _metric == 'max_reps') &&
-          _exerciseId == null){
-        throw ArgumentError('Choose the exercise this goal is about.');}
+          _exerciseId == null) {
+        throw ArgumentError('Choose the exercise this goal is about.');
+      }
       if (_type == null) throw ArgumentError('Choose a goal type.');
       final target = _target.trim().isEmpty ? null : _num(_target);
-      if (_target.trim().isNotEmpty && target == null){
-        throw ArgumentError('The target must be a number.');}
+      if (_target.trim().isNotEmpty && target == null) {
+        throw ArgumentError('The target must be a number.');
+      }
       final service = ref.read(progressServiceProvider);
       final g = widget.goal;
       if (g == null) {

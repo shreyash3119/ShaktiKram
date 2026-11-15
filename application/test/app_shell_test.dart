@@ -7,7 +7,7 @@ import 'package:shaktikram/core/routing/app_shell.dart';
 import 'package:shaktikram/core/sync/sync_status.dart';
 import 'package:shaktikram/core/widgets/controls.dart';
 import 'package:shaktikram/features/home/presentation/home_screen.dart';
-
+import 'package:shaktikram/core/backend/reporting_gateway.dart';
 import 'support/fakes.dart';
 
 /// These tests run as a signed-in, registered phone, so the app opens on Home.
@@ -16,12 +16,18 @@ Future<void> _pumpApp(
   List<Override> extra = const [],
 }) async {
   final h = Harness.ready();
+
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [...h.overrides, ...extra],
+      overrides: [
+        ...h.overrides,
+        reportingConfiguredProvider.overrideWith((ref) => false),
+        ...extra,
+      ],
       child: const ShaktiKramApp(),
     ),
   );
+
   await tester.pumpAndSettle();
 }
 
@@ -83,6 +89,7 @@ void main() {
     ]) {
       await tester.tap(_navLabel(label));
       await tester.pumpAndSettle();
+      
       expect(
         find.text(_subtitles()[label]!),
         findsOneWidget,
@@ -181,9 +188,17 @@ void main() {
 
     await tester.tap(_navLabel('Reports'));
     await tester.pumpAndSettle();
-    // No reporting service is set up in tests, so the screen says so instead of showing sample numbers.
-    expect(find.text('Reports are not set up'), findsOneWidget);
-    expect(find.text('Performance overview'), findsNothing);
+    
+    // No reporting service is set up in tests.
+    expect(
+      find.text('Reports are not set up', skipOffstage: false),
+      findsOneWidget,
+    );
+
+    expect(
+      find.text('Performance overview', skipOffstage: false),
+      findsNothing,
+    );
   });
 }
 

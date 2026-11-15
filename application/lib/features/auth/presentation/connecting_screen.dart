@@ -17,15 +17,19 @@ class ConnectingScreen extends ConsumerWidget {
 
     return Scaffold(
       body: SafeArea(
-        child: message == null
-            ? const LoadingView(message: 'Setting up this device…')
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ErrorView(message: message, onRetry: controller.retry),
-                  TextButton(onPressed: controller.signOut, child: const Text('Sign out')),
-                ],
-              ),
+        child:
+            message == null
+                ? const LoadingView(message: 'Setting up this device…')
+                : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ErrorView(message: message, onRetry: controller.retry),
+                    TextButton(
+                      onPressed: controller.signOut,
+                      child: const Text('Sign out'),
+                    ),
+                  ],
+                ),
       ),
     );
   }

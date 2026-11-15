@@ -228,21 +228,60 @@ class _RecoveryReadiness extends ConsumerWidget {
     final result = ref.watch(dailyBriefingProvider(today));
     final readiness = result.briefing?.readiness;
     final deload = result.briefing?.deload;
-    return TitledCard(title: 'Recovery and readiness', children: [
-      if (readiness == null)
-        MutedText(result.snapshot.hasData ? 'No readiness answer yet. Add today’s check-in below.' : 'Readiness appears once the daily briefing has loaded from the server.')
-      else ...[
-        Text('${readiness.level[0].toUpperCase()}${readiness.level.substring(1).replaceAll('_', ' ')}', style: TextStyle(color: p.text, fontSize: 22, fontWeight: FontWeight.w800)),
-        for (final line in readiness.reasoning) ...[const SizedBox(height: 6), Text(line, style: TextStyle(color: p.muted, fontSize: 15, height: 1.35))],
-      ],
-      if (deload != null && deload.level != 'none' && deload.level != 'unknown') ...[
+    return TitledCard(
+      title: 'Recovery and readiness',
+      children: [
+        if (readiness == null)
+          MutedText(
+            result.snapshot.hasData
+                ? 'No readiness answer yet. Add today’s check-in below.'
+                : 'Readiness appears once the daily briefing has loaded from the server.',
+          )
+        else ...[
+          Text(
+            '${readiness.level[0].toUpperCase()}${readiness.level.substring(1).replaceAll('_', ' ')}',
+            style: TextStyle(
+              color: p.text,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          for (final line in readiness.reasoning) ...[
+            const SizedBox(height: 6),
+            Text(
+              line,
+              style: TextStyle(color: p.muted, fontSize: 15, height: 1.35),
+            ),
+          ],
+        ],
+        if (deload != null &&
+            deload.level != 'none' &&
+            deload.level != 'unknown') ...[
+          const SizedBox(height: 10),
+          Text(
+            'Deload: ${deload.level.replaceAll('_', ' ')}',
+            style: TextStyle(
+              color: p.text,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
         const SizedBox(height: 10),
-        Text('Deload: ${deload.level.replaceAll('_', ' ')}', style: TextStyle(color: p.text, fontSize: 15, fontWeight: FontWeight.w700)),
+        const MutedText(
+          'Guidance from your own check-ins, not medical advice.',
+          size: 13,
+        ),
+        InsightStatusLine(
+          snapshot: result.snapshot,
+          onRefresh:
+              () =>
+                  ref
+                      .read(insightProvider(dailyBriefingSpec(today)).notifier)
+                      .refresh(),
+        ),
       ],
-      const SizedBox(height: 10),
-      const MutedText('Guidance from your own check-ins, not medical advice.', size: 13),
-      InsightStatusLine(snapshot: result.snapshot, onRefresh: () => ref.read(insightProvider(dailyBriefingSpec(today)).notifier).refresh()),
-    ]);
+    );
   }
 }
 

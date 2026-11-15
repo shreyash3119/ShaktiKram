@@ -19,7 +19,13 @@ enum InsightFreshness {
 /// A server calculation as the screen sees it: the last answer on the phone, how old it is, and whether the latest
 /// attempt to update it failed. Showing `data` while `error` is set is deliberate: the last known answer beats a blank.
 class InsightSnapshot {
-  const InsightSnapshot({this.data, this.fetchedAt, required this.freshness, this.error, this.refreshing = false});
+  const InsightSnapshot({
+    this.data,
+    this.fetchedAt,
+    required this.freshness,
+    this.error,
+    this.refreshing = false,
+  });
 
   const InsightSnapshot.none() : this(freshness: InsightFreshness.none);
 
@@ -35,13 +41,22 @@ class InsightSnapshot {
   bool get hasData => data != null;
   bool get isOffline => error?.isUnreachable ?? false;
 
-  InsightSnapshot copyWith({bool? refreshing}) =>
-      InsightSnapshot(data: data, fetchedAt: fetchedAt, freshness: freshness, error: error, refreshing: refreshing ?? this.refreshing);
+  InsightSnapshot copyWith({bool? refreshing}) => InsightSnapshot(
+    data: data,
+    fetchedAt: fetchedAt,
+    freshness: freshness,
+    error: error,
+    refreshing: refreshing ?? this.refreshing,
+  );
 }
 
 /// What to fetch for one cached insight: where it is stored, how it is fetched, and how long it counts as fresh.
 class InsightSpec {
-  const InsightSpec({required this.key, required this.fetch, this.freshFor = const Duration(minutes: 30)});
+  const InsightSpec({
+    required this.key,
+    required this.fetch,
+    this.freshFor = const Duration(minutes: 30),
+  });
 
   /// Cache key, for example `daily_briefing:2026-11-12` or `view:v_goal_progress`.
   final String key;
@@ -58,10 +73,13 @@ class InsightSpec {
 /// Keeps copies of the server's calculated answers on the phone (architecture: Flutter caches and displays, it does
 /// not recalculate). Reading never needs a connection; refreshing does, and a failed refresh leaves the old answer.
 class InsightRepository {
-  InsightRepository({required LocalStore store, required BackendGateway gateway, DateTime Function()? clock})
-      : _store = store,
-        _gateway = gateway,
-        _clock = clock ?? DateTime.now;
+  InsightRepository({
+    required LocalStore store,
+    required BackendGateway gateway,
+    DateTime Function()? clock,
+  }) : _store = store,
+       _gateway = gateway,
+       _clock = clock ?? DateTime.now;
 
   final LocalStore _store;
   final BackendGateway _gateway;
@@ -78,7 +96,14 @@ class InsightRepository {
       return const InsightSnapshot.none();
     }
     final age = _clock().difference(saved.fetchedAt);
-    return InsightSnapshot(data: data, fetchedAt: saved.fetchedAt, freshness: age <= spec.freshFor ? InsightFreshness.fresh : InsightFreshness.stale);
+    return InsightSnapshot(
+      data: data,
+      fetchedAt: saved.fetchedAt,
+      freshness:
+          age <= spec.freshFor
+              ? InsightFreshness.fresh
+              : InsightFreshness.stale,
+    );
   }
 
   /// Asks the server again. On success the answer is saved and returned as fresh. On failure the saved answer comes
@@ -88,10 +113,19 @@ class InsightRepository {
       final data = await spec.fetch(_gateway);
       final now = _clock();
       await _store.writeInsight(spec.key, jsonEncode(data), now);
-      return InsightSnapshot(data: data, fetchedAt: now.toUtc(), freshness: InsightFreshness.fresh);
+      return InsightSnapshot(
+        data: data,
+        fetchedAt: now.toUtc(),
+        freshness: InsightFreshness.fresh,
+      );
     } on BackendError catch (e) {
       final saved = await cached(spec);
-      return InsightSnapshot(data: saved.data, fetchedAt: saved.fetchedAt, freshness: saved.freshness, error: e);
+      return InsightSnapshot(
+        data: saved.data,
+        fetchedAt: saved.fetchedAt,
+        freshness: saved.freshness,
+        error: e,
+      );
     }
   }
 }

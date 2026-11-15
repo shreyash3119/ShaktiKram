@@ -37,7 +37,11 @@ class SystemBackupFilePicker implements BackupFilePicker {
 
   @override
   Future<String?> pickBackupZip() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: const ['zip'], withData: false);
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['zip'],
+      withData: false,
+    );
     final files = result?.files;
     if (files == null || files.isEmpty) return null;
     return files.first.path;
@@ -50,11 +54,15 @@ typedef ExportDirectory = Future<String> Function();
 /// Downloads reports and backups from the reporting service, saves them on the phone and keeps a local history.
 /// Nothing here writes to the server and nothing goes through the outbox.
 class ExportService {
-  ExportService({required LocalStore store, required ReportingGateway gateway, required ExportDirectory directory, DateTime Function()? clock})
-      : _store = store,
-        _gateway = gateway,
-        _directory = directory,
-        _clock = clock ?? DateTime.now;
+  ExportService({
+    required LocalStore store,
+    required ReportingGateway gateway,
+    required ExportDirectory directory,
+    DateTime Function()? clock,
+  }) : _store = store,
+       _gateway = gateway,
+       _directory = directory,
+       _clock = clock ?? DateTime.now;
 
   final LocalStore _store;
   final ReportingGateway _gateway;
@@ -62,38 +70,69 @@ class ExportService {
   final DateTime Function() _clock;
 
   /// Downloads the report for [request] as [format] and records it in the history.
-  Future<ExportLogEntry> exportReport(ReportRequest request, ReportFormat format, {DownloadProgress? onProgress}) async {
+  Future<ExportLogEntry> exportReport(
+    ReportRequest request,
+    ReportFormat format, {
+    DownloadProgress? onProgress,
+  }) async {
     final problem = request.query.validate();
-    if (problem != null) throw ReportError(ReportErrorKind.invalidRequest, problem);
-    final file = await _gateway.downloadReport(query: request.toParams(), format: format, directory: await _directory(), onProgress: onProgress);
-    return _store.addExportLog(ExportLogEntry(
-      kind: format == ReportFormat.xlsx ? ExportKind.reportXlsx : ExportKind.reportPdf,
-      label: request.query.label,
-      path: file.path,
-      sizeBytes: file.sizeBytes,
-      createdAt: _clock(),
-      detail: {'period': request.query.kind.wire, 'compare': request.compare},
-    ));
+    if (problem != null){
+      throw ReportError(ReportErrorKind.invalidRequest, problem);}
+    final file = await _gateway.downloadReport(
+      query: request.toParams(),
+      format: format,
+      directory: await _directory(),
+      onProgress: onProgress,
+    );
+    return _store.addExportLog(
+      ExportLogEntry(
+        kind:
+            format == ReportFormat.xlsx
+                ? ExportKind.reportXlsx
+                : ExportKind.reportPdf,
+        label: request.query.label,
+        path: file.path,
+        sizeBytes: file.sizeBytes,
+        createdAt: _clock(),
+        detail: {'period': request.query.kind.wire, 'compare': request.compare},
+      ),
+    );
   }
 
   /// Downloads the full backup or the CSV data export and records it in the history.
-  Future<ExportLogEntry> exportBackup(BackupKind kind, {bool includeMedia = false, DownloadProgress? onProgress}) async {
+  Future<ExportLogEntry> exportBackup(
+    BackupKind kind, {
+    bool includeMedia = false,
+    DownloadProgress? onProgress,
+  }) async {
     final withMedia = kind == BackupKind.fullZip && includeMedia;
-    final file = await _gateway.downloadBackup(kind: kind, includeMedia: withMedia, directory: await _directory(), onProgress: onProgress);
-    return _store.addExportLog(ExportLogEntry(
-      kind: kind == BackupKind.fullZip ? ExportKind.backupZip : ExportKind.dataCsv,
-      label: kind == BackupKind.fullZip ? 'Full backup' : 'CSV data export',
-      path: file.path,
-      sizeBytes: file.sizeBytes,
-      createdAt: _clock(),
-      detail: {'include_media': withMedia},
-    ));
+    final file = await _gateway.downloadBackup(
+      kind: kind,
+      includeMedia: withMedia,
+      directory: await _directory(),
+      onProgress: onProgress,
+    );
+    return _store.addExportLog(
+      ExportLogEntry(
+        kind:
+            kind == BackupKind.fullZip
+                ? ExportKind.backupZip
+                : ExportKind.dataCsv,
+        label: kind == BackupKind.fullZip ? 'Full backup' : 'CSV data export',
+        path: file.path,
+        sizeBytes: file.sizeBytes,
+        createdAt: _clock(),
+        detail: {'include_media': withMedia},
+      ),
+    );
   }
 
   /// Sends a backup file to the service to be checked. The service only reads it; nothing is restored.
-  Future<BackupValidation> validate(String path) => _gateway.validateBackup(path);
+  Future<BackupValidation> validate(String path) =>
+      _gateway.validateBackup(path);
 
-  Future<List<ExportLogEntry>> history({int limit = 100}) => _store.exportLog(limit: limit);
+  Future<List<ExportLogEntry>> history({int limit = 100}) =>
+      _store.exportLog(limit: limit);
 
   /// The newest full backup recorded on this phone, or null.
   Future<ExportLogEntry?> lastBackup() async {
@@ -115,17 +154,29 @@ class ExportService {
   }
 }
 
-final exportDirectoryProvider = Provider<ExportDirectory>((ref) => () async {
-      final base = await getApplicationDocumentsDirectory();
-      return p.join(base.path, 'exports');
-    });
+final exportDirectoryProvider = Provider<ExportDirectory>(
+  (ref) => () async {
+    final base = await getApplicationDocumentsDirectory();
+    return p.join(base.path, 'exports');
+  },
+);
 
 final exportServiceProvider = Provider<ExportService>((ref) {
-  return ExportService(store: ref.read(localStoreProvider), gateway: ref.read(reportingGatewayProvider), directory: ref.read(exportDirectoryProvider));
+  return ExportService(
+    store: ref.read(localStoreProvider),
+    gateway: ref.read(reportingGatewayProvider),
+    directory: ref.read(exportDirectoryProvider),
+  );
 });
 
-final fileSharerProvider = Provider<FileSharer>((ref) => const SharePlusFileSharer());
-final backupFilePickerProvider = Provider<BackupFilePicker>((ref) => const SystemBackupFilePicker());
+final fileSharerProvider = Provider<FileSharer>(
+  (ref) => const SharePlusFileSharer(),
+);
+final backupFilePickerProvider = Provider<BackupFilePicker>(
+  (ref) => const SystemBackupFilePicker(),
+);
 
 /// The files saved on this phone, newest first. Invalidate after an export or a delete.
-final exportHistoryProvider = FutureProvider.autoDispose<List<ExportLogEntry>>((ref) => ref.read(exportServiceProvider).history());
+final exportHistoryProvider = FutureProvider.autoDispose<List<ExportLogEntry>>(
+  (ref) => ref.read(exportServiceProvider).history(),
+);

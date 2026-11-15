@@ -5,7 +5,11 @@ import 'sync_status_chip.dart';
 
 /// Common page frame: app bar with the sync indicator and a scrolling, padded body.
 class ScreenScaffold extends StatelessWidget {
-  const ScreenScaffold({super.key, required this.title, required this.children});
+  const ScreenScaffold({
+    super.key,
+    required this.title,
+    required this.children,
+  });
 
   final String title;
   final List<Widget> children;
@@ -18,7 +22,10 @@ class ScreenScaffold extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.all(AppTheme.pagePadding),
           children: [
-            for (final child in children) ...[child, const SizedBox(height: AppTheme.gap)],
+            for (final child in children) ...[
+              child,
+              const SizedBox(height: AppTheme.gap),
+            ],
           ],
         ),
       ),

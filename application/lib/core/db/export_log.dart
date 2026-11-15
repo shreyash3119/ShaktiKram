@@ -24,7 +24,15 @@ enum ExportKind {
 /// One file saved on this phone by a report export or a backup. Kept only on the phone (never synced). The record
 /// stays even if the file is deleted outside the app; the app checks whether the file still exists when it is shown.
 class ExportLogEntry {
-  const ExportLogEntry({this.id, required this.kind, required this.label, required this.path, required this.sizeBytes, required this.createdAt, this.detail = const {}});
+  const ExportLogEntry({
+    this.id,
+    required this.kind,
+    required this.label,
+    required this.path,
+    required this.sizeBytes,
+    required this.createdAt,
+    this.detail = const {},
+  });
 
   /// Set by the store.
   final int? id;
@@ -41,7 +49,15 @@ class ExportLogEntry {
 
   String get fileName => path.split(RegExp(r'[\\/]')).last;
 
-  ExportLogEntry withId(int newId) => ExportLogEntry(id: newId, kind: kind, label: label, path: path, sizeBytes: sizeBytes, createdAt: createdAt, detail: detail);
+  ExportLogEntry withId(int newId) => ExportLogEntry(
+    id: newId,
+    kind: kind,
+    label: label,
+    path: path,
+    sizeBytes: sizeBytes,
+    createdAt: createdAt,
+    detail: detail,
+  );
 
   String detailJson() => jsonEncode(detail);
 

@@ -25,7 +25,12 @@ enum SyncOutcome {
 }
 
 class SyncReport {
-  const SyncReport(this.outcome, {this.pushed = 0, this.pulled = 0, this.message});
+  const SyncReport(
+    this.outcome, {
+    this.pushed = 0,
+    this.pulled = 0,
+    this.message,
+  });
 
   final SyncOutcome outcome;
 
@@ -68,7 +73,11 @@ class SyncEngine {
     var pulled = 0;
     try {
       final device = deviceId();
-      if (device == null) return const SyncReport(SyncOutcome.error, message: 'This device is not registered yet.');
+      if (device == null){
+        return const SyncReport(
+          SyncOutcome.error,
+          message: 'This device is not registered yet.',
+        );}
 
       // 1. Push. Each pass sends at most one operation per record, so an edit never goes out in the same request
       // as the create it depends on (the edit needs the revision the create gets). The next pass is built after the
@@ -76,7 +85,10 @@ class SyncEngine {
       // round (kept for retry) is not sent again until the next round.
       final tried = <String>{};
       while (true) {
-        final queued = await store.pendingOps(afterSeq: 0, limit: pushBatch * 20);
+        final queued = await store.pendingOps(
+          afterSeq: 0,
+          limit: pushBatch * 20,
+        );
         final batch = <OutboxOp>[];
         final records = <String>{};
         for (final op in queued) {
@@ -89,11 +101,16 @@ class SyncEngine {
         }
         if (batch.isEmpty) break;
         tried.addAll(batch.map((o) => o.opId));
-        final results = await gateway.applyOperations(deviceId: device, requestId: newUuidV4(), operations: batch);
+        final results = await gateway.applyOperations(
+          deviceId: device,
+          requestId: newUuidV4(),
+          operations: batch,
+        );
         final byId = {for (final r in results) r.opId: r};
         for (final op in batch) {
           final result = byId[op.opId];
-          if (result == null) continue; // No answer: stays queued for the next round.
+          if (result == null){
+            continue;} // No answer: stays queued for the next round.
           await store.recordResult(op, result);
           pushed++;
         }
@@ -102,10 +119,17 @@ class SyncEngine {
       // 2. Pull.
       var since = await store.lastRev();
       while (true) {
-        final page = await gateway.pullChanges(deviceId: device, sinceRev: since, limit: pullPage);
+        final page = await gateway.pullChanges(
+          deviceId: device,
+          sinceRev: since,
+          limit: pullPage,
+        );
         if (page.nextRev <= since && page.rows.isEmpty) break;
         pulled += page.rows.length;
-        await store.applyPulled(page.rows, page.nextRev > since ? page.nextRev : since);
+        await store.applyPulled(
+          page.rows,
+          page.nextRev > since ? page.nextRev : since,
+        );
         onProgress?.call(pulled);
         if (!page.hasMore || page.nextRev <= since) break;
         since = page.nextRev;
@@ -114,13 +138,37 @@ class SyncEngine {
       await store.setLastSyncAt(DateTime.now().toUtc());
       return SyncReport(SyncOutcome.ok, pushed: pushed, pulled: pulled);
     } on BackendError catch (e) {
-      if (e.isDeviceRevoked) return SyncReport(SyncOutcome.revoked, pushed: pushed, pulled: pulled, message: e.userMessage);
-      if (e.isDeviceNotRegistered) return SyncReport(SyncOutcome.notRegistered, pushed: pushed, pulled: pulled, message: e.userMessage);
-      if (e.isUnreachable) return SyncReport(SyncOutcome.offline, pushed: pushed, pulled: pulled);
-      return SyncReport(SyncOutcome.error, pushed: pushed, pulled: pulled, message: e.userMessage);
+      if (e.isDeviceRevoked){
+        return SyncReport(
+          SyncOutcome.revoked,
+          pushed: pushed,
+          pulled: pulled,
+          message: e.userMessage,
+        );}
+      if (e.isDeviceNotRegistered){
+        return SyncReport(
+          SyncOutcome.notRegistered,
+          pushed: pushed,
+          pulled: pulled,
+          message: e.userMessage,
+        );}
+      if (e.isUnreachable){
+        return SyncReport(SyncOutcome.offline, pushed: pushed, pulled: pulled);}
+      return SyncReport(
+        SyncOutcome.error,
+        pushed: pushed,
+        pulled: pulled,
+        message: e.userMessage,
+      );
     } catch (_) {
       // An answer the app could not read, or a storage problem. Changes stay queued; the owner sees a sync problem.
-      return SyncReport(SyncOutcome.error, pushed: pushed, pulled: pulled, message: 'Sync stopped unexpectedly. Your changes are still saved on this phone.');
+      return SyncReport(
+        SyncOutcome.error,
+        pushed: pushed,
+        pulled: pulled,
+        message:
+            'Sync stopped unexpectedly. Your changes are still saved on this phone.',
+      );
     } finally {
       _busy = false;
     }

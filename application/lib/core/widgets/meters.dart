@@ -6,7 +6,13 @@ import '../theme/app_theme.dart';
 
 /// Thin horizontal progress bar.
 class MeterBar extends StatelessWidget {
-  const MeterBar({super.key, required this.value, this.color, this.trackColor, this.height = 8});
+  const MeterBar({
+    super.key,
+    required this.value,
+    this.color,
+    this.trackColor,
+    this.height = 8,
+  });
 
   final double value; // 0..1
   final Color? color;
@@ -20,13 +26,23 @@ class MeterBar extends StatelessWidget {
       borderRadius: BorderRadius.circular(height),
       child: SizedBox(
         height: height,
-        child: LayoutBuilder(builder: (context, c) {
-          final w = c.maxWidth * value.clamp(0.0, 1.0);
-          return Stack(children: [
-            Positioned.fill(child: ColoredBox(color: trackColor ?? p.tile)),
-            Positioned(left: 0, top: 0, bottom: 0, width: w, child: ColoredBox(color: color ?? p.link)),
-          ]);
-        }),
+        child: LayoutBuilder(
+          builder: (context, c) {
+            final w = c.maxWidth * value.clamp(0.0, 1.0);
+            return Stack(
+              children: [
+                Positioned.fill(child: ColoredBox(color: trackColor ?? p.tile)),
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: w,
+                  child: ColoredBox(color: color ?? p.link),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -56,14 +72,26 @@ class MeterRow extends StatelessWidget {
     final p = context.pal;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 7),
-      child: Row(children: [
-        SizedBox(width: labelWidth, child: Text(label, style: TextStyle(color: p.muted, fontSize: 14.5))),
-        Expanded(child: MeterBar(value: value, color: color)),
-        SizedBox(
-          width: trailingWidth,
-          child: Text(trailing, textAlign: TextAlign.right, style: TextStyle(color: p.text, fontSize: 14.5)),
-        ),
-      ]),
+      child: Row(
+        children: [
+          SizedBox(
+            width: labelWidth,
+            child: Text(
+              label,
+              style: TextStyle(color: p.muted, fontSize: 14.5),
+            ),
+          ),
+          Expanded(child: MeterBar(value: value, color: color)),
+          SizedBox(
+            width: trailingWidth,
+            child: Text(
+              trailing,
+              textAlign: TextAlign.right,
+              style: TextStyle(color: p.text, fontSize: 14.5),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -76,15 +104,21 @@ class DotRating extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.pal;
-    return Row(mainAxisSize: MainAxisSize.min, children: [
-      for (var i = 0; i < 5; i++)
-        Container(
-          width: 9,
-          height: 9,
-          margin: const EdgeInsets.only(left: 4),
-          decoration: BoxDecoration(shape: BoxShape.circle, color: i < value ? p.link : p.tile),
-        ),
-    ]);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < 5; i++)
+          Container(
+            width: 9,
+            height: 9,
+            margin: const EdgeInsets.only(left: 4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: i < value ? p.link : p.tile,
+            ),
+          ),
+      ],
+    );
   }
 }
 
@@ -114,12 +148,31 @@ class RingGauge extends StatelessWidget {
       width: size,
       height: size,
       child: CustomPaint(
-        painter: _RingPainter(value.clamp(0.0, 1.0), color ?? p.link, p.tile, stroke),
+        painter: _RingPainter(
+          value.clamp(0.0, 1.0),
+          color ?? p.link,
+          p.tile,
+          stroke,
+        ),
         child: Center(
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text(centerText, style: TextStyle(color: p.text, fontSize: size * 0.2, fontWeight: FontWeight.w800)),
-            if (subText != null) Text(subText!, style: TextStyle(color: p.muted, fontSize: size * 0.12)),
-          ]),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                centerText,
+                style: TextStyle(
+                  color: p.text,
+                  fontSize: size * 0.2,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              if (subText != null)
+                Text(
+                  subText!,
+                  style: TextStyle(color: p.muted, fontSize: size * 0.12),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -137,22 +190,40 @@ class _RingPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
     final arcRect = rect.deflate(stroke / 2);
-    final base = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = stroke
-      ..strokeCap = StrokeCap.round;
+    final base =
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = stroke
+          ..strokeCap = StrokeCap.round;
     canvas.drawArc(arcRect, 0, math.pi * 2, false, base..color = track);
-    canvas.drawArc(arcRect, -math.pi / 2, math.pi * 2 * value, false, base..color = color);
+    canvas.drawArc(
+      arcRect,
+      -math.pi / 2,
+      math.pi * 2 * value,
+      false,
+      base..color = color,
+    );
   }
 
   @override
   bool shouldRepaint(_RingPainter old) =>
-      old.value != value || old.color != color || old.track != track || old.stroke != stroke;
+      old.value != value ||
+      old.color != color ||
+      old.track != track ||
+      old.stroke != stroke;
 }
 
-TextPainter _label(String text, Color color, double size, {FontWeight weight = FontWeight.w400}) {
+TextPainter _label(
+  String text,
+  Color color,
+  double size, {
+  FontWeight weight = FontWeight.w400,
+}) {
   return TextPainter(
-    text: TextSpan(text: text, style: TextStyle(color: color, fontSize: size, fontWeight: weight)),
+    text: TextSpan(
+      text: text,
+      style: TextStyle(color: color, fontSize: size, fontWeight: weight),
+    ),
     textDirection: TextDirection.ltr,
   )..layout();
 }
@@ -182,13 +253,33 @@ class LineChartView extends StatelessWidget {
     return SizedBox(
       height: height,
       width: double.infinity,
-      child: CustomPaint(painter: _LinePainter(values, xLabels, yMin, yMax, yTicks, p.link, p.divider, p.muted)),
+      child: CustomPaint(
+        painter: _LinePainter(
+          values,
+          xLabels,
+          yMin,
+          yMax,
+          yTicks,
+          p.link,
+          p.divider,
+          p.muted,
+        ),
+      ),
     );
   }
 }
 
 class _LinePainter extends CustomPainter {
-  _LinePainter(this.values, this.xLabels, this.yMin, this.yMax, this.yTicks, this.line, this.grid, this.text);
+  _LinePainter(
+    this.values,
+    this.xLabels,
+    this.yMin,
+    this.yMax,
+    this.yTicks,
+    this.line,
+    this.grid,
+    this.text,
+  );
   final List<double> values;
   final List<String> xLabels;
   final double yMin;
@@ -207,9 +298,10 @@ class _LinePainter extends CustomPainter {
     final range = (yMax - yMin) == 0 ? 1.0 : (yMax - yMin);
     double yOf(double v) => plot.bottom - (v - yMin) / range * plot.height;
 
-    final gridPaint = Paint()
-      ..color = grid
-      ..strokeWidth = 1;
+    final gridPaint =
+        Paint()
+          ..color = grid
+          ..strokeWidth = 1;
     for (final t in yTicks) {
       final y = yOf(t);
       canvas.drawLine(Offset(plot.left, y), Offset(plot.right, y), gridPaint);
@@ -218,7 +310,10 @@ class _LinePainter extends CustomPainter {
     }
     if (values.isEmpty) return;
     final n = values.length;
-    double xOf(int i) => n == 1 ? plot.center.dx : plot.left + 8 + i * (plot.width - 16) / (n - 1);
+    double xOf(int i) =>
+        n == 1
+            ? plot.center.dx
+            : plot.left + 8 + i * (plot.width - 16) / (n - 1);
 
     final path = Path();
     for (var i = 0; i < n; i++) {
@@ -251,7 +346,12 @@ class _LinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_LinePainter old) =>
-      old.values != values || old.line != line || old.grid != grid || old.text != text || old.yMin != yMin || old.yMax != yMax;
+      old.values != values ||
+      old.line != line ||
+      old.grid != grid ||
+      old.text != text ||
+      old.yMin != yMin ||
+      old.yMax != yMax;
 }
 
 /// Vertical bars with a value above and a label below each.
@@ -280,35 +380,59 @@ class BarChartView extends StatelessWidget {
     final p = context.pal;
     return SizedBox(
       height: height,
-      child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-        for (var i = 0; i < values.length; i++)
-          Expanded(
-            child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
-              if (showValues)
-                Text(_fmt(values[i]), style: TextStyle(color: p.muted, fontSize: 11)),
-              const SizedBox(height: 4),
-              Container(
-                width: barWidth,
-                height: math.max(4, (height - 44) * (values[i] / maxValue).clamp(0.0, 1.0)),
-                decoration: BoxDecoration(
-                  color: colors != null && i < colors!.length ? colors![i] : p.primary,
-                  borderRadius: BorderRadius.circular(3),
-                ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          for (var i = 0; i < values.length; i++)
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (showValues)
+                    Text(
+                      _fmt(values[i]),
+                      style: TextStyle(color: p.muted, fontSize: 11),
+                    ),
+                  const SizedBox(height: 4),
+                  Container(
+                    width: barWidth,
+                    height: math.max(
+                      4,
+                      (height - 44) * (values[i] / maxValue).clamp(0.0, 1.0),
+                    ),
+                    decoration: BoxDecoration(
+                      color:
+                          colors != null && i < colors!.length
+                              ? colors![i]
+                              : p.primary,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    labels[i],
+                    style: TextStyle(color: p.muted, fontSize: 11),
+                  ),
+                ],
               ),
-              const SizedBox(height: 6),
-              Text(labels[i], style: TextStyle(color: p.muted, fontSize: 11)),
-            ]),
-          ),
-      ]),
+            ),
+        ],
+      ),
     );
   }
 
-  static String _fmt(double v) => v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
+  static String _fmt(double v) =>
+      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
 }
 
 /// Spider chart for self-assessed muscle groups. Values are 0..1.
 class RadarChartView extends StatelessWidget {
-  const RadarChartView({super.key, required this.labels, required this.values, this.height = 300});
+  const RadarChartView({
+    super.key,
+    required this.labels,
+    required this.values,
+    this.height = 300,
+  });
 
   final List<String> labels;
   final List<double> values;
@@ -320,7 +444,9 @@ class RadarChartView extends StatelessWidget {
     return SizedBox(
       height: height,
       width: double.infinity,
-      child: CustomPaint(painter: _RadarPainter(labels, values, p.link, p.divider, p.muted)),
+      child: CustomPaint(
+        painter: _RadarPainter(labels, values, p.link, p.divider, p.muted),
+      ),
     );
   }
 }
@@ -344,10 +470,11 @@ class _RadarPainter extends CustomPainter {
       return center + Offset(math.cos(a), math.sin(a)) * r;
     }
 
-    final gridPaint = Paint()
-      ..color = grid
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
+    final gridPaint =
+        Paint()
+          ..color = grid
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1;
     for (final f in [0.34, 0.67, 1.0]) {
       final ring = Path();
       for (var i = 0; i < n; i++) {
@@ -393,5 +520,6 @@ class _RadarPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_RadarPainter old) => old.values != values || old.accent != accent || old.labels != labels;
+  bool shouldRepaint(_RadarPainter old) =>
+      old.values != values || old.accent != accent || old.labels != labels;
 }

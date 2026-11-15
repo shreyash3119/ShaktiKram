@@ -4,18 +4,43 @@
 /// Server answers are read defensively: a missing field is null or empty, never a crash, and nothing is recalculated here.
 library;
 
-double? _double(Object? v) => v is num ? v.toDouble() : (v is String ? double.tryParse(v) : null);
-int? _int(Object? v) => v is num ? v.toInt() : (v is String ? int.tryParse(v) : null);
+double? _double(Object? v) =>
+    v is num ? v.toDouble() : (v is String ? double.tryParse(v) : null);
+int? _int(Object? v) =>
+    v is num ? v.toInt() : (v is String ? int.tryParse(v) : null);
 String? _string(Object? v) => v is String ? v : null;
 bool _bool(Object? v) => v == true;
-Map<String, dynamic> _map(Object? v) => v is Map ? Map<String, dynamic>.from(v) : const {};
-List<Map<String, dynamic>> _maps(Object? v) => v is List ? [for (final e in v) if (e is Map) Map<String, dynamic>.from(e)] : const [];
-List<String> _strings(Object? v) => v is List ? [for (final e in v) if (e is String) e] : const [];
+Map<String, dynamic> _map(Object? v) =>
+    v is Map ? Map<String, dynamic>.from(v) : const {};
+List<Map<String, dynamic>> _maps(Object? v) =>
+    v is List
+        ? [
+          for (final e in v)
+            if (e is Map) Map<String, dynamic>.from(e),
+        ]
+        : const [];
+List<String> _strings(Object? v) =>
+    v is List
+        ? [
+          for (final e in v)
+            if (e is String) e,
+        ]
+        : const [];
 
 // ---- Synced records (SQLite) ----
 
 class PersonalRecord {
-  const PersonalRecord({required this.id, required this.kind, required this.value, required this.achievedOn, required this.sessionId, this.exerciseId, this.weightKg, this.reps, this.previousValue});
+  const PersonalRecord({
+    required this.id,
+    required this.kind,
+    required this.value,
+    required this.achievedOn,
+    required this.sessionId,
+    this.exerciseId,
+    this.weightKg,
+    this.reps,
+    this.previousValue,
+  });
 
   final String id;
 
@@ -30,20 +55,28 @@ class PersonalRecord {
   final double? previousValue;
 
   factory PersonalRecord.fromRecord(Map<String, dynamic> r) => PersonalRecord(
-        id: r['id'] as String,
-        kind: (r['kind'] as String?) ?? '',
-        value: _double(r['value']) ?? 0,
-        achievedOn: (r['achieved_on'] as String?) ?? '',
-        sessionId: (r['session_id'] as String?) ?? '',
-        exerciseId: r['exercise_id'] as String?,
-        weightKg: _double(r['weight_kg']),
-        reps: _int(r['reps']),
-        previousValue: _double(r['previous_value']),
-      );
+    id: r['id'] as String,
+    kind: (r['kind'] as String?) ?? '',
+    value: _double(r['value']) ?? 0,
+    achievedOn: (r['achieved_on'] as String?) ?? '',
+    sessionId: (r['session_id'] as String?) ?? '',
+    exerciseId: r['exercise_id'] as String?,
+    weightKg: _double(r['weight_kg']),
+    reps: _int(r['reps']),
+    previousValue: _double(r['previous_value']),
+  );
 }
 
 class Achievement {
-  const Achievement({required this.id, required this.kind, required this.threshold, required this.title, required this.achievedOn, this.supportingTable, this.supportingRecordId});
+  const Achievement({
+    required this.id,
+    required this.kind,
+    required this.threshold,
+    required this.title,
+    required this.achievedOn,
+    this.supportingTable,
+    this.supportingRecordId,
+  });
 
   final String id;
 
@@ -58,18 +91,29 @@ class Achievement {
   final String? supportingRecordId;
 
   factory Achievement.fromRecord(Map<String, dynamic> r) => Achievement(
-        id: r['id'] as String,
-        kind: (r['kind'] as String?) ?? '',
-        threshold: _int(r['threshold']) ?? 0,
-        title: (r['title'] as String?) ?? '',
-        achievedOn: (r['achieved_on'] as String?) ?? '',
-        supportingTable: r['supporting_table'] as String?,
-        supportingRecordId: r['supporting_record_id'] as String?,
-      );
+    id: r['id'] as String,
+    kind: (r['kind'] as String?) ?? '',
+    threshold: _int(r['threshold']) ?? 0,
+    title: (r['title'] as String?) ?? '',
+    achievedOn: (r['achieved_on'] as String?) ?? '',
+    supportingTable: r['supporting_table'] as String?,
+    supportingRecordId: r['supporting_record_id'] as String?,
+  );
 }
 
 class Goal {
-  const Goal({required this.id, required this.type, required this.title, required this.status, required this.startDate, this.description, this.targetMetric, this.targetValue, this.targetUnit, this.targetDate});
+  const Goal({
+    required this.id,
+    required this.type,
+    required this.title,
+    required this.status,
+    required this.startDate,
+    this.description,
+    this.targetMetric,
+    this.targetValue,
+    this.targetUnit,
+    this.targetDate,
+  });
 
   final String id;
   final String type;
@@ -85,21 +129,27 @@ class Goal {
   final String? targetDate;
 
   factory Goal.fromRecord(Map<String, dynamic> r) => Goal(
-        id: r['id'] as String,
-        type: (r['type'] as String?) ?? '',
-        title: (r['title'] as String?) ?? '',
-        status: (r['status'] as String?) ?? 'active',
-        startDate: (r['start_date'] as String?) ?? '',
-        description: r['description'] as String?,
-        targetMetric: r['target_metric'] as String?,
-        targetValue: _double(r['target_value']),
-        targetUnit: r['target_unit'] as String?,
-        targetDate: r['target_date'] as String?,
-      );
+    id: r['id'] as String,
+    type: (r['type'] as String?) ?? '',
+    title: (r['title'] as String?) ?? '',
+    status: (r['status'] as String?) ?? 'active',
+    startDate: (r['start_date'] as String?) ?? '',
+    description: r['description'] as String?,
+    targetMetric: r['target_metric'] as String?,
+    targetValue: _double(r['target_value']),
+    targetUnit: r['target_unit'] as String?,
+    targetDate: r['target_date'] as String?,
+  );
 }
 
 class Milestone {
-  const Milestone({required this.id, required this.goalId, required this.title, required this.targetValue, this.note});
+  const Milestone({
+    required this.id,
+    required this.goalId,
+    required this.title,
+    required this.targetValue,
+    this.note,
+  });
 
   final String id;
   final String goalId;
@@ -108,18 +158,24 @@ class Milestone {
   final String? note;
 
   factory Milestone.fromRecord(Map<String, dynamic> r) => Milestone(
-        id: r['id'] as String,
-        goalId: (r['goal_id'] as String?) ?? '',
-        title: (r['title'] as String?) ?? '',
-        targetValue: _double(r['target_value']) ?? 0,
-        note: r['note'] as String?,
-      );
+    id: r['id'] as String,
+    goalId: (r['goal_id'] as String?) ?? '',
+    title: (r['title'] as String?) ?? '',
+    targetValue: _double(r['target_value']) ?? 0,
+    note: r['note'] as String?,
+  );
 }
 
 // ---- Server view rows (cached) ----
 
 class ExerciseTrend {
-  const ExerciseTrend({required this.exerciseId, required this.signal, this.changePct, this.sessionsConsidered = 0, this.lastSessionDate});
+  const ExerciseTrend({
+    required this.exerciseId,
+    required this.signal,
+    this.changePct,
+    this.sessionsConsidered = 0,
+    this.lastSessionDate,
+  });
 
   final String exerciseId;
 
@@ -130,17 +186,25 @@ class ExerciseTrend {
   final String? lastSessionDate;
 
   factory ExerciseTrend.fromJson(Map<String, dynamic> r) => ExerciseTrend(
-        exerciseId: (r['exercise_id'] as String?) ?? '',
-        signal: (r['signal'] as String?) ?? 'insufficient_data',
-        changePct: _double(r['change_pct']),
-        sessionsConsidered: _int(r['sessions_considered']) ?? 0,
-        lastSessionDate: _string(r['last_session_date']),
-      );
+    exerciseId: (r['exercise_id'] as String?) ?? '',
+    signal: (r['signal'] as String?) ?? 'insufficient_data',
+    changePct: _double(r['change_pct']),
+    sessionsConsidered: _int(r['sessions_considered']) ?? 0,
+    lastSessionDate: _string(r['last_session_date']),
+  );
 }
 
 /// One exercise in one session: the best estimated 1RM, heaviest weight, most reps and total volume.
 class ExerciseSessionBest {
-  const ExerciseSessionBest({required this.exerciseId, required this.sessionId, required this.localDate, this.bestE1rmKg, this.topWeightKg, this.maxReps, this.volumeKg});
+  const ExerciseSessionBest({
+    required this.exerciseId,
+    required this.sessionId,
+    required this.localDate,
+    this.bestE1rmKg,
+    this.topWeightKg,
+    this.maxReps,
+    this.volumeKg,
+  });
 
   final String exerciseId;
   final String sessionId;
@@ -150,7 +214,8 @@ class ExerciseSessionBest {
   final int? maxReps;
   final double? volumeKg;
 
-  factory ExerciseSessionBest.fromJson(Map<String, dynamic> r) => ExerciseSessionBest(
+  factory ExerciseSessionBest.fromJson(Map<String, dynamic> r) =>
+      ExerciseSessionBest(
         exerciseId: (r['exercise_id'] as String?) ?? '',
         sessionId: (r['session_id'] as String?) ?? '',
         localDate: (r['local_date'] as String?) ?? '',
@@ -162,7 +227,20 @@ class ExerciseSessionBest {
 }
 
 class GoalProgress {
-  const GoalProgress({required this.goalId, required this.title, required this.goalStatus, required this.progressStatus, this.progressPct, this.expectedPct, this.reached = false, this.startValue, this.currentValue, this.targetValue, this.source, this.asOf});
+  const GoalProgress({
+    required this.goalId,
+    required this.title,
+    required this.goalStatus,
+    required this.progressStatus,
+    this.progressPct,
+    this.expectedPct,
+    this.reached = false,
+    this.startValue,
+    this.currentValue,
+    this.targetValue,
+    this.source,
+    this.asOf,
+  });
 
   final String goalId;
   final String title;
@@ -180,23 +258,30 @@ class GoalProgress {
   final String? asOf;
 
   factory GoalProgress.fromJson(Map<String, dynamic> r) => GoalProgress(
-        goalId: (r['goal_id'] as String?) ?? '',
-        title: (r['title'] as String?) ?? '',
-        goalStatus: (r['goal_status'] as String?) ?? 'active',
-        progressStatus: (r['progress_status'] as String?) ?? 'insufficient_data',
-        progressPct: _double(r['progress_pct']),
-        expectedPct: _double(r['expected_pct']),
-        reached: _bool(r['reached']),
-        startValue: _double(r['start_value']),
-        currentValue: _double(r['current_value']),
-        targetValue: _double(r['target_value']),
-        source: _string(r['source']),
-        asOf: _string(r['as_of']),
-      );
+    goalId: (r['goal_id'] as String?) ?? '',
+    title: (r['title'] as String?) ?? '',
+    goalStatus: (r['goal_status'] as String?) ?? 'active',
+    progressStatus: (r['progress_status'] as String?) ?? 'insufficient_data',
+    progressPct: _double(r['progress_pct']),
+    expectedPct: _double(r['expected_pct']),
+    reached: _bool(r['reached']),
+    startValue: _double(r['start_value']),
+    currentValue: _double(r['current_value']),
+    targetValue: _double(r['target_value']),
+    source: _string(r['source']),
+    asOf: _string(r['as_of']),
+  );
 }
 
 class MilestoneStatus {
-  const MilestoneStatus({required this.milestoneId, required this.goalId, required this.title, required this.targetValue, required this.isReached, this.currentValue});
+  const MilestoneStatus({
+    required this.milestoneId,
+    required this.goalId,
+    required this.title,
+    required this.targetValue,
+    required this.isReached,
+    this.currentValue,
+  });
 
   final String milestoneId;
   final String goalId;
@@ -206,17 +291,23 @@ class MilestoneStatus {
   final double? currentValue;
 
   factory MilestoneStatus.fromJson(Map<String, dynamic> r) => MilestoneStatus(
-        milestoneId: (r['milestone_id'] as String?) ?? '',
-        goalId: (r['goal_id'] as String?) ?? '',
-        title: (r['title'] as String?) ?? '',
-        targetValue: _double(r['target_value']) ?? 0,
-        isReached: _bool(r['is_reached']),
-        currentValue: _double(r['current_value']),
-      );
+    milestoneId: (r['milestone_id'] as String?) ?? '',
+    goalId: (r['goal_id'] as String?) ?? '',
+    title: (r['title'] as String?) ?? '',
+    targetValue: _double(r['target_value']) ?? 0,
+    isReached: _bool(r['is_reached']),
+    currentValue: _double(r['current_value']),
+  );
 }
 
 class MuscleExposure {
-  const MuscleExposure({required this.weekStart, required this.muscleId, this.directSets = 0, this.indirectSets = 0, this.trainingDays = 0});
+  const MuscleExposure({
+    required this.weekStart,
+    required this.muscleId,
+    this.directSets = 0,
+    this.indirectSets = 0,
+    this.trainingDays = 0,
+  });
 
   final String weekStart;
   final String muscleId;
@@ -225,17 +316,26 @@ class MuscleExposure {
   final int trainingDays;
 
   factory MuscleExposure.fromJson(Map<String, dynamic> r) => MuscleExposure(
-        weekStart: (r['week_start'] as String?) ?? '',
-        muscleId: (r['muscle_id'] as String?) ?? '',
-        directSets: _int(r['direct_sets']) ?? 0,
-        indirectSets: _int(r['indirect_sets']) ?? 0,
-        trainingDays: _int(r['training_days']) ?? 0,
-      );
+    weekStart: (r['week_start'] as String?) ?? '',
+    muscleId: (r['muscle_id'] as String?) ?? '',
+    directSets: _int(r['direct_sets']) ?? 0,
+    indirectSets: _int(r['indirect_sets']) ?? 0,
+    trainingDays: _int(r['training_days']) ?? 0,
+  );
 }
 
 /// A muscle's own rating (the person's assessment, never calculated from training) and how it changed.
 class MuscleRating {
-  const MuscleRating({required this.muscleId, required this.muscleKey, this.groupKey, this.currentLevel, this.category, this.ratedOn, this.previousLevel, this.assessmentChange});
+  const MuscleRating({
+    required this.muscleId,
+    required this.muscleKey,
+    this.groupKey,
+    this.currentLevel,
+    this.category,
+    this.ratedOn,
+    this.previousLevel,
+    this.assessmentChange,
+  });
 
   final String muscleId;
   final String muscleKey;
@@ -247,19 +347,26 @@ class MuscleRating {
   final String? assessmentChange;
 
   factory MuscleRating.fromJson(Map<String, dynamic> r) => MuscleRating(
-        muscleId: (r['muscle_id'] as String?) ?? '',
-        muscleKey: (r['muscle_key'] as String?) ?? '',
-        groupKey: _string(r['group_key']),
-        currentLevel: _int(r['current_level']),
-        category: _string(r['category']),
-        ratedOn: _string(r['rated_on']),
-        previousLevel: _int(r['previous_level']),
-        assessmentChange: _string(r['assessment_change']),
-      );
+    muscleId: (r['muscle_id'] as String?) ?? '',
+    muscleKey: (r['muscle_key'] as String?) ?? '',
+    groupKey: _string(r['group_key']),
+    currentLevel: _int(r['current_level']),
+    category: _string(r['category']),
+    ratedOn: _string(r['rated_on']),
+    previousLevel: _int(r['previous_level']),
+    assessmentChange: _string(r['assessment_change']),
+  );
 }
 
 class BodyComposition {
-  const BodyComposition({required this.localDate, this.bodyFatPct, this.weightKg, this.fatMassKg, this.leanMassKg, this.method});
+  const BodyComposition({
+    required this.localDate,
+    this.bodyFatPct,
+    this.weightKg,
+    this.fatMassKg,
+    this.leanMassKg,
+    this.method,
+  });
 
   final String localDate;
   final double? bodyFatPct;
@@ -270,19 +377,26 @@ class BodyComposition {
 
   /// Fat and lean mass are estimates derived from a body-fat reading; the server labels them so.
   factory BodyComposition.fromJson(Map<String, dynamic> r) => BodyComposition(
-        localDate: (r['local_date'] as String?) ?? '',
-        bodyFatPct: _double(r['body_fat_pct']),
-        weightKg: _double(r['weight_kg']),
-        fatMassKg: _double(r['fat_mass_kg']),
-        leanMassKg: _double(r['lean_mass_kg']),
-        method: _string(r['method']),
-      );
+    localDate: (r['local_date'] as String?) ?? '',
+    bodyFatPct: _double(r['body_fat_pct']),
+    weightKg: _double(r['weight_kg']),
+    fatMassKg: _double(r['fat_mass_kg']),
+    leanMassKg: _double(r['lean_mass_kg']),
+    method: _string(r['method']),
+  );
 }
 
 // ---- The daily briefing (api_daily_briefing) ----
 
 class BriefingPlan {
-  const BriefingPlan({this.status, this.isRestDay = false, this.templateName, this.plannedExercises = 0, this.isBreakDay = false, this.activeSplit});
+  const BriefingPlan({
+    this.status,
+    this.isRestDay = false,
+    this.templateName,
+    this.plannedExercises = 0,
+    this.isBreakDay = false,
+    this.activeSplit,
+  });
 
   final String? status;
   final bool isRestDay;
@@ -292,19 +406,26 @@ class BriefingPlan {
   final String? activeSplit;
 
   factory BriefingPlan.fromJson(Map<String, dynamic> j) => BriefingPlan(
-        status: _string(j['status']),
-        isRestDay: _bool(j['is_rest_day']),
-        templateName: _string(j['template_name']),
-        plannedExercises: _int(j['planned_exercises']) ?? 0,
-        isBreakDay: _bool(j['is_break_day']),
-        activeSplit: _string(j['active_split']),
-      );
+    status: _string(j['status']),
+    isRestDay: _bool(j['is_rest_day']),
+    templateName: _string(j['template_name']),
+    plannedExercises: _int(j['planned_exercises']) ?? 0,
+    isBreakDay: _bool(j['is_break_day']),
+    activeSplit: _string(j['active_split']),
+  );
 }
 
 /// Readiness or deload result. `level` is the server's wording; `reasoning` is human-readable; `note` is the server's
 /// reminder that this is decision support only. Shown as given.
 class InsightLevel {
-  const InsightLevel({required this.level, this.reasoning = const [], this.reasonCodes = const [], this.note, this.wellnessScore, this.valueKind});
+  const InsightLevel({
+    required this.level,
+    this.reasoning = const [],
+    this.reasonCodes = const [],
+    this.note,
+    this.wellnessScore,
+    this.valueKind,
+  });
 
   final String level;
   final List<String> reasoning;
@@ -314,35 +435,48 @@ class InsightLevel {
   final String? valueKind;
 
   factory InsightLevel.fromJson(Map<String, dynamic> j) => InsightLevel(
-        level: (j['level'] as String?) ?? 'unknown',
-        reasoning: _strings(j['reasoning']),
-        reasonCodes: _strings(j['reason_codes']),
-        note: _string(j['note']),
-        wellnessScore: _double(j['wellness_score']),
-        valueKind: _string(j['value_kind']),
-      );
+    level: (j['level'] as String?) ?? 'unknown',
+    reasoning: _strings(j['reasoning']),
+    reasonCodes: _strings(j['reason_codes']),
+    note: _string(j['note']),
+    wellnessScore: _double(j['wellness_score']),
+    valueKind: _string(j['value_kind']),
+  );
 }
 
 class BriefingContext {
-  const BriefingContext({this.lastSessionDate, this.daysSinceLastSession, this.sessionsLast7Days});
+  const BriefingContext({
+    this.lastSessionDate,
+    this.daysSinceLastSession,
+    this.sessionsLast7Days,
+  });
 
   final String? lastSessionDate;
   final int? daysSinceLastSession;
   final int? sessionsLast7Days;
 
-  factory BriefingContext.fromJson(Map<String, dynamic> j) =>
-      BriefingContext(lastSessionDate: _string(j['last_session_date']), daysSinceLastSession: _int(j['days_since_last_session']), sessionsLast7Days: _int(j['sessions_last_7_days']));
+  factory BriefingContext.fromJson(Map<String, dynamic> j) => BriefingContext(
+    lastSessionDate: _string(j['last_session_date']),
+    daysSinceLastSession: _int(j['days_since_last_session']),
+    sessionsLast7Days: _int(j['sessions_last_7_days']),
+  );
 }
 
 class BriefingSupplement {
-  const BriefingSupplement({required this.supplementId, required this.name, this.expectedDoses = 1, this.takenToday = 0});
+  const BriefingSupplement({
+    required this.supplementId,
+    required this.name,
+    this.expectedDoses = 1,
+    this.takenToday = 0,
+  });
 
   final String supplementId;
   final String name;
   final int expectedDoses;
   final int takenToday;
 
-  factory BriefingSupplement.fromJson(Map<String, dynamic> j) => BriefingSupplement(
+  factory BriefingSupplement.fromJson(Map<String, dynamic> j) =>
+      BriefingSupplement(
         supplementId: (j['supplement_id'] as String?) ?? '',
         name: (j['name'] as String?) ?? '',
         expectedDoses: _int(j['expected_doses']) ?? 1,
@@ -351,30 +485,52 @@ class BriefingSupplement {
 }
 
 class BriefingRecord {
-  const BriefingRecord({required this.kind, required this.value, this.exercise, this.achievedOn});
+  const BriefingRecord({
+    required this.kind,
+    required this.value,
+    this.exercise,
+    this.achievedOn,
+  });
 
   final String kind;
   final double value;
   final String? exercise;
   final String? achievedOn;
 
-  factory BriefingRecord.fromJson(Map<String, dynamic> j) =>
-      BriefingRecord(kind: (j['kind'] as String?) ?? '', value: _double(j['value']) ?? 0, exercise: _string(j['exercise']), achievedOn: _string(j['achieved_on']));
+  factory BriefingRecord.fromJson(Map<String, dynamic> j) => BriefingRecord(
+    kind: (j['kind'] as String?) ?? '',
+    value: _double(j['value']) ?? 0,
+    exercise: _string(j['exercise']),
+    achievedOn: _string(j['achieved_on']),
+  );
 }
 
 class BriefingTrend {
-  const BriefingTrend({required this.exercise, required this.signal, this.changePct});
+  const BriefingTrend({
+    required this.exercise,
+    required this.signal,
+    this.changePct,
+  });
 
   final String exercise;
   final String signal;
   final double? changePct;
 
-  factory BriefingTrend.fromJson(Map<String, dynamic> j) =>
-      BriefingTrend(exercise: (j['exercise'] as String?) ?? '', signal: (j['signal'] as String?) ?? '', changePct: _double(j['change_pct']));
+  factory BriefingTrend.fromJson(Map<String, dynamic> j) => BriefingTrend(
+    exercise: (j['exercise'] as String?) ?? '',
+    signal: (j['signal'] as String?) ?? '',
+    changePct: _double(j['change_pct']),
+  );
 }
 
 class BriefingWeakPoint {
-  const BriefingWeakPoint({required this.muscleKey, this.category, this.priority, this.directSets28d = 0, this.suggestions = const []});
+  const BriefingWeakPoint({
+    required this.muscleKey,
+    this.category,
+    this.priority,
+    this.directSets28d = 0,
+    this.suggestions = const [],
+  });
 
   final String muscleKey;
   final String? category;
@@ -384,12 +540,17 @@ class BriefingWeakPoint {
   /// Exercise names the server suggests; the person decides whether any fit their split.
   final List<String> suggestions;
 
-  factory BriefingWeakPoint.fromJson(Map<String, dynamic> j) => BriefingWeakPoint(
+  factory BriefingWeakPoint.fromJson(Map<String, dynamic> j) =>
+      BriefingWeakPoint(
         muscleKey: (j['muscle_key'] as String?) ?? '',
         category: _string(j['category']),
         priority: _string(j['priority']),
         directSets28d: _int(j['direct_sets_28d']) ?? 0,
-        suggestions: [for (final s in _maps(j['suggestions'])) if (_string(s['exercise_name']) != null) s['exercise_name'] as String],
+        suggestions: [
+          for (final s in _maps(j['suggestions']))
+            if (_string(s['exercise_name']) != null)
+              s['exercise_name'] as String,
+        ],
       );
 }
 
@@ -455,16 +616,32 @@ class DailyBriefing {
     final reassessment = _map(j['reassessment']);
     final streak = _map(j['streak']);
     final weak = j['weak_points'];
-    final weakMaps = weak is List ? _maps(weak) : (weak is Map ? _maps(weak.values.toList()) : const <Map<String, dynamic>>[]);
+    final weakMaps =
+        weak is List
+            ? _maps(weak)
+            : (weak is Map
+                ? _maps(weak.values.toList())
+                : const <Map<String, dynamic>>[]);
     return DailyBriefing(
       date: (j['date'] as String?) ?? '',
       plan: BriefingPlan.fromJson(_map(j['plan'])),
       readiness: readiness.isEmpty ? null : InsightLevel.fromJson(readiness),
-      readinessContext: _map(readiness['context']).isEmpty ? null : BriefingContext.fromJson(_map(readiness['context'])),
-      deload: _map(j['deload']).isEmpty ? null : InsightLevel.fromJson(_map(j['deload'])),
+      readinessContext:
+          _map(readiness['context']).isEmpty
+              ? null
+              : BriefingContext.fromJson(_map(readiness['context'])),
+      deload:
+          _map(j['deload']).isEmpty
+              ? null
+              : InsightLevel.fromJson(_map(j['deload'])),
       restrictionWarnings: _maps(j['restriction_warnings']),
-      nextTargets: _maps(_map(j['next_targets'])['suggestions'] ?? j['next_targets']),
-      supplements: [for (final s in _maps(j['supplements_today'])) BriefingSupplement.fromJson(s)],
+      nextTargets: _maps(
+        _map(j['next_targets'])['suggestions'] ?? j['next_targets'],
+      ),
+      supplements: [
+        for (final s in _maps(j['supplements_today']))
+          BriefingSupplement.fromJson(s),
+      ],
       hydrationMl: _int(hydration['total_ml']),
       waterTargetMl: _int(j['water_target_ml']),
       eatenProteinG: _double(nutrition['eaten_protein_g']),
@@ -474,10 +651,14 @@ class DailyBriefing {
       stepTarget: _int(steps['target']),
       reassessmentDue: _bool(reassessment['is_due']),
       nextReassessmentDate: _string(reassessment['next_due_date']),
-      goalCounts: {for (final e in _map(j['goals']).entries) e.key: _int(e.value) ?? 0},
+      goalCounts: {
+        for (final e in _map(j['goals']).entries) e.key: _int(e.value) ?? 0,
+      },
       currentStreak: _int(streak['current_streak']),
       longestStreak: _int(streak['longest_streak']),
-      recentRecords: [for (final r in _maps(j['recent_records'])) BriefingRecord.fromJson(r)],
+      recentRecords: [
+        for (final r in _maps(j['recent_records'])) BriefingRecord.fromJson(r),
+      ],
       trends: [for (final t in _maps(j['trends'])) BriefingTrend.fromJson(t)],
       weakPoints: [for (final w in weakMaps) BriefingWeakPoint.fromJson(w)],
     );
@@ -486,7 +667,14 @@ class DailyBriefing {
 
 /// One workout from `v_session_summary`: the server's totals for a session (paused time already removed from the duration).
 class SessionSummaryRow {
-  const SessionSummaryRow({required this.sessionId, required this.localDate, required this.status, this.durationSeconds, this.workingSets = 0, this.volumeKg = 0});
+  const SessionSummaryRow({
+    required this.sessionId,
+    required this.localDate,
+    required this.status,
+    this.durationSeconds,
+    this.workingSets = 0,
+    this.volumeKg = 0,
+  });
 
   final String sessionId;
   final String localDate;
@@ -498,7 +686,8 @@ class SessionSummaryRow {
   /// A workout counts only when it was finished and has at least one logged working set.
   bool get counts => status == 'completed' && workingSets > 0;
 
-  factory SessionSummaryRow.fromJson(Map<String, dynamic> r) => SessionSummaryRow(
+  factory SessionSummaryRow.fromJson(Map<String, dynamic> r) =>
+      SessionSummaryRow(
         sessionId: (r['session_id'] as String?) ?? '',
         localDate: (r['local_date'] as String?) ?? '',
         status: (r['status'] as String?) ?? '',

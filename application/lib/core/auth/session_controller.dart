@@ -73,7 +73,8 @@ class SessionController extends Notifier<SessionState> {
   void _onAuthChanged(bool signedIn) {
     if (signedIn || _signingOut) return;
     final phase = state.phase;
-    if (phase == SessionPhase.checking || phase == SessionPhase.signedOut) return;
+    if (phase == SessionPhase.checking || phase == SessionPhase.signedOut){
+      return;}
     unawaited(_toSignedOut(message: 'You were signed out. Sign in again.'));
   }
 
@@ -105,7 +106,11 @@ class SessionController extends Notifier<SessionState> {
 
   /// Signs in, then registers this device. Throws [AuthFailure] if the sign-in fails.
   /// If registration fails afterwards, the state becomes [SessionPhase.connecting] with a message.
-  Future<void> signIn({required String email, required String password, String? deviceLabel}) async {
+  Future<void> signIn({
+    required String email,
+    required String password,
+    String? deviceLabel,
+  }) async {
     await _auth.signIn(email: email.trim(), password: password);
     final label = deviceLabel?.trim();
     await _connect(label: (label == null || label.isEmpty) ? null : label);
@@ -117,18 +122,39 @@ class SessionController extends Notifier<SessionState> {
   Future<void> _connect({String? label}) async {
     final id = await _loadDeviceId();
     final deviceLabel = label ?? await _store.label() ?? defaultDeviceLabel;
-    state = SessionState(phase: SessionPhase.connecting, email: _auth.email, deviceId: id, deviceLabel: deviceLabel);
+    state = SessionState(
+      phase: SessionPhase.connecting,
+      email: _auth.email,
+      deviceId: id,
+      deviceLabel: deviceLabel,
+    );
     try {
       await _gateway.claimOwner();
-      await _gateway.registerDevice(id: id, label: deviceLabel, platform: 'mobile');
+      await _gateway.registerDevice(
+        id: id,
+        label: deviceLabel,
+        platform: 'mobile',
+      );
       await _store.saveLabel(deviceLabel);
       await _store.setRegistered(true);
-      state = SessionState(phase: SessionPhase.ready, email: _auth.email, deviceId: id, deviceLabel: deviceLabel);
+      state = SessionState(
+        phase: SessionPhase.ready,
+        email: _auth.email,
+        deviceId: id,
+        deviceLabel: deviceLabel,
+      );
     } on BackendError catch (e) {
       if (e.isNotOwner) {
-        await _toSignedOut(message: 'This account is not the owner of this app.');
+        await _toSignedOut(
+          message: 'This account is not the owner of this app.',
+        );
       } else if (e.isDeviceRevoked) {
-        state = SessionState(phase: SessionPhase.revoked, email: _auth.email, deviceId: id, deviceLabel: deviceLabel);
+        state = SessionState(
+          phase: SessionPhase.revoked,
+          email: _auth.email,
+          deviceId: id,
+          deviceLabel: deviceLabel,
+        );
       } else {
         state = SessionState(
           phase: SessionPhase.connecting,
@@ -149,7 +175,8 @@ class SessionController extends Notifier<SessionState> {
   /// (for example after the server data was reset). Returns true when the device is registered.
   Future<bool> reRegisterDevice() async {
     final id = await _loadDeviceId();
-    final label = state.deviceLabel ?? await _store.label() ?? defaultDeviceLabel;
+    final label =
+        state.deviceLabel ?? await _store.label() ?? defaultDeviceLabel;
     try {
       await _gateway.claimOwner();
       await _gateway.registerDevice(id: id, label: label, platform: 'mobile');
@@ -157,7 +184,9 @@ class SessionController extends Notifier<SessionState> {
       return true;
     } on BackendError catch (e) {
       if (e.isNotOwner) {
-        await _toSignedOut(message: 'This account is not the owner of this app.');
+        await _toSignedOut(
+          message: 'This account is not the owner of this app.',
+        );
       } else if (e.isDeviceRevoked) {
         markRevoked();
       }
@@ -196,4 +225,5 @@ class SessionController extends Notifier<SessionState> {
   }
 }
 
-final sessionControllerProvider = NotifierProvider<SessionController, SessionState>(SessionController.new);
+final sessionControllerProvider =
+    NotifierProvider<SessionController, SessionState>(SessionController.new);

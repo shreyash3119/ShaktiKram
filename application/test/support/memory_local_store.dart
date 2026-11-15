@@ -5,7 +5,12 @@ import 'package:shaktikram/core/db/store_logic.dart';
 import 'package:shaktikram/core/db/sync_models.dart';
 
 class _Rec {
-  _Rec({this.serverRev, this.serverData, required this.data, this.dirty = false});
+  _Rec({
+    this.serverRev,
+    this.serverData,
+    required this.data,
+    this.dirty = false,
+  });
   int? serverRev;
   Map<String, dynamic>? serverData;
   Map<String, dynamic> data;
@@ -23,10 +28,16 @@ class MemoryLocalStore implements LocalStore {
   String _key(String entity, String id) => '$entity/$id';
 
   @override
-  Future<Map<String, dynamic>?> get(String entity, String id) async => _records[_key(entity, id)]?.data;
+  Future<Map<String, dynamic>?> get(String entity, String id) async =>
+      _records[_key(entity, id)]?.data;
 
   @override
-  Future<List<Map<String, dynamic>>> list(String entity, {String? localDate, bool includeDeleted = false, int? limit}) async {
+  Future<List<Map<String, dynamic>>> list(
+    String entity, {
+    String? localDate,
+    bool includeDeleted = false,
+    int? limit,
+  }) async {
     final out = <Map<String, dynamic>>[];
     _records.forEach((key, rec) {
       if (!key.startsWith('$entity/')) return;
@@ -39,7 +50,12 @@ class MemoryLocalStore implements LocalStore {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> listByRef(String entity, String field, String refId, {bool includeDeleted = false}) async {
+  Future<List<Map<String, dynamic>>> listByRef(
+    String entity,
+    String field,
+    String refId, {
+    bool includeDeleted = false,
+  }) async {
     final out = <Map<String, dynamic>>[];
     _records.forEach((key, rec) {
       if (!key.startsWith('$entity/')) return;
@@ -51,7 +67,8 @@ class MemoryLocalStore implements LocalStore {
   }
 
   @override
-  Future<int> recordCount() async => _records.values.where((r) => !isDeleted(r.data)).length;
+  Future<int> recordCount() async =>
+      _records.values.where((r) => !isDeleted(r.data)).length;
 
   @override
   Future<OutboxOp> saveLocal(OutboxOp op) async {
@@ -65,28 +82,51 @@ class MemoryLocalStore implements LocalStore {
       final siblings = <Map<String, dynamic>>[
         if (entityId is String)
           for (final e in _records.entries)
-            if (e.key.startsWith('${op.entity}/') && !isDeleted(e.value.data) && e.value.data['entity_id'] == entityId) e.value.data,
+            if (e.key.startsWith('${op.entity}/') &&
+                !isDeleted(e.value.data) &&
+                e.value.data['entity_id'] == entityId)
+              e.value.data,
       ];
-      _records[_key(op.entity, id)] = _Rec(serverRev: null, serverData: null, data: overlayNewVersion(siblings, id, op.payload, op.clientUpdatedAt), dirty: true);
+      _records[_key(op.entity, id)] = _Rec(
+        serverRev: null,
+        serverData: null,
+        data: overlayNewVersion(siblings, id, op.payload, op.clientUpdatedAt),
+        dirty: true,
+      );
     }
     if (id != null && op.action != 'new_version') {
-      final next = op.action == 'delete'
-          ? (existing == null ? null : overlayDelete(existing.data, op.clientUpdatedAt))
-          : overlayUpsert(existing?.data, id, op.payload);
+      final next =
+          op.action == 'delete'
+              ? (existing == null
+                  ? null
+                  : overlayDelete(existing.data, op.clientUpdatedAt))
+              : overlayUpsert(existing?.data, id, op.payload);
       if (next != null) {
-        _records[_key(op.entity, id)] =
-            _Rec(serverRev: existing?.serverRev, serverData: existing?.serverData, data: next, dirty: true);
+        _records[_key(op.entity, id)] = _Rec(
+          serverRev: existing?.serverRev,
+          serverData: existing?.serverData,
+          data: next,
+          dirty: true,
+        );
       }
     }
     return stored;
   }
 
   @override
-  Future<List<OutboxOp>> saveLocalAll(List<OutboxOp> ops) async => [for (final op in ops) await saveLocal(op)];
+  Future<List<OutboxOp>> saveLocalAll(List<OutboxOp> ops) async => [
+    for (final op in ops) await saveLocal(op),
+  ];
 
   @override
-  Future<List<OutboxOp>> pendingOps({int afterSeq = 0, int limit = 100}) async =>
-      _outbox.where((o) => o.state == OpState.pending && o.seq! > afterSeq).take(limit).toList();
+  Future<List<OutboxOp>> pendingOps({
+    int afterSeq = 0,
+    int limit = 100,
+  }) async =>
+      _outbox
+          .where((o) => o.state == OpState.pending && o.seq! > afterSeq)
+          .take(limit)
+          .toList();
 
   void _revert(OutboxOp op) {
     final id = op.recordId;
@@ -113,7 +153,10 @@ class MemoryLocalStore implements LocalStore {
       if (id != null && rev != null) {
         for (var i = 0; i < _outbox.length; i++) {
           final o = _outbox[i];
-          if (o.entity == op.entity && o.recordId == id && o.state == OpState.pending && (o.baseRev == null || o.baseRev! < rev)) {
+          if (o.entity == op.entity &&
+              o.recordId == id &&
+              o.state == OpState.pending &&
+              (o.baseRev == null || o.baseRev! < rev)) {
             _outbox[i] = o.copyWith(baseRev: rev);
           }
         }
@@ -121,17 +164,34 @@ class MemoryLocalStore implements LocalStore {
         if (rec != null && (rec.serverRev ?? 0) < rev) rec.serverRev = rev;
       }
       if (id != null) {
-        final left = _outbox.any((o) => o.entity == op.entity && o.recordId == id && o.state == OpState.pending);
+        final left = _outbox.any(
+          (o) =>
+              o.entity == op.entity &&
+              o.recordId == id &&
+              o.state == OpState.pending,
+        );
         if (!left) _records[_key(op.entity, id)]?.dirty = false;
       }
     } else if (outcome == 'conflict') {
-      _outbox[index] = _outbox[index].copyWith(state: OpState.conflict, errorCode: result.issueCode ?? 'conflict_stale_rev', message: result.issueMessage);
+      _outbox[index] = _outbox[index].copyWith(
+        state: OpState.conflict,
+        errorCode: result.issueCode ?? 'conflict_stale_rev',
+        message: result.issueMessage,
+      );
       _revert(op);
     } else if (shouldRetry(result.issueCode, op.attempts)) {
-      _outbox[index] = _outbox[index].copyWith(attempts: op.attempts + 1, errorCode: result.issueCode, message: result.issueMessage);
+      _outbox[index] = _outbox[index].copyWith(
+        attempts: op.attempts + 1,
+        errorCode: result.issueCode,
+        message: result.issueMessage,
+      );
     } else {
-      _outbox[index] = _outbox[index]
-          .copyWith(state: OpState.rejected, attempts: op.attempts + 1, errorCode: result.issueCode, message: result.issueMessage);
+      _outbox[index] = _outbox[index].copyWith(
+        state: OpState.rejected,
+        attempts: op.attempts + 1,
+        errorCode: result.issueCode,
+        message: result.issueMessage,
+      );
       _revert(op);
     }
   }
@@ -142,12 +202,16 @@ class MemoryLocalStore implements LocalStore {
       final id = row.record['id'] as String?;
       if (id == null) continue;
       final existing = _records[_key(row.entity, id)];
-      if (existing?.serverRev != null && row.rev < existing!.serverRev!) continue;
+      if (existing?.serverRev != null && row.rev < existing!.serverRev!){
+        continue;}
       final dirty = existing?.dirty ?? false;
       _records[_key(row.entity, id)] = _Rec(
         serverRev: row.rev,
         serverData: Map<String, dynamic>.from(row.record),
-        data: dirty && existing != null ? existing.data : Map<String, dynamic>.from(row.record),
+        data:
+            dirty && existing != null
+                ? existing.data
+                : Map<String, dynamic>.from(row.record),
         dirty: dirty,
       );
     }
@@ -169,8 +233,16 @@ class MemoryLocalStore implements LocalStore {
   Future<CachedInsight?> readInsight(String key) async => _insights[key];
 
   @override
-  Future<void> writeInsight(String key, String payload, DateTime fetchedAt) async =>
-      _insights[key] = CachedInsight(key: key, payload: payload, fetchedAt: fetchedAt.toUtc());
+  Future<void> writeInsight(
+    String key,
+    String payload,
+    DateTime fetchedAt,
+  ) async =>
+      _insights[key] = CachedInsight(
+        key: key,
+        payload: payload,
+        fetchedAt: fetchedAt.toUtc(),
+      );
 
   @override
   Future<void> clearInsights() async => _insights.clear();
@@ -188,24 +260,29 @@ class MemoryLocalStore implements LocalStore {
   @override
   Future<List<ExportLogEntry>> exportLog({int limit = 100}) async {
     final sorted = [..._exportLog]..sort((a, b) {
-        final c = b.createdAt.compareTo(a.createdAt);
-        return c != 0 ? c : (b.id ?? 0).compareTo(a.id ?? 0);
-      });
+      final c = b.createdAt.compareTo(a.createdAt);
+      return c != 0 ? c : (b.id ?? 0).compareTo(a.id ?? 0);
+    });
     return sorted.take(limit).toList();
   }
 
   @override
-  Future<void> removeExportLog(int id) async => _exportLog.removeWhere((e) => e.id == id);
+  Future<void> removeExportLog(int id) async =>
+      _exportLog.removeWhere((e) => e.id == id);
 
   @override
-  Future<int> pendingCount() async => _outbox.where((o) => o.state == OpState.pending).length;
+  Future<int> pendingCount() async =>
+      _outbox.where((o) => o.state == OpState.pending).length;
 
   @override
-  Future<List<OutboxOp>> issues() async => _outbox.where((o) => o.state != OpState.pending).toList();
+  Future<List<OutboxOp>> issues() async =>
+      _outbox.where((o) => o.state != OpState.pending).toList();
 
   @override
-  Future<int> issueCount() async => _outbox.where((o) => o.state != OpState.pending).length;
+  Future<int> issueCount() async =>
+      _outbox.where((o) => o.state != OpState.pending).length;
 
   @override
-  Future<void> dismissIssue(String opId) async => _outbox.removeWhere((o) => o.opId == opId && o.state != OpState.pending);
+  Future<void> dismissIssue(String opId) async =>
+      _outbox.removeWhere((o) => o.opId == opId && o.state != OpState.pending);
 }

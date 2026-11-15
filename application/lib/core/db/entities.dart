@@ -39,7 +39,10 @@ const syncedEntities = <String, EntityInfo>{
   'exercise_restrictions': EntityInfo(RecordClass.editable),
   'exercises': EntityInfo(RecordClass.editable),
   'goal_progress': EntityInfo(RecordClass.appendOnly),
-  'goal_status_events': EntityInfo(RecordClass.appendOnly, clientWritable: false),
+  'goal_status_events': EntityInfo(
+    RecordClass.appendOnly,
+    clientWritable: false,
+  ),
   'goals': EntityInfo(RecordClass.editable),
   'gym_decisions': EntityInfo(RecordClass.appendOnly),
   'injuries': EntityInfo(RecordClass.editable),
@@ -67,7 +70,10 @@ const syncedEntities = <String, EntityInfo>{
   'sleep_logs': EntityInfo(RecordClass.editable),
   'split_day_muscles': EntityInfo(RecordClass.editable),
   'split_days': EntityInfo(RecordClass.editable),
-  'split_status_events': EntityInfo(RecordClass.appendOnly, clientWritable: false),
+  'split_status_events': EntityInfo(
+    RecordClass.appendOnly,
+    clientWritable: false,
+  ),
   'split_versions': EntityInfo(RecordClass.versioned),
   'splits': EntityInfo(RecordClass.editable),
   'supplement_logs': EntityInfo(RecordClass.appendOnly),
@@ -81,4 +87,5 @@ const syncedEntities = <String, EntityInfo>{
   'workout_templates': EntityInfo(RecordClass.editable),
 };
 
-bool isWritableEntity(String entity) => syncedEntities[entity]?.clientWritable ?? false;
+bool isWritableEntity(String entity) =>
+    syncedEntities[entity]?.clientWritable ?? false;

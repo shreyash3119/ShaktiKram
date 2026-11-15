@@ -25,20 +25,29 @@ Future<void> main() async {
   }
 
   try {
-    await Supabase.initialize(url: AppConfig.supabaseUrl, publishableKey: AppConfig.supabasePublishableKey);
+    await Supabase.initialize(
+      url: AppConfig.supabaseUrl,
+      publishableKey: AppConfig.supabasePublishableKey,
+    );
     final client = Supabase.instance.client;
     final prefs = await SharedPreferences.getInstance();
     final localStore = await SqfliteLocalStore.open();
 
-    runApp(ProviderScope(
-      overrides: [
-        authServiceProvider.overrideWithValue(SupabaseAuthService(client.auth)),
-        backendGatewayProvider.overrideWithValue(SupabaseBackendGateway(client)),
-        deviceStoreProvider.overrideWithValue(SharedPrefsDeviceStore(prefs)),
-        localStoreProvider.overrideWithValue(localStore),
-      ],
-      child: const SyncRunner(child: ShaktiKramApp()),
-    ));
+    runApp(
+      ProviderScope(
+        overrides: [
+          authServiceProvider.overrideWithValue(
+            SupabaseAuthService(client.auth),
+          ),
+          backendGatewayProvider.overrideWithValue(
+            SupabaseBackendGateway(client),
+          ),
+          deviceStoreProvider.overrideWithValue(SharedPrefsDeviceStore(prefs)),
+          localStoreProvider.overrideWithValue(localStore),
+        ],
+        child: const SyncRunner(child: ShaktiKramApp()),
+      ),
+    );
   } catch (e) {
     runApp(StartupProblemApp(title: 'The app could not start', message: '$e'));
   }

@@ -16,11 +16,21 @@ abstract class LocalStore {
 
   /// Records of one table, without soft-deleted rows unless asked. [localDate] is `YYYY-MM-DD`.
   /// Newest first by `occurred_at` when present, otherwise by id.
-  Future<List<Map<String, dynamic>>> list(String entity, {String? localDate, bool includeDeleted = false, int? limit});
+  Future<List<Map<String, dynamic>>> list(
+    String entity, {
+    String? localDate,
+    bool includeDeleted = false,
+    int? limit,
+  });
 
   /// Records of [entity] whose link field [field] (for example `session_id`) points at [refId].
   /// Newest first by `occurred_at`, then by id. Callers sort further when they need another order.
-  Future<List<Map<String, dynamic>>> listByRef(String entity, String field, String refId, {bool includeDeleted = false});
+  Future<List<Map<String, dynamic>>> listByRef(
+    String entity,
+    String field,
+    String refId, {
+    bool includeDeleted = false,
+  });
 
   Future<int> recordCount();
 

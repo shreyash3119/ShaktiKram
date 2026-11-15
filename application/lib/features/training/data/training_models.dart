@@ -2,12 +2,22 @@
 /// local store holds). Numbers may arrive as numbers or as text, so they are read defensively.
 library;
 
-double? _double(Object? v) => v is num ? v.toDouble() : (v is String ? double.tryParse(v) : null);
-int? _int(Object? v) => v is num ? v.toInt() : (v is String ? int.tryParse(v) : null);
+double? _double(Object? v) =>
+    v is num ? v.toDouble() : (v is String ? double.tryParse(v) : null);
+int? _int(Object? v) =>
+    v is num ? v.toInt() : (v is String ? int.tryParse(v) : null);
 DateTime? _time(Object? v) => v is String ? DateTime.tryParse(v) : null;
 
 class Exercise {
-  const Exercise({required this.id, required this.name, this.category, this.equipmentId, this.notes, this.isCustom = true, this.removedOn});
+  const Exercise({
+    required this.id,
+    required this.name,
+    this.category,
+    this.equipmentId,
+    this.notes,
+    this.isCustom = true,
+    this.removedOn,
+  });
 
   final String id;
   final String name;
@@ -22,18 +32,25 @@ class Exercise {
   bool get isInactive => removedOn != null;
 
   factory Exercise.fromRecord(Map<String, dynamic> r) => Exercise(
-        id: r['id'] as String,
-        name: (r['name'] as String?) ?? '',
-        category: r['category'] as String?,
-        equipmentId: r['equipment_id'] as String?,
-        notes: r['notes'] as String?,
-        isCustom: r['is_custom'] != false,
-        removedOn: r['removed_on'] as String?,
-      );
+    id: r['id'] as String,
+    name: (r['name'] as String?) ?? '',
+    category: r['category'] as String?,
+    equipmentId: r['equipment_id'] as String?,
+    notes: r['notes'] as String?,
+    isCustom: r['is_custom'] != false,
+    removedOn: r['removed_on'] as String?,
+  );
 }
 
 class TemplateVersion {
-  const TemplateVersion({required this.id, required this.templateId, required this.version, required this.name, this.effectiveFrom, this.effectiveTo});
+  const TemplateVersion({
+    required this.id,
+    required this.templateId,
+    required this.version,
+    required this.name,
+    this.effectiveFrom,
+    this.effectiveTo,
+  });
 
   final String id;
   final String templateId;
@@ -45,13 +62,13 @@ class TemplateVersion {
   bool get isCurrent => effectiveTo == null;
 
   factory TemplateVersion.fromRecord(Map<String, dynamic> r) => TemplateVersion(
-        id: r['id'] as String,
-        templateId: r['entity_id'] as String,
-        version: _int(r['version']) ?? 1,
-        name: (r['name'] as String?) ?? '',
-        effectiveFrom: _time(r['effective_from']),
-        effectiveTo: _time(r['effective_to']),
-      );
+    id: r['id'] as String,
+    templateId: r['entity_id'] as String,
+    version: _int(r['version']) ?? 1,
+    name: (r['name'] as String?) ?? '',
+    effectiveFrom: _time(r['effective_from']),
+    effectiveTo: _time(r['effective_to']),
+  );
 }
 
 /// One exercise of a template version, with its prescription (sets, rep range, weight, rest, effort targets).
@@ -86,7 +103,8 @@ class TemplateExercise {
   final String? warmupGuidance;
   final String? notes;
 
-  factory TemplateExercise.fromRecord(Map<String, dynamic> r) => TemplateExercise(
+  factory TemplateExercise.fromRecord(Map<String, dynamic> r) =>
+      TemplateExercise(
         id: r['id'] as String,
         templateVersionId: r['template_version_id'] as String,
         exerciseId: r['exercise_id'] as String,
@@ -104,7 +122,13 @@ class TemplateExercise {
 }
 
 class SplitDay {
-  const SplitDay({required this.id, required this.position, required this.label, this.isRest = false, this.templateId});
+  const SplitDay({
+    required this.id,
+    required this.position,
+    required this.label,
+    this.isRest = false,
+    this.templateId,
+  });
 
   final String id;
   final int position;
@@ -113,17 +137,26 @@ class SplitDay {
   final String? templateId;
 
   factory SplitDay.fromRecord(Map<String, dynamic> r) => SplitDay(
-        id: r['id'] as String,
-        position: _int(r['position']) ?? 1,
-        label: (r['label'] as String?) ?? '',
-        isRest: r['is_rest'] == true,
-        templateId: r['template_id'] as String?,
-      );
+    id: r['id'] as String,
+    position: _int(r['position']) ?? 1,
+    label: (r['label'] as String?) ?? '',
+    isRest: r['is_rest'] == true,
+    templateId: r['template_id'] as String?,
+  );
 }
 
 /// The split that is active now, with its current version and days.
 class ActiveSplit {
-  const ActiveSplit({required this.splitId, required this.versionId, required this.name, required this.pattern, this.cycleLengthDays, this.status = 'active', this.notes, required this.days});
+  const ActiveSplit({
+    required this.splitId,
+    required this.versionId,
+    required this.name,
+    required this.pattern,
+    this.cycleLengthDays,
+    this.status = 'active',
+    this.notes,
+    required this.days,
+  });
 
   final String splitId;
   final String versionId;
@@ -159,15 +192,15 @@ class ScheduleEntry {
   final String? sessionId;
 
   factory ScheduleEntry.fromRecord(Map<String, dynamic> r) => ScheduleEntry(
-        id: r['id'] as String,
-        localDate: (r['local_date'] as String?) ?? '',
-        isRestDay: r['is_rest_day'] == true,
-        splitVersionId: r['split_version_id'] as String?,
-        splitDayId: r['split_day_id'] as String?,
-        templateVersionId: r['template_version_id'] as String?,
-        status: (r['status'] as String?) ?? 'planned',
-        sessionId: r['session_id'] as String?,
-      );
+    id: r['id'] as String,
+    localDate: (r['local_date'] as String?) ?? '',
+    isRestDay: r['is_rest_day'] == true,
+    splitVersionId: r['split_version_id'] as String?,
+    splitDayId: r['split_day_id'] as String?,
+    templateVersionId: r['template_version_id'] as String?,
+    status: (r['status'] as String?) ?? 'planned',
+    sessionId: r['session_id'] as String?,
+  );
 }
 
 class WorkoutSession {
@@ -206,20 +239,22 @@ class WorkoutSession {
   bool get isActive => status == 'in_progress' || status == 'paused';
 
   factory WorkoutSession.fromRecord(Map<String, dynamic> r) => WorkoutSession(
-        id: r['id'] as String,
-        startedAt: _time(r['occurred_at']) ?? DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
-        endedAt: _time(r['ended_at']),
-        localDate: (r['local_date'] as String?) ?? '',
-        name: r['name'] as String?,
-        status: (r['status'] as String?) ?? 'in_progress',
-        scheduleEntryId: r['schedule_entry_id'] as String?,
-        splitVersionId: r['split_version_id'] as String?,
-        splitDayId: r['split_day_id'] as String?,
-        templateVersionId: r['template_version_id'] as String?,
-        pausedSeconds: _int(r['paused_seconds']) ?? 0,
-        notes: r['notes'] as String?,
-        postNotes: r['post_notes'] as String?,
-      );
+    id: r['id'] as String,
+    startedAt:
+        _time(r['occurred_at']) ??
+        DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+    endedAt: _time(r['ended_at']),
+    localDate: (r['local_date'] as String?) ?? '',
+    name: r['name'] as String?,
+    status: (r['status'] as String?) ?? 'in_progress',
+    scheduleEntryId: r['schedule_entry_id'] as String?,
+    splitVersionId: r['split_version_id'] as String?,
+    splitDayId: r['split_day_id'] as String?,
+    templateVersionId: r['template_version_id'] as String?,
+    pausedSeconds: _int(r['paused_seconds']) ?? 0,
+    notes: r['notes'] as String?,
+    postNotes: r['post_notes'] as String?,
+  );
 }
 
 class SessionExercise {
@@ -252,16 +287,19 @@ class SessionExercise {
   bool get isSkipped => status == 'skipped';
 
   factory SessionExercise.fromRecord(Map<String, dynamic> r) => SessionExercise(
-        id: r['id'] as String,
-        sessionId: r['session_id'] as String,
-        exerciseId: r['exercise_id'] as String,
-        position: _int(r['position']) ?? 1,
-        status: (r['status'] as String?) ?? 'done',
-        skipReason: r['skip_reason'] as String?,
-        templateExerciseId: r['template_exercise_id'] as String?,
-        prescription: r['prescription_snapshot'] is Map ? Map<String, dynamic>.from(r['prescription_snapshot'] as Map) : null,
-        notes: r['notes'] as String?,
-      );
+    id: r['id'] as String,
+    sessionId: r['session_id'] as String,
+    exerciseId: r['exercise_id'] as String,
+    position: _int(r['position']) ?? 1,
+    status: (r['status'] as String?) ?? 'done',
+    skipReason: r['skip_reason'] as String?,
+    templateExerciseId: r['template_exercise_id'] as String?,
+    prescription:
+        r['prescription_snapshot'] is Map
+            ? Map<String, dynamic>.from(r['prescription_snapshot'] as Map)
+            : null,
+    notes: r['notes'] as String?,
+  );
 }
 
 class LoggedSet {
@@ -298,19 +336,19 @@ class LoggedSet {
   bool get isWorking => setType == 'working';
 
   factory LoggedSet.fromRecord(Map<String, dynamic> r) => LoggedSet(
-        id: r['id'] as String,
-        sessionExerciseId: r['session_exercise_id'] as String,
-        setNumber: _int(r['set_number']) ?? 1,
-        setType: (r['set_type'] as String?) ?? 'working',
-        weightKg: _double(r['weight_kg']),
-        reps: _int(r['reps']),
-        completed: r['completed'] != false,
-        rir: _int(r['rir']),
-        rpe: _double(r['rpe']),
-        restSeconds: _int(r['rest_s']),
-        notes: r['notes'] as String?,
-        occurredAt: _time(r['occurred_at']),
-      );
+    id: r['id'] as String,
+    sessionExerciseId: r['session_exercise_id'] as String,
+    setNumber: _int(r['set_number']) ?? 1,
+    setType: (r['set_type'] as String?) ?? 'working',
+    weightKg: _double(r['weight_kg']),
+    reps: _int(r['reps']),
+    completed: r['completed'] != false,
+    rir: _int(r['rir']),
+    rpe: _double(r['rpe']),
+    restSeconds: _int(r['rest_s']),
+    notes: r['notes'] as String?,
+    occurredAt: _time(r['occurred_at']),
+  );
 }
 
 /// Totals for one session, worked out from the sets held on the phone with the same rules as the backend view
@@ -336,18 +374,30 @@ class SessionSummary {
 
 /// What was done for an exercise the last time it was trained (shown while logging).
 class PreviousPerformance {
-  const PreviousPerformance({required this.sessionId, required this.localDate, required this.sets});
+  const PreviousPerformance({
+    required this.sessionId,
+    required this.localDate,
+    required this.sets,
+  });
 
   final String sessionId;
   final String localDate;
   final List<LoggedSet> sets;
 
-  List<LoggedSet> get workingSets => [for (final s in sets) if (s.isWorking && s.completed) s];
+  List<LoggedSet> get workingSets => [
+    for (final s in sets)
+      if (s.isWorking && s.completed) s,
+  ];
 }
 
 /// A muscle from the reference list on the phone.
 class MuscleRef {
-  const MuscleRef({required this.id, required this.key, required this.label, required this.groupKey});
+  const MuscleRef({
+    required this.id,
+    required this.key,
+    required this.label,
+    required this.groupKey,
+  });
 
   final String id;
   final String key;
@@ -355,20 +405,28 @@ class MuscleRef {
   final String groupKey;
 
   factory MuscleRef.fromRecord(Map<String, dynamic> r) => MuscleRef(
-        id: r['id'] as String,
-        key: (r['key'] as String?) ?? '',
-        label: (r['label'] as String?) ?? (r['key'] as String? ?? ''),
-        groupKey: (r['group_key'] as String?) ?? '',
-      );
+    id: r['id'] as String,
+    key: (r['key'] as String?) ?? '',
+    label: (r['label'] as String?) ?? (r['key'] as String? ?? ''),
+    groupKey: (r['group_key'] as String?) ?? '',
+  );
 }
 
 /// A piece of gym equipment from the reference list on the phone.
 class EquipmentRef {
-  const EquipmentRef({required this.id, required this.key, required this.label});
+  const EquipmentRef({
+    required this.id,
+    required this.key,
+    required this.label,
+  });
 
   final String id;
   final String key;
   final String label;
 
-  factory EquipmentRef.fromRecord(Map<String, dynamic> r) => EquipmentRef(id: r['id'] as String, key: (r['key'] as String?) ?? '', label: (r['label'] as String?) ?? (r['key'] as String? ?? ''));
+  factory EquipmentRef.fromRecord(Map<String, dynamic> r) => EquipmentRef(
+    id: r['id'] as String,
+    key: (r['key'] as String?) ?? '',
+    label: (r['label'] as String?) ?? (r['key'] as String? ?? ''),
+  );
 }

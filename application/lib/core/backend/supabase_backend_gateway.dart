@@ -14,7 +14,9 @@ class SupabaseBackendGateway implements BackendGateway {
   Future<dynamic> _rpc(String function, [Map<String, dynamic>? params]) async {
     try {
       final response = await _client.rpc(function, params: params);
-      if (response is Map && response.containsKey('data')) return response['data'];
+      if (response is Map && response.containsKey('data')) {
+        return response['data'];
+      }
       return response;
     } on PostgrestException catch (e) {
       throw BackendError.fromRaw(httpCode: e.code, message: e.message);
@@ -31,15 +33,25 @@ class SupabaseBackendGateway implements BackendGateway {
   }
 
   @override
-  Future<DeviceRecord> registerDevice({required String id, required String label, required String platform}) async {
-    final data = await _rpc('api_register_device', {'p_device_id': id, 'p_label': label, 'p_platform': platform});
+  Future<DeviceRecord> registerDevice({
+    required String id,
+    required String label,
+    required String platform,
+  }) async {
+    final data = await _rpc('api_register_device', {
+      'p_device_id': id,
+      'p_label': label,
+      'p_platform': platform,
+    });
     return DeviceRecord.fromJson(Map<String, dynamic>.from(data as Map));
   }
 
   @override
   Future<List<DeviceRecord>> listDevices() async {
     final data = await _rpc('api_list_devices');
-    return (data as List).map((e) => DeviceRecord.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+    return (data as List)
+        .map((e) => DeviceRecord.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
   }
 
   @override
@@ -60,17 +72,31 @@ class SupabaseBackendGateway implements BackendGateway {
       'p_operations': [for (final op in operations) op.toWire()],
     });
     final results = (data as Map)['results'] as List;
-    return [for (final r in results) OpResult.fromJson(Map<String, dynamic>.from(r as Map))];
+    return [
+      for (final r in results)
+        OpResult.fromJson(Map<String, dynamic>.from(r as Map)),
+    ];
   }
 
   @override
-  Future<PullPage> pullChanges({required String deviceId, required int sinceRev, int limit = 200}) async {
-    final data = await _rpc('api_pull_changes', {'p_device_id': deviceId, 'p_since_rev': sinceRev, 'p_limit': limit});
+  Future<PullPage> pullChanges({
+    required String deviceId,
+    required int sinceRev,
+    int limit = 200,
+  }) async {
+    final data = await _rpc('api_pull_changes', {
+      'p_device_id': deviceId,
+      'p_since_rev': sinceRev,
+      'p_limit': limit,
+    });
     return PullPage.fromJson(Map<String, dynamic>.from(data as Map));
   }
 
   @override
-  Future<Object?> callInsight(String function, {Map<String, dynamic>? params}) => _rpc(function, params);
+  Future<Object?> callInsight(
+    String function, {
+    Map<String, dynamic>? params,
+  }) => _rpc(function, params);
 
   @override
   Future<List<Map<String, dynamic>>> readView(
@@ -86,7 +112,9 @@ class SupabaseBackendGateway implements BackendGateway {
         query = query.eq(e.key, e.value);
       }
       PostgrestTransformBuilder<List<Map<String, dynamic>>> shaped = query;
-      if (orderBy != null) shaped = shaped.order(orderBy, ascending: !descending);
+      if (orderBy != null) {
+        shaped = shaped.order(orderBy, ascending: !descending);
+      }
       if (limit != null) shaped = shaped.limit(limit);
       final rows = await shaped;
       return [for (final r in rows) Map<String, dynamic>.from(r)];

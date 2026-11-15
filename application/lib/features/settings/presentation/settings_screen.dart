@@ -87,6 +87,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final session = ref.watch(sessionControllerProvider);
     final themeMode = ref.watch(themeModeProvider);
     final sync = ref.watch(syncStatusProvider);
+  final lastBackup = ref.watch(lastBackupProvider).valueOrNull;
 
     const themeLabels = ['Dark', 'Light', 'System'];
     const themeModes = [ThemeMode.dark, ThemeMode.light, ThemeMode.system];
@@ -105,7 +106,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       String? syncProblem,
     ) = switch (sync.phase) {
       SyncPhase.synced => ('Synced', lastSync, null),
-      SyncPhase.syncing => ('Syncing', sync.pulledCount > 0 ? 'Downloaded ${sync.pulledCount} records' : 'In progress', null),
+      SyncPhase.syncing => (
+        'Syncing',
+        sync.pulledCount > 0
+            ? 'Downloaded ${sync.pulledCount} records'
+            : 'In progress',
+        null,
+      ),
       SyncPhase.pending => (
         '${sync.pendingCount} waiting',
         'Will send when online',
@@ -198,29 +205,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ],
         ),
         TitledCard(
-          title: 'Data & reports',
-          children: [
-            RowList([
-              RowItem(
-                title: 'Sync',
-                subtitle: '$lastSync · ${sync.pendingCount} pending',
-                trailing: syncTitle,
-              ),
-              RowItem(
-                title: 'Export data',
-                subtitle: 'Download a report as Excel or PDF',
-                chevron: true,
-                onTap: () => context.go('${AppRoutes.reports}?tab=export'),
-              ),
-              RowItem(
-                title: 'Backup & data export',
-                subtitle: 'Full backup, CSV export, check a backup file',
-                chevron: true,
-                onTap: () => context.push(AppRoutes.backup),
-              ),
-            ]),
-          ],
-        ),
+  title: 'Data & reports',
+  children: [
+    RowList([
+      RowItem(
+        title: 'Sync',
+        subtitle: '$lastSync · ${sync.pendingCount} pending',
+        trailing: syncTitle,
+      ),
+      RowItem(
+        title: 'Export data',
+        subtitle: 'Download a report as Excel or PDF',
+        chevron: true,
+        onTap: () => context.go('${AppRoutes.reports}?tab=export'),
+      ),
+      RowItem(
+        title: 'Backup & data export',
+        subtitle: 'Full backup, CSV export, check a backup file',
+        chevron: true,
+        onTap: () => context.push(AppRoutes.backup),
+      ),
+    ]),
+    const SizedBox(height: 12),
+    MutedText(
+      lastBackup == null
+          ? 'No backup has been made from this phone yet. Backups are never made automatically.'
+          : 'Last backup made from this phone: ${lastBackup.createdAt.toLocal().toString().substring(0, 16)}. Backups are never made automatically.',
+      size: 14,
+    ),
+  ],
+),
         TitledCard(
           title: 'Account',
           children: [
@@ -448,7 +462,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ],
         ),
-        const _BackupCard(),
+        
       ],
     );
   }
@@ -458,27 +472,4 @@ String _clock(DateTime t) {
   final h = t.hour % 12 == 0 ? 12 : t.hour % 12;
   final m = t.minute.toString().padLeft(2, '0');
   return '$h:$m ${t.hour < 12 ? 'am' : 'pm'}';
-}
-
-/// Where backups are made, and the date of the last one made from this phone. No automatic backup exists.
-class _BackupCard extends ConsumerWidget {
-  const _BackupCard();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final last = ref.watch(lastBackupProvider).valueOrNull;
-    return TitledCard(
-      title: 'Backup',
-      children: [
-        MutedText(
-          last == null
-              ? 'No backup has been made from this phone yet. Backups are never made automatically.'
-              : 'Last backup made from this phone: ${last.createdAt.toLocal().toString().substring(0, 16)}. Backups are never made automatically.',
-          size: 15,
-        ),
-        const SizedBox(height: 12),
-        AppButton('Backup & data export', onPressed: () => context.push(AppRoutes.backup)),
-      ],
-    );
-  }
 }

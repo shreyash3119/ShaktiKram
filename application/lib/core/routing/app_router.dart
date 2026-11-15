@@ -68,43 +68,101 @@ final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
     initialLocation: AppRoutes.home,
     refreshListenable: phaseChanged,
-    redirect: (context, state) =>
-        sessionRedirect(ref.read(sessionControllerProvider).phase, state.matchedLocation),
+    redirect:
+        (context, state) => sessionRedirect(
+          ref.read(sessionControllerProvider).phase,
+          state.matchedLocation,
+        ),
     routes: [
-      GoRoute(path: AppRoutes.splash, builder: (context, state) => const SplashScreen()),
-      GoRoute(path: AppRoutes.signIn, builder: (context, state) => const SignInScreen()),
-      GoRoute(path: AppRoutes.connecting, builder: (context, state) => const ConnectingScreen()),
-      GoRoute(path: AppRoutes.revoked, builder: (context, state) => const RevokedScreen()),
-      GoRoute(path: AppRoutes.session, builder: (context, state) => const WorkoutSessionScreen()),
+      GoRoute(
+        path: AppRoutes.splash,
+        builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.signIn,
+        builder: (context, state) => const SignInScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.connecting,
+        builder: (context, state) => const ConnectingScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.revoked,
+        builder: (context, state) => const RevokedScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.session,
+        builder: (context, state) => const WorkoutSessionScreen(),
+      ),
       StatefulShellRoute.indexedStack(
-        builder: (BuildContext context, GoRouterState state, StatefulNavigationShell shell) =>
-            AppShell(navigationShell: shell),
+        builder:
+            (
+              BuildContext context,
+              GoRouterState state,
+              StatefulNavigationShell shell,
+            ) => AppShell(navigationShell: shell),
         branches: [
-          StatefulShellBranch(routes: [
-            GoRoute(path: AppRoutes.home, builder: (context, state) => const HomeScreen()),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(path: AppRoutes.training, builder: (context, state) => const TrainingScreen()),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(path: AppRoutes.progress, builder: (context, state) => const ProgressScreen()),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(path: AppRoutes.lifestyle, builder: (context, state) => const LifestyleScreen()),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(path: AppRoutes.reports, builder: (context, state) => ReportsScreen(initialTab: state.uri.queryParameters['tab'])),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: AppRoutes.settings,
-              builder: (context, state) => const SettingsScreen(),
-              routes: [
-                GoRoute(path: 'devices', builder: (context, state) => const DevicesScreen()),
-                GoRoute(path: 'backup', builder: (context, state) => const BackupScreen()),
-              ],
-            ),
-          ]),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.home,
+                builder: (context, state) => const HomeScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.training,
+                builder: (context, state) => const TrainingScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.progress,
+                builder: (context, state) => const ProgressScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.lifestyle,
+                builder: (context, state) => const LifestyleScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.reports,
+                builder:
+                    (context, state) => ReportsScreen(
+                      initialTab: state.uri.queryParameters['tab'],
+                    ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.settings,
+                builder: (context, state) => const SettingsScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'devices',
+                    builder: (context, state) => const DevicesScreen(),
+                  ),
+                  GoRoute(
+                    path: 'backup',
+                    builder: (context, state) => const BackupScreen(),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ],
       ),
     ],

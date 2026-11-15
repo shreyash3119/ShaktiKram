@@ -44,13 +44,23 @@ class InnerTile extends StatelessWidget {
       child: child,
     );
     if (onTap == null) return box;
-    return GestureDetector(behavior: HitTestBehavior.opaque, onTap: onTap, child: box);
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: box,
+    );
   }
 }
 
 /// Card title with the optional amber "Sample values" badge and a blue link on the right.
 class SectionHeader extends StatelessWidget {
-  const SectionHeader(this.title, {super.key, this.sample = false, this.link, this.onLink});
+  const SectionHeader(
+    this.title, {
+    super.key,
+    this.sample = false,
+    this.link,
+    this.onLink,
+  });
 
   final String title;
   final bool sample;
@@ -60,23 +70,48 @@ class SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.pal;
-    return Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-      Expanded(
-        child: Text(title, style: TextStyle(color: p.text, fontSize: 18, fontWeight: FontWeight.w700, height: 1.25)),
-      ),
-      if (sample) ...[
-        const SizedBox(width: 8),
-        Text('Sample values', style: TextStyle(color: p.amber, fontSize: 12, fontWeight: FontWeight.w500)),
-      ],
-      if (link != null) ...[
-        const SizedBox(width: 10),
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: onLink ?? () {},
-          child: Text('$link ›', style: TextStyle(color: p.link, fontSize: 14, fontWeight: FontWeight.w500)),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: TextStyle(
+              color: p.text,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              height: 1.25,
+            ),
+          ),
         ),
+        if (sample) ...[
+          const SizedBox(width: 8),
+          Text(
+            'Sample values',
+            style: TextStyle(
+              color: p.amber,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+        if (link != null) ...[
+          const SizedBox(width: 10),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onLink ?? () {},
+            child: Text(
+              '$link ›',
+              style: TextStyle(
+                color: p.link,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ],
-    ]);
+    );
   }
 }
 
@@ -91,7 +126,12 @@ class GroupLabel extends StatelessWidget {
       padding: const EdgeInsets.only(top: 8),
       child: Text(
         text.toUpperCase(),
-        style: TextStyle(color: context.pal.muted, fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 0.4),
+        style: TextStyle(
+          color: context.pal.muted,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.4,
+        ),
       ),
     );
   }
@@ -106,13 +146,23 @@ class MutedText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(text, textAlign: align, style: TextStyle(color: context.pal.muted, fontSize: size, height: 1.35));
+    return Text(
+      text,
+      textAlign: align,
+      style: TextStyle(color: context.pal.muted, fontSize: size, height: 1.35),
+    );
   }
 }
 
 /// A bold value over a muted label ("12,450 kg" / "Volume").
 class StatBlock extends StatelessWidget {
-  const StatBlock(this.value, this.label, {super.key, this.size = 22, this.valueColor});
+  const StatBlock(
+    this.value,
+    this.label, {
+    super.key,
+    this.size = 22,
+    this.valueColor,
+  });
 
   final String value;
   final String label;
@@ -122,11 +172,22 @@ class StatBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.pal;
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-      Text(value, style: TextStyle(color: valueColor ?? p.text, fontSize: size, fontWeight: FontWeight.w700)),
-      const SizedBox(height: 2),
-      Text(label, style: TextStyle(color: p.muted, fontSize: 13)),
-    ]);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            color: valueColor ?? p.text,
+            fontSize: size,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(label, style: TextStyle(color: p.muted, fontSize: 13)),
+      ],
+    );
   }
 }
 
@@ -156,26 +217,48 @@ class RowItem extends StatelessWidget {
     final p = context.pal;
     final row = Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(children: [
-        if (leading != null) ...[leading!, const SizedBox(width: 12)],
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: TextStyle(color: p.text, fontSize: 15, fontWeight: FontWeight.w700)),
-            if (subtitle != null) ...[
-              const SizedBox(height: 2),
-              Text(subtitle!, style: TextStyle(color: p.muted, fontSize: 13.5, height: 1.3)),
-            ],
-          ]),
-        ),
-        if (trailing != null) ...[
-          const SizedBox(width: 8),
-          Text(trailing!, style: TextStyle(color: trailingColor ?? p.muted, fontSize: 14)),
+      child: Row(
+        children: [
+          if (leading != null) ...[leading!, const SizedBox(width: 12)],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: p.text,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle!,
+                    style: TextStyle(
+                      color: p.muted,
+                      fontSize: 13.5,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (trailing != null) ...[
+            const SizedBox(width: 8),
+            Text(
+              trailing!,
+              style: TextStyle(color: trailingColor ?? p.muted, fontSize: 14),
+            ),
+          ],
+          if (chevron) ...[
+            const SizedBox(width: 8),
+            Text('›', style: TextStyle(color: p.muted, fontSize: 18)),
+          ],
         ],
-        if (chevron) ...[
-          const SizedBox(width: 8),
-          Text('›', style: TextStyle(color: p.muted, fontSize: 18)),
-        ],
-      ]),
+      ),
     );
     if (onTap == null) return row;
     return InkWell(onTap: onTap, child: row);
@@ -219,18 +302,27 @@ class TitledCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        SectionHeader(title, sample: sample, link: link, onLink: onLink),
-        const SizedBox(height: 12),
-        ...children,
-      ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeader(title, sample: sample, link: link, onLink: onLink),
+          const SizedBox(height: 12),
+          ...children,
+        ],
+      ),
     );
   }
 }
 
 /// Page frame: large title with a subtitle, then the content. Used by every tab.
 class ScreenFrame extends StatelessWidget {
-  const ScreenFrame({super.key, required this.title, this.subtitle, this.trailing, required this.children});
+  const ScreenFrame({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.trailing,
+    required this.children,
+  });
 
   final String title;
   final String? subtitle;
@@ -244,22 +336,47 @@ class ScreenFrame extends StatelessWidget {
       body: SafeArea(
         bottom: false,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(AppTheme.pagePadding, 20, AppTheme.pagePadding, 24),
+          padding: const EdgeInsets.fromLTRB(
+            AppTheme.pagePadding,
+            20,
+            AppTheme.pagePadding,
+            24,
+          ),
           children: [
-            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(title, style: TextStyle(color: p.text, fontSize: 30, fontWeight: FontWeight.w800, height: 1.15)),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 4),
-                    Text(subtitle!, style: TextStyle(color: p.muted, fontSize: 15)),
-                  ],
-                ]),
-              ),
-              if (trailing != null) ...[const SizedBox(width: 12), trailing!],
-            ]),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          color: p.text,
+                          fontSize: 30,
+                          fontWeight: FontWeight.w800,
+                          height: 1.15,
+                        ),
+                      ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle!,
+                          style: TextStyle(color: p.muted, fontSize: 15),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (trailing != null) ...[const SizedBox(width: 12), trailing!],
+              ],
+            ),
             const SizedBox(height: AppTheme.gap + 4),
-            for (final child in children) ...[child, const SizedBox(height: AppTheme.gap)],
+            for (final child in children) ...[
+              child,
+              const SizedBox(height: AppTheme.gap),
+            ],
           ],
         ),
       ),

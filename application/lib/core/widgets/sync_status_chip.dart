@@ -26,8 +26,18 @@ class SyncStatusChip extends ConsumerWidget {
       label: 'Sync status: $label',
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-        decoration: BoxDecoration(color: p.tile, borderRadius: BorderRadius.circular(20)),
-        child: Text(label, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w500)),
+        decoration: BoxDecoration(
+          color: p.tile,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: color,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ),
     );
   }

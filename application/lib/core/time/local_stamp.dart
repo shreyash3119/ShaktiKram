@@ -2,7 +2,11 @@
 /// phone's offset from UTC. The server checks that the day matches the instant and the offset, so all three always
 /// come from one [instant] (decision: `local_date` and `tz_offset_minutes` on every event).
 class LocalStamp {
-  const LocalStamp({required this.occurredAt, required this.localDate, required this.tzOffsetMinutes});
+  const LocalStamp({
+    required this.occurredAt,
+    required this.localDate,
+    required this.tzOffsetMinutes,
+  });
 
   /// UTC, ISO 8601.
   final String occurredAt;
@@ -12,10 +16,10 @@ class LocalStamp {
   final int tzOffsetMinutes;
 
   Map<String, dynamic> toPayload() => {
-        'occurred_at': occurredAt,
-        'local_date': localDate,
-        'tz_offset_minutes': tzOffsetMinutes,
-      };
+    'occurred_at': occurredAt,
+    'local_date': localDate,
+    'tz_offset_minutes': tzOffsetMinutes,
+  };
 }
 
 LocalStamp localStampOf(DateTime instant) {
@@ -24,7 +28,8 @@ LocalStamp localStampOf(DateTime instant) {
   String two(int n) => n.toString().padLeft(2, '0');
   return LocalStamp(
     occurredAt: instant.toUtc().toIso8601String(),
-    localDate: '${shifted.year.toString().padLeft(4, '0')}-${two(shifted.month)}-${two(shifted.day)}',
+    localDate:
+        '${shifted.year.toString().padLeft(4, '0')}-${two(shifted.month)}-${two(shifted.day)}',
     tzOffsetMinutes: offset.inMinutes,
   );
 }

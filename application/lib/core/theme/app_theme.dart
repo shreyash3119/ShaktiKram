@@ -73,21 +73,21 @@ class AppPalette extends ThemeExtension<AppPalette> {
 
   @override
   AppPalette copyWith({Color? bg}) => AppPalette(
-        bg: bg ?? this.bg,
-        card: card,
-        tile: tile,
-        primary: primary,
-        onPrimary: onPrimary,
-        link: link,
-        amber: amber,
-        green: green,
-        greenFill: greenFill,
-        red: red,
-        text: text,
-        muted: muted,
-        faint: faint,
-        divider: divider,
-      );
+    bg: bg ?? this.bg,
+    card: card,
+    tile: tile,
+    primary: primary,
+    onPrimary: onPrimary,
+    link: link,
+    amber: amber,
+    green: green,
+    greenFill: greenFill,
+    red: red,
+    text: text,
+    muted: muted,
+    faint: faint,
+    divider: divider,
+  );
 
   @override
   AppPalette lerp(ThemeExtension<AppPalette>? other, double t) {
@@ -113,7 +113,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
 }
 
 extension PaletteContext on BuildContext {
-  AppPalette get pal => Theme.of(this).extension<AppPalette>() ?? AppPalette.dark;
+  AppPalette get pal =>
+      Theme.of(this).extension<AppPalette>() ?? AppPalette.dark;
 }
 
 /// Theme choice from Settings. The designs are dark, so dark is the default.
@@ -124,7 +125,9 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
   void set(ThemeMode mode) => state = mode;
 }
 
-final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(ThemeModeNotifier.new);
+final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(
+  ThemeModeNotifier.new,
+);
 
 class AppTheme {
   AppTheme._();
@@ -171,7 +174,9 @@ class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         color: p.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardRadius)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(cardRadius),
+        ),
       ),
       appBarTheme: AppBarTheme(
         centerTitle: false,
@@ -179,7 +184,11 @@ class AppTheme {
         foregroundColor: p.text,
         elevation: 0,
         scrolledUnderElevation: 0,
-        titleTextStyle: TextStyle(color: p.text, fontSize: 20, fontWeight: FontWeight.w700),
+        titleTextStyle: TextStyle(
+          color: p.text,
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+        ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -198,21 +207,29 @@ class AppTheme {
           backgroundColor: p.primary,
           foregroundColor: p.onPrimary,
           minimumSize: const Size.fromHeight(52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radius),
+          ),
           textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
         ),
       ),
-      textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(foregroundColor: p.link)),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: p.link),
+      ),
       dialogTheme: DialogThemeData(
         backgroundColor: p.card,
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardRadius)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(cardRadius),
+        ),
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: p.tile,
         contentTextStyle: TextStyle(color: p.text),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radius),
+        ),
       ),
       listTileTheme: ListTileThemeData(iconColor: p.muted, textColor: p.text),
     );

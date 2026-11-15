@@ -42,7 +42,11 @@ abstract class BackendGateway {
   Future<void> claimOwner();
 
   /// `api_register_device`. Safe to repeat. Also renames the device.
-  Future<DeviceRecord> registerDevice({required String id, required String label, required String platform});
+  Future<DeviceRecord> registerDevice({
+    required String id,
+    required String label,
+    required String platform,
+  });
 
   /// `api_list_devices`.
   Future<List<DeviceRecord>> listDevices();
@@ -59,7 +63,11 @@ abstract class BackendGateway {
   });
 
   /// `api_pull_changes`: changed rows after [sinceRev], at most [limit] (1 to 500).
-  Future<PullPage> pullChanges({required String deviceId, required int sinceRev, int limit = 200});
+  Future<PullPage> pullChanges({
+    required String deviceId,
+    required int sinceRev,
+    int limit = 200,
+  });
 
   /// A read-only server calculation: one of the `api_*` functions that returns the `{data, meta}` envelope
   /// (`api_daily_briefing`, `api_readiness`, ...). Returns the `data` part as decoded JSON. Throws [BackendError].

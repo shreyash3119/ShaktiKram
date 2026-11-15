@@ -8,16 +8,24 @@ class LoadingView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        const CircularProgressIndicator(),
-        if (message != null) ...[const SizedBox(height: 12), Text(message!)],
-      ]),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const CircularProgressIndicator(),
+          if (message != null) ...[const SizedBox(height: 12), Text(message!)],
+        ],
+      ),
     );
   }
 }
 
 class EmptyView extends StatelessWidget {
-  const EmptyView({super.key, required this.title, this.message, this.icon = Icons.inbox_outlined});
+  const EmptyView({
+    super.key,
+    required this.title,
+    this.message,
+    this.icon = Icons.inbox_outlined,
+  });
   final String title;
   final String? message;
   final IconData icon;
@@ -28,12 +36,18 @@ class EmptyView extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 40, color: Theme.of(context).colorScheme.outline),
-          const SizedBox(height: 12),
-          Text(title, style: text.titleMedium, textAlign: TextAlign.center),
-          if (message != null) ...[const SizedBox(height: 4), Text(message!, textAlign: TextAlign.center)],
-        ]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 40, color: Theme.of(context).colorScheme.outline),
+            const SizedBox(height: 12),
+            Text(title, style: text.titleMedium, textAlign: TextAlign.center),
+            if (message != null) ...[
+              const SizedBox(height: 4),
+              Text(message!, textAlign: TextAlign.center),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -49,15 +63,25 @@ class ErrorView extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.error_outline, size: 40, color: Theme.of(context).colorScheme.error),
-          const SizedBox(height: 12),
-          Text(message, textAlign: TextAlign.center),
-          if (onRetry != null) ...[
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 40,
+              color: Theme.of(context).colorScheme.error,
+            ),
             const SizedBox(height: 12),
-            FilledButton.tonal(onPressed: onRetry, child: const Text('Try again')),
+            Text(message, textAlign: TextAlign.center),
+            if (onRetry != null) ...[
+              const SizedBox(height: 12),
+              FilledButton.tonal(
+                onPressed: onRetry,
+                child: const Text('Try again'),
+              ),
+            ],
           ],
-        ]),
+        ),
       ),
     );
   }

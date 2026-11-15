@@ -16,7 +16,11 @@ class SessionAlreadyActive implements Exception {
 /// discard. Every call is one atomic local step queued through the outbox, so it works offline and survives a restart.
 /// Values are checked here against the same limits as the database, so the server never has to refuse a normal entry.
 class WorkoutSessionService {
-  WorkoutSessionService({required this.writer, required this.repository, DateTime Function()? clock}) : _clock = clock ?? DateTime.now;
+  WorkoutSessionService({
+    required this.writer,
+    required this.repository,
+    DateTime Function()? clock,
+  }) : _clock = clock ?? DateTime.now;
 
   final ChangeWriter writer;
   final TrainingRepository repository;
@@ -52,13 +56,15 @@ class WorkoutSessionService {
     final changes = <PendingChange>[session];
     if (templateVersionId != null) {
       for (final te in await repository.templateExercises(templateVersionId)) {
-        changes.add(PendingChange.upsert(_exercise, {
-          'session_id': session.id,
-          'exercise_id': te.exerciseId,
-          'position': te.position,
-          'status': 'done',
-          'template_exercise_id': te.id,
-        }));
+        changes.add(
+          PendingChange.upsert(_exercise, {
+            'session_id': session.id,
+            'exercise_id': te.exerciseId,
+            'position': te.position,
+            'status': 'done',
+            'template_exercise_id': te.id,
+          }),
+        );
       }
     }
     await writer.apply(changes);
@@ -68,7 +74,11 @@ class WorkoutSessionService {
   /// Adds an exercise that was not in the plan, at the end. Returns the session exercise id.
   Future<String> addExercise(String sessionId, String exerciseId) async {
     final existing = await repository.sessionExercises(sessionId);
-    final next = existing.isEmpty ? 1 : existing.map((e) => e.position).reduce((a, b) => a > b ? a : b) + 1;
+    final next =
+        existing.isEmpty
+            ? 1
+            : existing.map((e) => e.position).reduce((a, b) => a > b ? a : b) +
+                1;
     final change = PendingChange.upsert(_exercise, {
       'session_id': sessionId,
       'exercise_id': exerciseId,
@@ -80,10 +90,12 @@ class WorkoutSessionService {
   }
 
   /// Marks an exercise as skipped, with the reason.
-  Future<void> skipExercise(String sessionExerciseId, {String? reason}) => writer.apply([
+  Future<void> skipExercise(String sessionExerciseId, {String? reason}) =>
+      writer.apply([
         PendingChange.upsert(_exercise, {
           'status': 'skipped',
-          'skip_reason': (reason == null || reason.trim().isEmpty) ? null : reason.trim(),
+          'skip_reason':
+              (reason == null || reason.trim().isEmpty) ? null : reason.trim(),
         }, id: sessionExerciseId),
       ]);
 
@@ -119,10 +131,21 @@ class WorkoutSessionService {
     int? restSeconds,
     String? notes,
   }) async {
-    _checkSetValues(setType: setType, weightKg: weightKg, reps: reps, rir: rir, rpe: rpe, restSeconds: restSeconds);
+    _checkSetValues(
+      setType: setType,
+      weightKg: weightKg,
+      reps: reps,
+      rir: rir,
+      rpe: rpe,
+      restSeconds: restSeconds,
+    );
     final existing = await repository.sets(sessionExerciseId);
-    final numbers = [for (final s in existing) if (s.setType == setType) s.setNumber];
-    final next = numbers.isEmpty ? 1 : numbers.reduce((a, b) => a > b ? a : b) + 1;
+    final numbers = [
+      for (final s in existing)
+        if (s.setType == setType) s.setNumber,
+    ];
+    final next =
+        numbers.isEmpty ? 1 : numbers.reduce((a, b) => a > b ? a : b) + 1;
     final change = PendingChange.upsert(_set, {
       ...localStampOf(_clock()).toPayload(),
       'session_exercise_id': sessionExerciseId,
@@ -151,7 +174,13 @@ class WorkoutSessionService {
     int? restSeconds,
     String? notes,
   }) {
-    _checkSetValues(weightKg: weightKg, reps: reps, rir: rir, rpe: rpe, restSeconds: restSeconds);
+    _checkSetValues(
+      weightKg: weightKg,
+      reps: reps,
+      rir: rir,
+      rpe: rpe,
+      restSeconds: restSeconds,
+    );
     final changes = <String, dynamic>{
       if (weightKg != null) 'weight_kg': weightKg,
       if (reps != null) 'reps': reps,
@@ -165,28 +194,40 @@ class WorkoutSessionService {
     return writer.apply([PendingChange.upsert(_set, changes, id: setId)]);
   }
 
-  Future<void> deleteSet(String setId) => writer.apply([PendingChange.delete(_set, setId)]);
+  Future<void> deleteSet(String setId) =>
+      writer.apply([PendingChange.delete(_set, setId)]);
 
   /// Pauses or resumes. When resuming, [addPausedSeconds] is the time spent paused, added to the session's total.
-  Future<void> setPaused(String sessionId, {required bool paused, int addPausedSeconds = 0}) async {
+  Future<void> setPaused(
+    String sessionId, {
+    required bool paused,
+    int addPausedSeconds = 0,
+  }) async {
     final session = await repository.session(sessionId);
     if (session == null) return;
     await writer.apply([
       PendingChange.upsert(_session, {
         'status': paused ? 'paused' : 'in_progress',
-        if (addPausedSeconds > 0) 'paused_seconds': session.pausedSeconds + addPausedSeconds,
+        if (addPausedSeconds > 0)
+          'paused_seconds': session.pausedSeconds + addPausedSeconds,
       }, id: sessionId),
     ]);
   }
 
   /// Saves notes written during the workout.
   Future<void> setNotes(String sessionId, String notes) => writer.apply([
-        PendingChange.upsert(_session, {'notes': notes.trim().isEmpty ? null : notes.trim()}, id: sessionId),
-      ]);
+    PendingChange.upsert(_session, {
+      'notes': notes.trim().isEmpty ? null : notes.trim(),
+    }, id: sessionId),
+  ]);
 
   /// Finishes the workout. Exercises with no sets logged are marked skipped (reason "Not done") unless
   /// [markUntouchedAsSkipped] is false. A linked schedule entry is marked completed.
-  Future<void> completeSession(String sessionId, {String? postNotes, bool markUntouchedAsSkipped = true}) async {
+  Future<void> completeSession(
+    String sessionId, {
+    String? postNotes,
+    bool markUntouchedAsSkipped = true,
+  }) async {
     final session = await repository.session(sessionId);
     if (session == null) throw StateError('That workout is not on this phone.');
     var end = _clock().toUtc();
@@ -197,17 +238,30 @@ class WorkoutSessionService {
       for (final e in await repository.sessionExercises(sessionId)) {
         if (e.isSkipped) continue;
         if ((await repository.sets(e.id)).isEmpty) {
-          changes.add(PendingChange.upsert(_exercise, {'status': 'skipped', 'skip_reason': 'Not done'}, id: e.id));
+          changes.add(
+            PendingChange.upsert(_exercise, {
+              'status': 'skipped',
+              'skip_reason': 'Not done',
+            }, id: e.id),
+          );
         }
       }
     }
-    changes.add(PendingChange.upsert(_session, {
-      'status': 'completed',
-      'ended_at': end.toIso8601String(),
-      if (postNotes != null && postNotes.trim().isNotEmpty) 'post_notes': postNotes.trim(),
-    }, id: sessionId));
+    changes.add(
+      PendingChange.upsert(_session, {
+        'status': 'completed',
+        'ended_at': end.toIso8601String(),
+        if (postNotes != null && postNotes.trim().isNotEmpty)
+          'post_notes': postNotes.trim(),
+      }, id: sessionId),
+    );
     if (session.scheduleEntryId != null) {
-      changes.add(PendingChange.upsert('schedule_entries', {'status': 'completed', 'session_id': sessionId}, id: session.scheduleEntryId));
+      changes.add(
+        PendingChange.upsert('schedule_entries', {
+          'status': 'completed',
+          'session_id': sessionId,
+        }, id: session.scheduleEntryId),
+      );
     }
     await writer.apply(changes);
   }
@@ -225,14 +279,29 @@ class WorkoutSessionService {
     await writer.apply(changes);
   }
 
-  void _checkSetValues({String setType = 'working', double? weightKg, int? reps, int? rir, double? rpe, int? restSeconds}) {
-    if (setType != 'working' && setType != 'warmup') throw ArgumentError('A set is either a warm-up or a working set.');
-    if (weightKg != null && (weightKg < 0 || weightKg > 9999.99)) throw ArgumentError('Weight must be between 0 and 9999 kg.');
-    if (reps != null && (reps < 0 || reps > 32767)) throw ArgumentError('Reps cannot be negative.');
-    if (rir != null && (rir < 0 || rir > 10)) throw ArgumentError('Reps in reserve must be between 0 and 10.');
-    if (rpe != null && (rpe < 1 || rpe > 10 || (rpe * 2) != (rpe * 2).roundToDouble())) {
-      throw ArgumentError('Effort (RPE) must be between 1 and 10 in steps of 0.5.');
+  void _checkSetValues({
+    String setType = 'working',
+    double? weightKg,
+    int? reps,
+    int? rir,
+    double? rpe,
+    int? restSeconds,
+  }) {
+    if (setType != 'working' && setType != 'warmup'){
+      throw ArgumentError('A set is either a warm-up or a working set.');}
+    if (weightKg != null && (weightKg < 0 || weightKg > 9999.99)){
+      throw ArgumentError('Weight must be between 0 and 9999 kg.');}
+    if (reps != null && (reps < 0 || reps > 32767)){
+      throw ArgumentError('Reps cannot be negative.');}
+    if (rir != null && (rir < 0 || rir > 10)){
+      throw ArgumentError('Reps in reserve must be between 0 and 10.');}
+    if (rpe != null &&
+        (rpe < 1 || rpe > 10 || (rpe * 2) != (rpe * 2).roundToDouble())) {
+      throw ArgumentError(
+        'Effort (RPE) must be between 1 and 10 in steps of 0.5.',
+      );
     }
-    if (restSeconds != null && restSeconds < 0) throw ArgumentError('Rest cannot be negative.');
+    if (restSeconds != null && restSeconds < 0){
+      throw ArgumentError('Rest cannot be negative.');}
   }
 }

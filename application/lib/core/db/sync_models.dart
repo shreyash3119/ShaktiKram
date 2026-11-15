@@ -47,7 +47,14 @@ class OutboxOp {
   final String? errorCode;
   final String? message;
 
-  OutboxOp copyWith({int? seq, int? baseRev, OpState? state, int? attempts, String? errorCode, String? message}) {
+  OutboxOp copyWith({
+    int? seq,
+    int? baseRev,
+    OpState? state,
+    int? attempts,
+    String? errorCode,
+    String? message,
+  }) {
     return OutboxOp(
       seq: seq ?? this.seq,
       opId: opId,
@@ -67,21 +74,28 @@ class OutboxOp {
 
   /// The operation as the server expects it (contract section 10).
   Map<String, dynamic> toWire() => {
-        'op_id': opId,
-        'seq': seq,
-        'entity': entity,
-        'action': action,
-        if (recordId != null) 'record_id': recordId,
-        if (baseRev != null) 'base_rev': baseRev,
-        'client_updated_at': clientUpdatedAt.toUtc().toIso8601String(),
-        if (reason != null) 'reason': reason,
-        'payload': payload,
-      };
+    'op_id': opId,
+    'seq': seq,
+    'entity': entity,
+    'action': action,
+    if (recordId != null) 'record_id': recordId,
+    if (baseRev != null) 'base_rev': baseRev,
+    'client_updated_at': clientUpdatedAt.toUtc().toIso8601String(),
+    if (reason != null) 'reason': reason,
+    'payload': payload,
+  };
 }
 
 /// The server's answer for one operation.
 class OpResult {
-  const OpResult({required this.opId, required this.result, this.rev, this.errorCode, this.message, this.originalResult});
+  const OpResult({
+    required this.opId,
+    required this.result,
+    this.rev,
+    this.errorCode,
+    this.message,
+    this.originalResult,
+  });
 
   final String opId;
 
@@ -123,16 +137,24 @@ class OpResult {
   }
 
   /// Error code to keep with a change that was not applied.
-  String? get issueCode => errorCode ?? (outcome == 'ignored' ? 'duplicate_ignored' : null);
+  String? get issueCode =>
+      errorCode ?? (outcome == 'ignored' ? 'duplicate_ignored' : null);
 
   /// Explanation to keep with a change that was not applied.
   String? get issueMessage =>
-      message ?? (outcome == 'ignored' ? 'The server already had a record with this id, so this change was not applied.' : null);
+      message ??
+      (outcome == 'ignored'
+          ? 'The server already had a record with this id, so this change was not applied.'
+          : null);
 }
 
 /// One changed row from `api_pull_changes`.
 class PulledRow {
-  const PulledRow({required this.entity, required this.rev, required this.record});
+  const PulledRow({
+    required this.entity,
+    required this.rev,
+    required this.record,
+  });
 
   final String entity;
   final int rev;
@@ -148,7 +170,11 @@ class PulledRow {
 }
 
 class PullPage {
-  const PullPage({required this.rows, required this.nextRev, required this.hasMore});
+  const PullPage({
+    required this.rows,
+    required this.nextRev,
+    required this.hasMore,
+  });
 
   final List<PulledRow> rows;
   final int nextRev;
@@ -156,7 +182,10 @@ class PullPage {
 
   factory PullPage.fromJson(Map<String, dynamic> json) {
     return PullPage(
-      rows: [for (final r in (json['rows'] as List? ?? const [])) PulledRow.fromJson(Map<String, dynamic>.from(r as Map))],
+      rows: [
+        for (final r in (json['rows'] as List? ?? const []))
+          PulledRow.fromJson(Map<String, dynamic>.from(r as Map)),
+      ],
       nextRev: (json['next_rev'] as num?)?.toInt() ?? 0,
       hasMore: json['has_more'] == true,
     );

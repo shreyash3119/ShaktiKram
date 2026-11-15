@@ -13,14 +13,27 @@ class FakeServer implements BackendGateway {
   final Map<String, List<Map<String, dynamic>>> viewRows = {};
 
   @override
-  Future<Object?> callInsight(String function, {Map<String, dynamic>? params}) async {
-    if (offline) throw const BackendError.unreachable();
+  Future<Object?> callInsight(
+    String function, {
+    Map<String, dynamic>? params,
+  }) async {
+    if (offline) {
+      throw const BackendError.unreachable();
+    }
     return insightAnswers[function];
   }
 
   @override
-  Future<List<Map<String, dynamic>>> readView(String view, {Map<String, Object>? equals, String? orderBy, bool descending = false, int? limit}) async {
-    if (offline) throw const BackendError.unreachable();
+  Future<List<Map<String, dynamic>>> readView(
+    String view, {
+    Map<String, Object>? equals,
+    String? orderBy,
+    bool descending = false,
+    int? limit,
+  }) async {
+    if (offline) {
+      throw const BackendError.unreachable();
+    }
     return viewRows[view] ?? const [];
   }
 
@@ -31,10 +44,21 @@ class FakeServer implements BackendGateway {
   final Map<String, List<String>> requiredFields = {
     'meals': ['title', 'category'],
     'goals': ['type', 'title'],
-    'body_measurements': ['occurred_at', 'local_date', 'measurement_type', 'value'],
+    'body_measurements': [
+      'occurred_at',
+      'local_date',
+      'measurement_type',
+      'value',
+    ],
     'workout_sessions': ['occurred_at', 'local_date', 'tz_offset_minutes'],
     'session_exercises': ['session_id', 'exercise_id', 'position'],
-    'sets': ['session_exercise_id', 'set_number', 'occurred_at', 'local_date', 'tz_offset_minutes'],
+    'sets': [
+      'session_exercise_id',
+      'set_number',
+      'occurred_at',
+      'local_date',
+      'tz_offset_minutes',
+    ],
   };
 
   /// Column defaults applied when a record is created.
@@ -61,16 +85,33 @@ class FakeServer implements BackendGateway {
     'schedule_entries': {'session_id': 'workout_sessions'},
     'injuries': {'body_region_id': 'body_regions'},
     'injury_updates': {'injury_id': 'injuries'},
-    'pain_entries': {'body_region_id': 'body_regions', 'injury_id': 'injuries', 'checkin_id': 'daily_checkins'},
-    'exercise_restrictions': {'injury_id': 'injuries', 'exercise_id': 'exercises'},
+    'pain_entries': {
+      'body_region_id': 'body_regions',
+      'injury_id': 'injuries',
+      'checkin_id': 'daily_checkins',
+    },
+    'exercise_restrictions': {
+      'injury_id': 'injuries',
+      'exercise_id': 'exercises',
+    },
     'supplement_phases': {'entity_id': 'supplements'},
-    'supplement_logs': {'supplement_id': 'supplements', 'phase_id': 'supplement_phases'},
+    'supplement_logs': {
+      'supplement_id': 'supplements',
+      'phase_id': 'supplement_phases',
+    },
     'meal_plan_entries': {'meal_id': 'meals', 'replaced_by_meal_id': 'meals'},
   };
 
   /// Puts a record on the server as if it had been there already (reference data, a plan made earlier).
   void seed(String entity, Map<String, dynamic> record) {
-    final r = {...record, 'rev': ++_rev, 'created_at': now.toIso8601String(), 'updated_at': now.toIso8601String(), 'device_id': 'seed', 'deleted_at': record['deleted_at']};
+    final r = {
+      ...record,
+      'rev': ++_rev,
+      'created_at': now.toIso8601String(),
+      'updated_at': now.toIso8601String(),
+      'device_id': 'seed',
+      'deleted_at': record['deleted_at'],
+    };
     tables.putIfAbsent(entity, () => {})[r['id'] as String] = r;
   }
 
@@ -91,13 +132,19 @@ class FakeServer implements BackendGateway {
   int get revision => _rev;
 
   void _requireOnline() {
-    if (offline) throw const BackendError.unreachable();
+    if (offline) {
+      throw const BackendError.unreachable();
+    }
   }
 
   void _requireDevice(String id) {
     final d = _devices[id];
-    if (d == null) throw const BackendError('unauthorized', 'device is not registered');
-    if (d.isRevoked) throw const BackendError('device_revoked', 'this device was revoked');
+    if (d == null) {
+      throw const BackendError('unauthorized', 'device is not registered');
+    }
+    if (d.isRevoked) {
+      throw const BackendError('device_revoked', 'this device was revoked');
+    }
   }
 
   // ---- devices ----
@@ -106,11 +153,21 @@ class FakeServer implements BackendGateway {
   Future<void> claimOwner() async => _requireOnline();
 
   @override
-  Future<DeviceRecord> registerDevice({required String id, required String label, required String platform}) async {
+  Future<DeviceRecord> registerDevice({
+    required String id,
+    required String label,
+    required String platform,
+  }) async {
     _requireOnline();
     final old = _devices[id];
-    if (old != null && old.isRevoked) throw const BackendError('device_revoked', 'this device was revoked');
-    return _devices[id] = DeviceRecord(id: id, label: label, platform: platform);
+    if (old != null && old.isRevoked) {
+      throw const BackendError('device_revoked', 'this device was revoked');
+    }
+    return _devices[id] = DeviceRecord(
+      id: id,
+      label: label,
+      platform: platform,
+    );
   }
 
   @override
@@ -123,8 +180,15 @@ class FakeServer implements BackendGateway {
   Future<DeviceRecord> revokeDevice(String id) async {
     _requireOnline();
     final d = _devices[id];
-    if (d == null) throw const BackendError('not_found', 'device not found');
-    return _devices[id] = DeviceRecord(id: d.id, label: d.label, platform: d.platform, revokedAt: now);
+    if (d == null) {
+      throw const BackendError('not_found', 'device not found');
+    }
+    return _devices[id] = DeviceRecord(
+      id: d.id,
+      label: d.label,
+      platform: d.platform,
+      revokedAt: now,
+    );
   }
 
   // ---- writes ----
@@ -138,7 +202,8 @@ class FakeServer implements BackendGateway {
     _requireOnline();
     _requireDevice(deviceId);
     applyCalls++;
-    final ordered = [...operations]..sort((a, b) => (a.seq ?? 0).compareTo(b.seq ?? 0));
+    final ordered = [...operations]
+      ..sort((a, b) => (a.seq ?? 0).compareTo(b.seq ?? 0));
     final results = [for (final op in ordered) _applyOne(op, deviceId)];
     if (dropNextResponse) {
       dropNextResponse = false;
@@ -172,62 +237,121 @@ class FakeServer implements BackendGateway {
       message = e.message;
     }
     _opLog[op.opId] = {'result': result, 'rev': rev, 'error_code': code};
-    return OpResult(opId: op.opId, result: result, rev: rev, errorCode: code, message: message);
+    return OpResult(
+      opId: op.opId,
+      result: result,
+      rev: rev,
+      errorCode: code,
+      message: message,
+    );
   }
 
   (String, int?) _dispatch(OutboxOp op, String device) {
     final info = syncedEntities[op.entity];
     if (info == null || !info.clientWritable) {
-      throw BackendError('validation_failed', 'unknown or read-only entity ${op.entity}');
+      throw BackendError(
+        'validation_failed',
+        'unknown or read-only entity ${op.entity}',
+      );
     }
-    for (final key in ['rev', 'created_at', 'updated_at', 'device_id', 'deleted_at']) {
-      if (op.payload.containsKey(key)) throw BackendError('validation_failed', 'unknown or protected field(s): $key');
+    for (final key in [
+      'rev',
+      'created_at',
+      'updated_at',
+      'device_id',
+      'deleted_at',
+    ]) {
+      if (op.payload.containsKey(key)) {
+        throw BackendError(
+          'validation_failed',
+          'unknown or protected field(s): $key',
+        );
+      }
     }
     final table = tables.putIfAbsent(op.entity, () => {});
-    final clientTime = op.clientUpdatedAt.isAfter(now.add(const Duration(minutes: 5))) ? now.add(const Duration(minutes: 5)) : op.clientUpdatedAt;
+    final clientTime =
+        op.clientUpdatedAt.isAfter(now.add(const Duration(minutes: 5)))
+            ? now.add(const Duration(minutes: 5))
+            : op.clientUpdatedAt;
 
     if (op.action == 'new_version') {
       if (info.recordClass != RecordClass.versioned) {
-        throw BackendError('validation_failed', '${op.entity} is not a versioned table');
+        throw BackendError(
+          'validation_failed',
+          '${op.entity} is not a versioned table',
+        );
       }
       final entityId = op.payload['entity_id'] as String?;
-      if (entityId == null) throw const BackendError('validation_failed', 'entity_id is required');
-      final versions = table.values.where((r) => r['entity_id'] == entityId && r['deleted_at'] == null).toList()
-        ..sort((a, b) => (b['version'] as int).compareTo(a['version'] as int));
+      if (entityId == null) {
+        throw const BackendError('validation_failed', 'entity_id is required');
+      }
+      final versions =
+          table.values
+              .where(
+                (r) => r['entity_id'] == entityId && r['deleted_at'] == null,
+              )
+              .toList()
+            ..sort(
+              (a, b) => (b['version'] as int).compareTo(a['version'] as int),
+            );
       final id = (op.payload['id'] as String?) ?? 'v-${table.length + 1}';
       if (versions.isNotEmpty) {
         final current = versions.first;
-        final from = op.payload['effective_from'] != null ? DateTime.parse(op.payload['effective_from'] as String) : now;
+        final from =
+            op.payload['effective_from'] != null
+                ? DateTime.parse(op.payload['effective_from'] as String)
+                : now;
         if (current['effective_to'] == null) {
-          if (from.isBefore(DateTime.parse(current['effective_from'] as String))) {
-            throw const BackendError('version_conflict', 'a new version cannot start before the current one');
+          if (from.isBefore(
+            DateTime.parse(current['effective_from'] as String),
+          )) {
+            throw const BackendError(
+              'version_conflict',
+              'a new version cannot start before the current one',
+            );
           }
           current['effective_to'] = from.toUtc().toIso8601String();
           current['rev'] = ++_rev;
         }
       }
-      table[id] = _stamp({
-        ...op.payload,
-        'id': id,
-        'version': (versions.isEmpty ? 0 : versions.first['version'] as int) + 1,
-        'effective_from': op.payload['effective_from'] ?? now.toIso8601String(),
-        'effective_to': null,
-      }, device, created: true);
+      table[id] = _stamp(
+        {
+          ...op.payload,
+          'id': id,
+          'version':
+              (versions.isEmpty ? 0 : versions.first['version'] as int) + 1,
+          'effective_from':
+              op.payload['effective_from'] ?? now.toIso8601String(),
+          'effective_to': null,
+        },
+        device,
+        created: true,
+      );
       return ('applied', table[id]!['rev'] as int);
     }
 
     final id = op.recordId;
-    if (id == null) throw const BackendError('validation_failed', 'record_id is required');
+    if (id == null) {
+      throw const BackendError('validation_failed', 'record_id is required');
+    }
     final existing = table[id];
 
     if (op.action == 'upsert') {
       if (info.recordClass == RecordClass.versioned) {
-        throw const BackendError('validation_failed', 'use new_version for versioned tables');
+        throw const BackendError(
+          'validation_failed',
+          'use new_version for versioned tables',
+        );
       }
       if (existing == null) {
         final merged = {...?defaults[op.entity], ...op.payload, 'id': id};
         for (final field in requiredFields[op.entity] ?? const <String>[]) {
-          if (merged[field] == null) throw BackendError('validation_failed', 'null value in column $field');
+          if (merged[field] == null) {
+            throw BackendError(
+              'validation_failed',
+              'null value in column $field',
+            );
+          }
         }
         _validate(op.entity, merged, table);
         if (op.entity == 'session_exercises') _copyPrescription(merged);
@@ -236,8 +360,13 @@ class FakeServer implements BackendGateway {
       }
       final base = op.baseRev;
       final current = existing['rev'] as int;
-      if (base == null || (info.recordClass == RecordClass.appendOnly && base != current)) return ('duplicate', current);
-      if (_conflicts(info, existing, base, device, clientTime)) return ('conflict', current);
+      if (base == null ||
+          (info.recordClass == RecordClass.appendOnly && base != current)) {
+        return ('duplicate', current);
+      }
+      if (_conflicts(info, existing, base, device, clientTime)) {
+        return ('conflict', current);
+      }
       final merged = {...existing, ...op.payload, 'id': id};
       _validate(op.entity, merged, table);
       existing.addAll({...op.payload}..remove('id'));
@@ -247,10 +376,16 @@ class FakeServer implements BackendGateway {
 
     if (op.action == 'delete') {
       if (info.recordClass == RecordClass.versioned) {
-        throw const BackendError('immutable_record', 'version rows cannot be deleted');
+        throw const BackendError(
+          'immutable_record',
+          'version rows cannot be deleted',
+        );
       }
-      if (existing == null) throw BackendError('not_found', '${op.entity} $id does not exist');
-      if (op.baseRev != null && _conflicts(info, existing, op.baseRev!, device, clientTime)) {
+      if (existing == null) {
+        throw BackendError('not_found', '${op.entity} $id does not exist');
+      }
+      if (op.baseRev != null &&
+          _conflicts(info, existing, op.baseRev!, device, clientTime)) {
         return ('conflict', existing['rev'] as int);
       }
       if (existing['deleted_at'] == null) {
@@ -266,7 +401,9 @@ class FakeServer implements BackendGateway {
   void _copyPrescription(Map<String, dynamic> row) {
     final teId = row['template_exercise_id'];
     final te = teId == null ? null : tables['template_exercises']?[teId];
-    if (te == null || row['prescription_snapshot'] != null) return;
+    if (te == null || row['prescription_snapshot'] != null) {
+      return;
+    }
     final exercise = tables['exercises']?[te['exercise_id']];
     row['prescription_snapshot'] = {
       'template_version_id': te['template_version_id'],
@@ -283,119 +420,267 @@ class FakeServer implements BackendGateway {
 
   /// The database rules that matter to the workout screens: references, uniqueness, value ranges, vocabularies,
   /// and `local_date` agreeing with `occurred_at` and `tz_offset_minutes`.
-  void _validate(String entity, Map<String, dynamic> row, Map<String, Map<String, dynamic>> table) {
-    for (final fk in (foreignKeys[entity] ?? const <String, String>{}).entries) {
+  void _validate(
+    String entity,
+    Map<String, dynamic> row,
+    Map<String, Map<String, dynamic>> table,
+  ) {
+    for (final fk
+        in (foreignKeys[entity] ?? const <String, String>{}).entries) {
       final ref = row[fk.key];
       if (ref != null && tables[fk.value]?[ref] == null) {
-        throw BackendError('reference_missing', 'insert or update on $entity violates foreign key ${fk.key}');
+        throw BackendError(
+          'reference_missing',
+          'insert or update on $entity violates foreign key ${fk.key}',
+        );
       }
     }
-    bool alive(Map<String, dynamic> r) => r['deleted_at'] == null && r['id'] != row['id'];
+    bool alive(Map<String, dynamic> r) =>
+        r['deleted_at'] == null && r['id'] != row['id'];
     if (entity == 'sets' && row['deleted_at'] == null) {
-      if (table.values.any((r) =>
-          alive(r) &&
-          r['session_exercise_id'] == row['session_exercise_id'] &&
-          r['set_type'] == row['set_type'] &&
-          r['set_number'] == row['set_number'])) {
-        throw const BackendError('validation_failed', 'duplicate key value violates unique constraint uq_sets_number');
+      if (table.values.any(
+        (r) =>
+            alive(r) &&
+            r['session_exercise_id'] == row['session_exercise_id'] &&
+            r['set_type'] == row['set_type'] &&
+            r['set_number'] == row['set_number'],
+      )) {
+        throw const BackendError(
+          'validation_failed',
+          'duplicate key value violates unique constraint uq_sets_number',
+        );
       }
       final rpe = row['rpe'];
-      if (rpe != null && ((rpe as num) < 1 || rpe > 10 || rpe * 2 != (rpe * 2).round())) throw const BackendError('validation_failed', 'ck_sets_rpe');
+      if (rpe != null &&
+          ((rpe as num) < 1 || rpe > 10 || rpe * 2 != (rpe * 2).round())){
+        throw const BackendError('validation_failed', 'ck_sets_rpe');}
       final rir = row['rir'];
-      if (rir != null && ((rir as num) < 0 || rir > 10)) throw const BackendError('validation_failed', 'ck_sets_rir');
+      if (rir != null && ((rir as num) < 0 || rir > 10)) {
+        throw const BackendError('validation_failed', 'ck_sets_rir');
+      }
       final weight = row['weight_kg'];
-      if (weight != null && (weight as num) < 0) throw const BackendError('validation_failed', 'ck_sets_weight_nonnegative');
-      if (!['warmup', 'working'].contains(row['set_type'])) throw const BackendError('validation_failed', 'ck_sets_set_type_values');
+      if (weight != null && (weight as num) < 0) {
+        throw const BackendError(
+          'validation_failed',
+          'ck_sets_weight_nonnegative',
+        );
+      }
+      if (!['warmup', 'working'].contains(row['set_type'])) {
+        throw const BackendError(
+          'validation_failed',
+          'ck_sets_set_type_values',
+        );
+      }
     }
     if (entity == 'session_exercises' && row['deleted_at'] == null) {
-      if (table.values.any((r) => alive(r) && r['session_id'] == row['session_id'] && r['position'] == row['position'])) {
-        throw const BackendError('validation_failed', 'duplicate key value violates unique constraint uq_session_exercises_position');
+      if (table.values.any(
+        (r) =>
+            alive(r) &&
+            r['session_id'] == row['session_id'] &&
+            r['position'] == row['position'],
+      )) {
+        throw const BackendError(
+          'validation_failed',
+          'duplicate key value violates unique constraint uq_session_exercises_position',
+        );
       }
-      if (!['done', 'skipped', 'added'].contains(row['status'])) throw const BackendError('validation_failed', 'ck_session_exercises_status_values');
+      if (!['done', 'skipped', 'added'].contains(row['status'])) {
+        throw const BackendError(
+          'validation_failed',
+          'ck_session_exercises_status_values',
+        );
+      }
     }
     if (entity == 'workout_sessions') {
-      if (!['in_progress', 'paused', 'completed', 'abandoned'].contains(row['status'])) {
-        throw const BackendError('validation_failed', 'ck_workout_sessions_status_values');
+      if (![
+        'in_progress',
+        'paused',
+        'completed',
+        'abandoned',
+      ].contains(row['status'])) {
+        throw const BackendError(
+          'validation_failed',
+          'ck_workout_sessions_status_values',
+        );
       }
-      if (row['status'] == 'completed' && row['ended_at'] == null) throw const BackendError('validation_failed', 'ck_workout_sessions_completed_has_end');
+      if (row['status'] == 'completed' && row['ended_at'] == null) {
+        throw const BackendError(
+          'validation_failed',
+          'ck_workout_sessions_completed_has_end',
+        );
+      }
       final ended = row['ended_at'];
-      if (ended != null && DateTime.parse(ended as String).isBefore(DateTime.parse(row['occurred_at'] as String))) {
-        throw const BackendError('validation_failed', 'ck_workout_sessions_end_after_start');
+      if (ended != null &&
+          DateTime.parse(
+            ended as String,
+          ).isBefore(DateTime.parse(row['occurred_at'] as String))) {
+        throw const BackendError(
+          'validation_failed',
+          'ck_workout_sessions_end_after_start',
+        );
       }
     }
     _validateLifestyle(entity, row, table, alive);
-    if (row['occurred_at'] != null && row['tz_offset_minutes'] != null && row['local_date'] != null) {
+    if (row['occurred_at'] != null &&
+        row['tz_offset_minutes'] != null &&
+        row['local_date'] != null) {
       final at = DateTime.parse(row['occurred_at'] as String).toUtc();
-      final local = at.add(Duration(minutes: (row['tz_offset_minutes'] as num).toInt()));
+      final local = at.add(
+        Duration(minutes: (row['tz_offset_minutes'] as num).toInt()),
+      );
       String two(int n) => n.toString().padLeft(2, '0');
-      final expected = '${local.year.toString().padLeft(4, '0')}-${two(local.month)}-${two(local.day)}';
+      final expected =
+          '${local.year.toString().padLeft(4, '0')}-${two(local.month)}-${two(local.day)}';
       if (row['local_date'] != expected) {
-        throw BackendError('validation_failed', 'local_date ${row['local_date']} does not match occurred_at and tz_offset_minutes ($expected)');
+        throw BackendError(
+          'validation_failed',
+          'local_date ${row['local_date']} does not match occurred_at and tz_offset_minutes ($expected)',
+        );
       }
     }
   }
 
   /// The Stage 3 rules the Lifestyle screens depend on: one check-in and one step count per day, unique supplement
   /// names, value ranges and the check constraints that tie fields together.
-  void _validateLifestyle(String entity, Map<String, dynamic> row, Map<String, Map<String, dynamic>> table, bool Function(Map<String, dynamic>) alive) {
+  void _validateLifestyle(
+    String entity,
+    Map<String, dynamic> row,
+    Map<String, Map<String, dynamic>> table,
+    bool Function(Map<String, dynamic>) alive,
+  ) {
     Never fail(String name) => throw BackendError('validation_failed', name);
     final live = row['deleted_at'] == null;
     switch (entity) {
       case 'daily_checkins':
-        if (live && table.values.any((r) => alive(r) && r['local_date'] == row['local_date'])) fail('uq_daily_checkins_local_date');
-        for (final k in ['energy', 'sleep_quality', 'soreness', 'fatigue', 'motivation', 'stress']) {
+        if (live &&
+            table.values.any(
+              (r) => alive(r) && r['local_date'] == row['local_date'],
+            )){
+          fail('uq_daily_checkins_local_date');}
+        for (final k in [
+          'energy',
+          'sleep_quality',
+          'soreness',
+          'fatigue',
+          'motivation',
+          'stress',
+        ]) {
           final v = row[k];
-          if (v != null && ((v as num) < 1 || v > 5)) fail('ck_daily_checkins_$k');
+          if (v != null && ((v as num) < 1 || v > 5)) {
+            fail('ck_daily_checkins_$k');
+          }
         }
       case 'daily_steps':
-        if (live && table.values.any((r) => alive(r) && r['local_date'] == row['local_date'])) fail('uq_daily_steps_local_date');
-        if ((row['steps'] as num) < 0) fail('ck_daily_steps_steps_nonnegative');
+        if (live &&
+            table.values.any(
+              (r) => alive(r) && r['local_date'] == row['local_date'],
+            )){
+          fail('uq_daily_steps_local_date');}
+        if ((row['steps'] as num) < 0) {
+          fail('ck_daily_steps_steps_nonnegative');
+        }
       case 'sleep_logs':
         final d = row['duration_s'] as num;
-        if (d <= 0 || d > 86400) fail('ck_sleep_logs_duration');
-        if (row['sleep_at'] != null && row['wake_at'] != null && !DateTime.parse(row['wake_at'] as String).isAfter(DateTime.parse(row['sleep_at'] as String))) {
+        if (d <= 0 || d > 86400) {
+          fail('ck_sleep_logs_duration');
+        }
+        if (row['sleep_at'] != null &&
+            row['wake_at'] != null &&
+            !DateTime.parse(
+              row['wake_at'] as String,
+            ).isAfter(DateTime.parse(row['sleep_at'] as String))) {
           fail('ck_sleep_logs_wake_after_sleep');
         }
       case 'water_logs':
-        if ((row['amount_ml'] as num) <= 0) fail('ck_water_logs_amount_positive');
+        if ((row['amount_ml'] as num) <= 0) {
+          fail('ck_water_logs_amount_positive');
+        }
       case 'cardio_sessions':
-        if ((row['duration_s'] as num) <= 0) fail('ck_cardio_sessions_duration_positive');
-        if (!['walking', 'running', 'cycling', 'treadmill', 'stairmaster', 'elliptical', 'custom'].contains(row['activity'])) fail('ck_cardio_sessions_activity_values');
-        if (row['activity'] == 'custom' && row['custom_activity'] == null) fail('ck_cardio_sessions_custom_has_name');
+        if ((row['duration_s'] as num) <= 0) {
+          fail('ck_cardio_sessions_duration_positive');
+        }
+        if (![
+          'walking',
+          'running',
+          'cycling',
+          'treadmill',
+          'stairmaster',
+          'elliptical',
+          'custom',
+        ].contains(row['activity'])){
+          fail('ck_cardio_sessions_activity_values');}
+        if (row['activity'] == 'custom' && row['custom_activity'] == null) {
+          fail('ck_cardio_sessions_custom_has_name');
+        }
       case 'body_measurements':
-        if ((row['value'] as num) <= 0) fail('ck_body_measurements_value_positive');
-        if (row['measurement_type'] == 'body_fat' && (row['method'] == null || (row['value'] as num) >= 100)) fail('ck_body_measurements_body_fat');
+        if ((row['value'] as num) <= 0) {
+          fail('ck_body_measurements_value_positive');
+        }
+        if (row['measurement_type'] == 'body_fat' &&
+            (row['method'] == null || (row['value'] as num) >= 100)){
+          fail('ck_body_measurements_body_fat');}
       case 'injuries':
-        if (row['status'] == 'resolved' && row['resolved_on'] == null) fail('ck_injuries_resolved_has_date');
+        if (row['status'] == 'resolved' && row['resolved_on'] == null) {
+          fail('ck_injuries_resolved_has_date');
+        }
         final resolved = row['resolved_on'] as String?;
-        if (resolved != null && resolved.compareTo(row['start_date'] as String) < 0) fail('ck_injuries_resolved_after_start');
+        if (resolved != null &&
+            resolved.compareTo(row['start_date'] as String) < 0){
+          fail('ck_injuries_resolved_after_start');}
       case 'pain_entries':
         final l = row['level'] as num;
-        if (l < 0 || l > 10) fail('ck_pain_entries_level');
+        if (l < 0 || l > 10) {
+          fail('ck_pain_entries_level');
+        }
       case 'exercise_restrictions':
-        if (row['exercise_id'] == null && row['movement'] == null) fail('ck_exercise_restrictions_target');
+        if (row['exercise_id'] == null && row['movement'] == null) {
+          fail('ck_exercise_restrictions_target');
+        }
       case 'supplements':
         final name = (row['name'] as String).trim().toLowerCase();
-        if (live && table.values.any((r) => alive(r) && (r['name'] as String).trim().toLowerCase() == name)) fail('uq_supplements_name_alive');
+        if (live &&
+            table.values.any(
+              (r) =>
+                  alive(r) &&
+                  (r['name'] as String).trim().toLowerCase() == name,
+            )){
+          fail('uq_supplements_name_alive');}
       case 'supplement_logs':
-        if (!['taken', 'missed', 'skipped'].contains(row['outcome'])) fail('ck_supplement_logs_outcome_values');
+        if (!['taken', 'missed', 'skipped'].contains(row['outcome'])) {
+          fail('ck_supplement_logs_outcome_values');
+        }
       case 'meal_plan_entries':
-        if (row['status'] == 'replaced' && row['replaced_by_meal_id'] == null) fail('ck_meal_plan_entries_replaced_has_meal');
-        if ((row['servings'] as num) <= 0) fail('ck_meal_plan_entries_servings_positive');
+        if (row['status'] == 'replaced' && row['replaced_by_meal_id'] == null){
+          fail('ck_meal_plan_entries_replaced_has_meal');}
+        if ((row['servings'] as num) <= 0) {
+          fail('ck_meal_plan_entries_servings_positive');
+        }
     }
   }
 
   /// A conflict needs a different device to have written the row since base_rev, and the server copy to be at least
   /// as new as the client's change.
-  bool _conflicts(EntityInfo info, Map<String, dynamic> existing, int base, String device, DateTime clientTime) {
+  bool _conflicts(
+    EntityInfo info,
+    Map<String, dynamic> existing,
+    int base,
+    String device,
+    DateTime clientTime,
+  ) {
     return info.recordClass == RecordClass.editable &&
         base < (existing['rev'] as int) &&
         existing['device_id'] != device &&
         !clientTime.isAfter(DateTime.parse(existing['updated_at'] as String));
   }
 
-  Map<String, dynamic> _stamp(Map<String, dynamic> record, String device, {required bool created}) {
-    if (created) record['created_at'] = now.toIso8601String();
+  Map<String, dynamic> _stamp(
+    Map<String, dynamic> record,
+    String device, {
+    required bool created,
+  }) {
+    if (created) {
+      record['created_at'] = now.toIso8601String();
+    }
     record['deleted_at'] = null;
     _touch(record, device);
     return record;
@@ -410,16 +695,29 @@ class FakeServer implements BackendGateway {
   // ---- pull ----
 
   @override
-  Future<PullPage> pullChanges({required String deviceId, required int sinceRev, int limit = 200}) async {
+  Future<PullPage> pullChanges({
+    required String deviceId,
+    required int sinceRev,
+    int limit = 200,
+  }) async {
     _requireOnline();
     _requireDevice(deviceId);
     final all = <PulledRow>[
       for (final t in tables.entries)
         for (final r in t.value.values)
-          if ((r['rev'] as int) > sinceRev) PulledRow(entity: t.key, rev: r['rev'] as int, record: Map<String, dynamic>.from(r)),
+          if ((r['rev'] as int) > sinceRev)
+            PulledRow(
+              entity: t.key,
+              rev: r['rev'] as int,
+              record: Map<String, dynamic>.from(r),
+            ),
     ]..sort((a, b) => a.rev.compareTo(b.rev));
     final more = all.length > limit;
     final rows = more ? all.sublist(0, limit) : all;
-    return PullPage(rows: rows, nextRev: rows.isEmpty ? sinceRev : rows.last.rev, hasMore: more);
+    return PullPage(
+      rows: rows,
+      nextRev: rows.isEmpty ? sinceRev : rows.last.rev,
+      hasMore: more,
+    );
   }
 }

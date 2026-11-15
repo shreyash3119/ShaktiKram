@@ -5,6 +5,7 @@ import 'package:shaktikram/core/auth/auth_service.dart';
 import 'package:shaktikram/core/auth/device_store.dart';
 import 'package:shaktikram/core/backend/backend_error.dart';
 import 'package:shaktikram/core/backend/backend_gateway.dart';
+import 'package:shaktikram/core/backend/reporting_gateway.dart';
 import 'package:shaktikram/core/db/local_store.dart';
 import 'package:shaktikram/core/db/sync_models.dart';
 
@@ -78,7 +79,10 @@ class FakeGateway implements BackendGateway {
   BackendError? insightError;
 
   @override
-  Future<Object?> callInsight(String function, {Map<String, dynamic>? params}) async {
+  Future<Object?> callInsight(
+    String function, {
+    Map<String, dynamic>? params,
+  }) async {
     calls.add('insight:$function');
     final error = insightError;
     if (error != null) throw error;
@@ -86,7 +90,13 @@ class FakeGateway implements BackendGateway {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> readView(String view, {Map<String, Object>? equals, String? orderBy, bool descending = false, int? limit}) async {
+  Future<List<Map<String, dynamic>>> readView(
+    String view, {
+    Map<String, Object>? equals,
+    String? orderBy,
+    bool descending = false,
+    int? limit,
+  }) async {
     calls.add('view:$view');
     final error = insightError;
     if (error != null) throw error;
@@ -112,7 +122,8 @@ class FakeGateway implements BackendGateway {
   int _pullCalls = 0;
 
   /// Answer for an operation id. Default is applied with rev 1.
-  OpResult Function(OutboxOp op) onApply = (op) => OpResult(opId: op.opId, result: 'applied', rev: 1);
+  OpResult Function(OutboxOp op) onApply =
+      (op) => OpResult(opId: op.opId, result: 'applied', rev: 1);
 
   /// Pages handed out by [pullChanges], in order. When empty, an empty final page is returned.
   final List<PullPage> pullPages = [];
@@ -125,7 +136,11 @@ class FakeGateway implements BackendGateway {
   }
 
   @override
-  Future<DeviceRecord> registerDevice({required String id, required String label, required String platform}) async {
+  Future<DeviceRecord> registerDevice({
+    required String id,
+    required String label,
+    required String platform,
+  }) async {
     calls.add('registerDevice:$id:$label');
     if (clearApplyErrorOnRegister) applyError = null;
     final error = registerError;
@@ -171,13 +186,18 @@ class FakeGateway implements BackendGateway {
   }
 
   @override
-  Future<PullPage> pullChanges({required String deviceId, required int sinceRev, int limit = 200}) async {
+  Future<PullPage> pullChanges({
+    required String deviceId,
+    required int sinceRev,
+    int limit = 200,
+  }) async {
     calls.add('pull:$sinceRev');
     final error = pullError;
     if (error != null) throw error;
     if (failPullAtCall == ++_pullCalls) throw const BackendError.unreachable();
     pullSince.add(sinceRev);
-    if (pullPages.isEmpty) return PullPage(rows: const [], nextRev: sinceRev, hasMore: false);
+    if (pullPages.isEmpty){
+      return PullPage(rows: const [], nextRev: sinceRev, hasMore: false);}
     return pullPages.removeAt(0);
   }
 }
@@ -211,21 +231,25 @@ class InMemoryDeviceStore implements DeviceStore {
 /// A signed-in, registered phone: the app opens straight to Home without calling the server.
 class Harness {
   Harness.ready()
-      : auth = FakeAuthService(hasSession: true, email: 'owner@example.com'),
-        gateway = FakeGateway(),
-        store = InMemoryDeviceStore(id: 'device-1', labelValue: 'Test phone', isRegistered: true);
+    : auth = FakeAuthService(hasSession: true, email: 'owner@example.com'),
+      gateway = FakeGateway(),
+      store = InMemoryDeviceStore(
+        id: 'device-1',
+        labelValue: 'Test phone',
+        isRegistered: true,
+      );
 
   /// No session stored: the sign-in screen opens.
   Harness.signedOut()
-      : auth = FakeAuthService(),
-        gateway = FakeGateway(),
-        store = InMemoryDeviceStore(id: 'device-1');
+    : auth = FakeAuthService(),
+      gateway = FakeGateway(),
+      store = InMemoryDeviceStore(id: 'device-1');
 
   /// A session exists but this device is not registered yet.
   Harness.signedInUnregistered()
-      : auth = FakeAuthService(hasSession: true, email: 'owner@example.com'),
-        gateway = FakeGateway(),
-        store = InMemoryDeviceStore(id: 'device-1');
+    : auth = FakeAuthService(hasSession: true, email: 'owner@example.com'),
+      gateway = FakeGateway(),
+      store = InMemoryDeviceStore(id: 'device-1');
 
   final FakeAuthService auth;
   final FakeGateway gateway;
@@ -235,10 +259,13 @@ class Harness {
   List<Override> get overrides => overridesWith(gateway);
 
   /// The same app set-up, talking to another backend (for example the fake server).
-  List<Override> overridesWith(BackendGateway backend) => [
-        localStoreProvider.overrideWithValue(local),
-        authServiceProvider.overrideWithValue(auth),
-        backendGatewayProvider.overrideWithValue(backend),
-        deviceStoreProvider.overrideWithValue(store),
-      ];
+    List<Override> overridesWith(BackendGateway backend) => [
+    localStoreProvider.overrideWithValue(local),
+    authServiceProvider.overrideWithValue(auth),
+    backendGatewayProvider.overrideWithValue(backend),
+    deviceStoreProvider.overrideWithValue(store),
+    reportingGatewayProvider.overrideWithValue(
+      const NotConfiguredReportingGateway(),
+    ),
+  ];
 }

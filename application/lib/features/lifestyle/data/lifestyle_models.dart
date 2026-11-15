@@ -2,8 +2,10 @@
 /// local store holds). Numbers may arrive as numbers or as text, so they are read defensively.
 library;
 
-double? _double(Object? v) => v is num ? v.toDouble() : (v is String ? double.tryParse(v) : null);
-int? _int(Object? v) => v is num ? v.toInt() : (v is String ? int.tryParse(v) : null);
+double? _double(Object? v) =>
+    v is num ? v.toDouble() : (v is String ? double.tryParse(v) : null);
+int? _int(Object? v) =>
+    v is num ? v.toInt() : (v is String ? int.tryParse(v) : null);
 DateTime? _time(Object? v) => v is String ? DateTime.tryParse(v) : null;
 
 class BodyRegion {
@@ -12,7 +14,10 @@ class BodyRegion {
   final String id;
   final String name;
 
-  factory BodyRegion.fromRecord(Map<String, dynamic> r) => BodyRegion(id: r['id'] as String, name: (r['name'] as String?) ?? (r['code'] as String?) ?? '');
+  factory BodyRegion.fromRecord(Map<String, dynamic> r) => BodyRegion(
+    id: r['id'] as String,
+    name: (r['name'] as String?) ?? (r['code'] as String?) ?? '',
+  );
 }
 
 /// One check-in per day (the database allows only one). Ratings are 1 to 5.
@@ -42,21 +47,30 @@ class DailyCheckin {
   final String? notes;
 
   factory DailyCheckin.fromRecord(Map<String, dynamic> r) => DailyCheckin(
-        id: r['id'] as String,
-        localDate: (r['local_date'] as String?) ?? '',
-        energy: _int(r['energy']),
-        sleepQuality: _int(r['sleep_quality']),
-        soreness: _int(r['soreness']),
-        fatigue: _int(r['fatigue']),
-        motivation: _int(r['motivation']),
-        stress: _int(r['stress']),
-        painFlag: r['pain_flag'] == true,
-        notes: r['notes'] as String?,
-      );
+    id: r['id'] as String,
+    localDate: (r['local_date'] as String?) ?? '',
+    energy: _int(r['energy']),
+    sleepQuality: _int(r['sleep_quality']),
+    soreness: _int(r['soreness']),
+    fatigue: _int(r['fatigue']),
+    motivation: _int(r['motivation']),
+    stress: _int(r['stress']),
+    painFlag: r['pain_flag'] == true,
+    notes: r['notes'] as String?,
+  );
 }
 
 class SleepLog {
-  const SleepLog({required this.id, required this.localDate, required this.durationSeconds, this.sleepAt, this.wakeAt, this.quality, this.isNap = false, this.notes});
+  const SleepLog({
+    required this.id,
+    required this.localDate,
+    required this.durationSeconds,
+    this.sleepAt,
+    this.wakeAt,
+    this.quality,
+    this.isNap = false,
+    this.notes,
+  });
 
   final String id;
 
@@ -72,19 +86,25 @@ class SleepLog {
   double get hours => durationSeconds / 3600;
 
   factory SleepLog.fromRecord(Map<String, dynamic> r) => SleepLog(
-        id: r['id'] as String,
-        localDate: (r['local_date'] as String?) ?? '',
-        durationSeconds: _int(r['duration_s']) ?? 0,
-        sleepAt: _time(r['sleep_at']),
-        wakeAt: _time(r['wake_at']),
-        quality: _int(r['quality']),
-        isNap: r['is_nap'] == true,
-        notes: r['notes'] as String?,
-      );
+    id: r['id'] as String,
+    localDate: (r['local_date'] as String?) ?? '',
+    durationSeconds: _int(r['duration_s']) ?? 0,
+    sleepAt: _time(r['sleep_at']),
+    wakeAt: _time(r['wake_at']),
+    quality: _int(r['quality']),
+    isNap: r['is_nap'] == true,
+    notes: r['notes'] as String?,
+  );
 }
 
 class DailySteps {
-  const DailySteps({required this.id, required this.localDate, required this.steps, this.targetSteps, this.source = 'manual'});
+  const DailySteps({
+    required this.id,
+    required this.localDate,
+    required this.steps,
+    this.targetSteps,
+    this.source = 'manual',
+  });
 
   final String id;
   final String localDate;
@@ -93,16 +113,21 @@ class DailySteps {
   final String source;
 
   factory DailySteps.fromRecord(Map<String, dynamic> r) => DailySteps(
-        id: r['id'] as String,
-        localDate: (r['local_date'] as String?) ?? '',
-        steps: _int(r['steps']) ?? 0,
-        targetSteps: _int(r['target_steps']),
-        source: (r['source'] as String?) ?? 'manual',
-      );
+    id: r['id'] as String,
+    localDate: (r['local_date'] as String?) ?? '',
+    steps: _int(r['steps']) ?? 0,
+    targetSteps: _int(r['target_steps']),
+    source: (r['source'] as String?) ?? 'manual',
+  );
 }
 
 class WaterLog {
-  const WaterLog({required this.id, required this.localDate, required this.amountMl, this.occurredAt});
+  const WaterLog({
+    required this.id,
+    required this.localDate,
+    required this.amountMl,
+    this.occurredAt,
+  });
 
   final String id;
   final String localDate;
@@ -110,11 +135,11 @@ class WaterLog {
   final DateTime? occurredAt;
 
   factory WaterLog.fromRecord(Map<String, dynamic> r) => WaterLog(
-        id: r['id'] as String,
-        localDate: (r['local_date'] as String?) ?? '',
-        amountMl: _int(r['amount_ml']) ?? 0,
-        occurredAt: _time(r['occurred_at']),
-      );
+    id: r['id'] as String,
+    localDate: (r['local_date'] as String?) ?? '',
+    amountMl: _int(r['amount_ml']) ?? 0,
+    occurredAt: _time(r['occurred_at']),
+  );
 }
 
 class CardioSession {
@@ -142,24 +167,36 @@ class CardioSession {
   final String? notes;
   final DateTime? occurredAt;
 
-  String get label => activity == 'custom' ? (customActivity ?? 'Cardio') : '${activity[0].toUpperCase()}${activity.substring(1)}';
+  String get label =>
+      activity == 'custom'
+          ? (customActivity ?? 'Cardio')
+          : '${activity[0].toUpperCase()}${activity.substring(1)}';
 
   factory CardioSession.fromRecord(Map<String, dynamic> r) => CardioSession(
-        id: r['id'] as String,
-        localDate: (r['local_date'] as String?) ?? '',
-        activity: (r['activity'] as String?) ?? 'custom',
-        customActivity: r['custom_activity'] as String?,
-        durationSeconds: _int(r['duration_s']) ?? 0,
-        distanceM: _double(r['distance_m']),
-        caloriesKcal: _double(r['calories_kcal']),
-        intensity: r['intensity'] as String?,
-        notes: r['notes'] as String?,
-        occurredAt: _time(r['occurred_at']),
-      );
+    id: r['id'] as String,
+    localDate: (r['local_date'] as String?) ?? '',
+    activity: (r['activity'] as String?) ?? 'custom',
+    customActivity: r['custom_activity'] as String?,
+    durationSeconds: _int(r['duration_s']) ?? 0,
+    distanceM: _double(r['distance_m']),
+    caloriesKcal: _double(r['calories_kcal']),
+    intensity: r['intensity'] as String?,
+    notes: r['notes'] as String?,
+    occurredAt: _time(r['occurred_at']),
+  );
 }
 
 class BodyMeasurement {
-  const BodyMeasurement({required this.id, required this.localDate, required this.type, required this.value, this.method, this.customLabel, this.customUnit, this.occurredAt});
+  const BodyMeasurement({
+    required this.id,
+    required this.localDate,
+    required this.type,
+    required this.value,
+    this.method,
+    this.customLabel,
+    this.customUnit,
+    this.occurredAt,
+  });
 
   final String id;
   final String localDate;
@@ -171,19 +208,30 @@ class BodyMeasurement {
   final DateTime? occurredAt;
 
   factory BodyMeasurement.fromRecord(Map<String, dynamic> r) => BodyMeasurement(
-        id: r['id'] as String,
-        localDate: (r['local_date'] as String?) ?? '',
-        type: (r['measurement_type'] as String?) ?? '',
-        value: _double(r['value']) ?? 0,
-        method: r['method'] as String?,
-        customLabel: r['custom_label'] as String?,
-        customUnit: r['custom_unit'] as String?,
-        occurredAt: _time(r['occurred_at']),
-      );
+    id: r['id'] as String,
+    localDate: (r['local_date'] as String?) ?? '',
+    type: (r['measurement_type'] as String?) ?? '',
+    value: _double(r['value']) ?? 0,
+    method: r['method'] as String?,
+    customLabel: r['custom_label'] as String?,
+    customUnit: r['custom_unit'] as String?,
+    occurredAt: _time(r['occurred_at']),
+  );
 }
 
 class Injury {
-  const Injury({required this.id, required this.name, required this.bodyRegionId, required this.side, required this.startDate, required this.status, this.severity, this.injuryType, this.notes, this.resolvedOn});
+  const Injury({
+    required this.id,
+    required this.name,
+    required this.bodyRegionId,
+    required this.side,
+    required this.startDate,
+    required this.status,
+    this.severity,
+    this.injuryType,
+    this.notes,
+    this.resolvedOn,
+  });
 
   final String id;
   final String name;
@@ -199,21 +247,32 @@ class Injury {
   bool get isResolved => status == 'resolved';
 
   factory Injury.fromRecord(Map<String, dynamic> r) => Injury(
-        id: r['id'] as String,
-        name: (r['name'] as String?) ?? '',
-        bodyRegionId: (r['body_region_id'] as String?) ?? '',
-        side: (r['side'] as String?) ?? 'not_applicable',
-        startDate: (r['start_date'] as String?) ?? '',
-        status: (r['status'] as String?) ?? 'active',
-        severity: r['severity'] as String?,
-        injuryType: r['injury_type'] as String?,
-        notes: r['notes'] as String?,
-        resolvedOn: r['resolved_on'] as String?,
-      );
+    id: r['id'] as String,
+    name: (r['name'] as String?) ?? '',
+    bodyRegionId: (r['body_region_id'] as String?) ?? '',
+    side: (r['side'] as String?) ?? 'not_applicable',
+    startDate: (r['start_date'] as String?) ?? '',
+    status: (r['status'] as String?) ?? 'active',
+    severity: r['severity'] as String?,
+    injuryType: r['injury_type'] as String?,
+    notes: r['notes'] as String?,
+    resolvedOn: r['resolved_on'] as String?,
+  );
 }
 
 class PainEntry {
-  const PainEntry({required this.id, required this.localDate, required this.bodyRegionId, required this.side, required this.level, required this.effectOnTraining, this.painType, this.injuryId, this.notes, this.occurredAt});
+  const PainEntry({
+    required this.id,
+    required this.localDate,
+    required this.bodyRegionId,
+    required this.side,
+    required this.level,
+    required this.effectOnTraining,
+    this.painType,
+    this.injuryId,
+    this.notes,
+    this.occurredAt,
+  });
 
   final String id;
   final String localDate;
@@ -227,21 +286,31 @@ class PainEntry {
   final DateTime? occurredAt;
 
   factory PainEntry.fromRecord(Map<String, dynamic> r) => PainEntry(
-        id: r['id'] as String,
-        localDate: (r['local_date'] as String?) ?? '',
-        bodyRegionId: (r['body_region_id'] as String?) ?? '',
-        side: (r['side'] as String?) ?? 'not_applicable',
-        level: _int(r['level']) ?? 0,
-        effectOnTraining: (r['effect_on_training'] as String?) ?? 'none',
-        painType: r['pain_type'] as String?,
-        injuryId: r['injury_id'] as String?,
-        notes: r['notes'] as String?,
-        occurredAt: _time(r['occurred_at']),
-      );
+    id: r['id'] as String,
+    localDate: (r['local_date'] as String?) ?? '',
+    bodyRegionId: (r['body_region_id'] as String?) ?? '',
+    side: (r['side'] as String?) ?? 'not_applicable',
+    level: _int(r['level']) ?? 0,
+    effectOnTraining: (r['effect_on_training'] as String?) ?? 'none',
+    painType: r['pain_type'] as String?,
+    injuryId: r['injury_id'] as String?,
+    notes: r['notes'] as String?,
+    occurredAt: _time(r['occurred_at']),
+  );
 }
 
 class ExerciseRestriction {
-  const ExerciseRestriction({required this.id, required this.kind, required this.source, required this.activeFrom, this.exerciseId, this.movement, this.injuryId, this.note, this.activeTo});
+  const ExerciseRestriction({
+    required this.id,
+    required this.kind,
+    required this.source,
+    required this.activeFrom,
+    this.exerciseId,
+    this.movement,
+    this.injuryId,
+    this.note,
+    this.activeTo,
+  });
 
   final String id;
 
@@ -255,7 +324,8 @@ class ExerciseRestriction {
   final String? injuryId;
   final String? note;
 
-  factory ExerciseRestriction.fromRecord(Map<String, dynamic> r) => ExerciseRestriction(
+  factory ExerciseRestriction.fromRecord(Map<String, dynamic> r) =>
+      ExerciseRestriction(
         id: r['id'] as String,
         kind: (r['kind'] as String?) ?? 'uncomfortable',
         source: (r['source'] as String?) ?? 'self',
@@ -269,15 +339,24 @@ class ExerciseRestriction {
 }
 
 class Supplement {
-  const Supplement({required this.id, required this.name, this.category, this.notes});
+  const Supplement({
+    required this.id,
+    required this.name,
+    this.category,
+    this.notes,
+  });
 
   final String id;
   final String name;
   final String? category;
   final String? notes;
 
-  factory Supplement.fromRecord(Map<String, dynamic> r) =>
-      Supplement(id: r['id'] as String, name: (r['name'] as String?) ?? '', category: r['category'] as String?, notes: r['notes'] as String?);
+  factory Supplement.fromRecord(Map<String, dynamic> r) => Supplement(
+    id: r['id'] as String,
+    name: (r['name'] as String?) ?? '',
+    category: r['category'] as String?,
+    notes: r['notes'] as String?,
+  );
 }
 
 class SupplementPhase {
@@ -310,20 +389,34 @@ class SupplementPhase {
   bool get isCurrent => effectiveTo == null;
 
   factory SupplementPhase.fromRecord(Map<String, dynamic> r) => SupplementPhase(
-        id: r['id'] as String,
-        supplementId: r['entity_id'] as String,
-        version: _int(r['version']) ?? 1,
-        status: (r['status'] as String?) ?? 'active',
-        doseAmount: _double(r['dose_amount']),
-        doseUnit: r['dose_unit'] as String?,
-        timesPerDay: _int(r['times_per_day']) ?? 1,
-        daysOfWeek: r['days_of_week'] is List ? [for (final d in r['days_of_week'] as List) if (_int(d) != null) _int(d)!] : const [],
-        effectiveTo: _time(r['effective_to']),
-      );
+    id: r['id'] as String,
+    supplementId: r['entity_id'] as String,
+    version: _int(r['version']) ?? 1,
+    status: (r['status'] as String?) ?? 'active',
+    doseAmount: _double(r['dose_amount']),
+    doseUnit: r['dose_unit'] as String?,
+    timesPerDay: _int(r['times_per_day']) ?? 1,
+    daysOfWeek:
+        r['days_of_week'] is List
+            ? [
+              for (final d in r['days_of_week'] as List)
+                if (_int(d) != null) _int(d)!,
+            ]
+            : const [],
+    effectiveTo: _time(r['effective_to']),
+  );
 }
 
 class SupplementLog {
-  const SupplementLog({required this.id, required this.supplementId, required this.outcome, required this.localDate, this.quantity, this.unit, this.occurredAt});
+  const SupplementLog({
+    required this.id,
+    required this.supplementId,
+    required this.outcome,
+    required this.localDate,
+    this.quantity,
+    this.unit,
+    this.occurredAt,
+  });
 
   final String id;
   final String supplementId;
@@ -336,18 +429,29 @@ class SupplementLog {
   final DateTime? occurredAt;
 
   factory SupplementLog.fromRecord(Map<String, dynamic> r) => SupplementLog(
-        id: r['id'] as String,
-        supplementId: (r['supplement_id'] as String?) ?? '',
-        outcome: (r['outcome'] as String?) ?? 'taken',
-        localDate: (r['local_date'] as String?) ?? '',
-        quantity: _double(r['quantity']),
-        unit: r['unit'] as String?,
-        occurredAt: _time(r['occurred_at']),
-      );
+    id: r['id'] as String,
+    supplementId: (r['supplement_id'] as String?) ?? '',
+    outcome: (r['outcome'] as String?) ?? 'taken',
+    localDate: (r['local_date'] as String?) ?? '',
+    quantity: _double(r['quantity']),
+    unit: r['unit'] as String?,
+    occurredAt: _time(r['occurred_at']),
+  );
 }
 
 class Meal {
-  const Meal({required this.id, required this.title, required this.category, this.caloriesKcal, this.proteinG, this.carbsG, this.fatG, this.fibreG, this.isEstimate = false, this.notes});
+  const Meal({
+    required this.id,
+    required this.title,
+    required this.category,
+    this.caloriesKcal,
+    this.proteinG,
+    this.carbsG,
+    this.fatG,
+    this.fibreG,
+    this.isEstimate = false,
+    this.notes,
+  });
 
   final String id;
   final String title;
@@ -361,21 +465,29 @@ class Meal {
   final String? notes;
 
   factory Meal.fromRecord(Map<String, dynamic> r) => Meal(
-        id: r['id'] as String,
-        title: (r['title'] as String?) ?? '',
-        category: (r['category'] as String?) ?? 'snack',
-        caloriesKcal: _double(r['calories_kcal']),
-        proteinG: _double(r['protein_g']),
-        carbsG: _double(r['carbs_g']),
-        fatG: _double(r['fat_g']),
-        fibreG: _double(r['fibre_g']),
-        isEstimate: r['nutrition_is_estimate'] == true,
-        notes: r['notes'] as String?,
-      );
+    id: r['id'] as String,
+    title: (r['title'] as String?) ?? '',
+    category: (r['category'] as String?) ?? 'snack',
+    caloriesKcal: _double(r['calories_kcal']),
+    proteinG: _double(r['protein_g']),
+    carbsG: _double(r['carbs_g']),
+    fatG: _double(r['fat_g']),
+    fibreG: _double(r['fibre_g']),
+    isEstimate: r['nutrition_is_estimate'] == true,
+    notes: r['notes'] as String?,
+  );
 }
 
 class MealPlanEntry {
-  const MealPlanEntry({required this.id, required this.localDate, required this.slot, required this.mealId, this.servings = 1, this.status = 'planned', this.replacedByMealId});
+  const MealPlanEntry({
+    required this.id,
+    required this.localDate,
+    required this.slot,
+    required this.mealId,
+    this.servings = 1,
+    this.status = 'planned',
+    this.replacedByMealId,
+  });
 
   final String id;
   final String localDate;
@@ -390,19 +502,27 @@ class MealPlanEntry {
   final String? replacedByMealId;
 
   factory MealPlanEntry.fromRecord(Map<String, dynamic> r) => MealPlanEntry(
-        id: r['id'] as String,
-        localDate: (r['local_date'] as String?) ?? '',
-        slot: (r['slot'] as String?) ?? 'snack',
-        mealId: (r['meal_id'] as String?) ?? '',
-        servings: _double(r['servings']) ?? 1,
-        status: (r['status'] as String?) ?? 'planned',
-        replacedByMealId: r['replaced_by_meal_id'] as String?,
-      );
+    id: r['id'] as String,
+    localDate: (r['local_date'] as String?) ?? '',
+    slot: (r['slot'] as String?) ?? 'snack',
+    mealId: (r['meal_id'] as String?) ?? '',
+    servings: _double(r['servings']) ?? 1,
+    status: (r['status'] as String?) ?? 'planned',
+    replacedByMealId: r['replaced_by_meal_id'] as String?,
+  );
 }
 
 /// The current personal targets (one version is open at a time).
 class PersonalTargets {
-  const PersonalTargets({required this.id, required this.entityId, required this.version, this.proteinG, this.caloriesKcal, this.waterMl, this.stepTarget});
+  const PersonalTargets({
+    required this.id,
+    required this.entityId,
+    required this.version,
+    this.proteinG,
+    this.caloriesKcal,
+    this.waterMl,
+    this.stepTarget,
+  });
 
   final String id;
   final String entityId;
@@ -413,14 +533,14 @@ class PersonalTargets {
   final int? stepTarget;
 
   factory PersonalTargets.fromRecord(Map<String, dynamic> r) => PersonalTargets(
-        id: r['id'] as String,
-        entityId: r['entity_id'] as String,
-        version: _int(r['version']) ?? 1,
-        proteinG: _double(r['protein_g']),
-        caloriesKcal: _double(r['calories_kcal']),
-        waterMl: _int(r['water_ml']),
-        stepTarget: _int(r['step_target']),
-      );
+    id: r['id'] as String,
+    entityId: r['entity_id'] as String,
+    version: _int(r['version']) ?? 1,
+    proteinG: _double(r['protein_g']),
+    caloriesKcal: _double(r['calories_kcal']),
+    waterMl: _int(r['water_ml']),
+    stepTarget: _int(r['step_target']),
+  );
 }
 
 /// What one day looks like, worked out from the records held on the phone. Display only: nothing here is a

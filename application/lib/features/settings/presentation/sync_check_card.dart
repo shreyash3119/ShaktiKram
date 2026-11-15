@@ -50,7 +50,11 @@ class _SyncCheckCardState extends ConsumerState<SyncCheckCard> {
           style: TextStyle(color: p.muted, fontSize: 14),
         ),
         const SizedBox(height: 12),
-        AppButton(_running ? 'Running...' : 'Run sync check', key: const Key('sync-check-run'), onPressed: _running ? null : _run),
+        AppButton(
+          _running ? 'Running...' : 'Run sync check',
+          key: const Key('sync-check-run'),
+          onPressed: _running ? null : _run,
+        ),
         if (steps != null) ...[
           const SizedBox(height: 12),
           for (final s in steps)
@@ -58,7 +62,10 @@ class _SyncCheckCardState extends ConsumerState<SyncCheckCard> {
               padding: const EdgeInsets.only(bottom: 6),
               child: Text(
                 '${s.passed ? 'Passed' : 'Failed'}: ${s.name}. ${s.detail}',
-                style: TextStyle(color: s.passed ? p.green : p.red, fontSize: 14),
+                style: TextStyle(
+                  color: s.passed ? p.green : p.red,
+                  fontSize: 14,
+                ),
               ),
             ),
         ],
