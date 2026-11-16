@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shaktikram/app.dart';
 import 'package:shaktikram/core/routing/app_shell.dart';
-import 'package:shaktikram/core/widgets/controls.dart';
 
 import 'support/fakes.dart';
 
@@ -32,12 +31,7 @@ Future<void> _tapVisible(WidgetTester tester, Finder target) async {
 }
 
 Future<void> _pill(WidgetTester tester, String label) async {
-  await tester.tap(
-    find.descendant(
-      of: find.byType(PillTabs).first,
-      matching: find.text(label),
-    ),
-  );
+  await tester.tap(find.byKey(Key('tab-$label')));
   await tester.pumpAndSettle();
 }
 
@@ -46,23 +40,26 @@ void main() {
     tester,
   ) async {
     await _open(tester);
-    expect(find.text('Today’s lifestyle'), findsOneWidget);
+    expect(find.text('Recovery and readiness'), findsOneWidget);
+    expect(find.text('Start check-in'), findsOneWidget);
+    await _pill(tester, 'Nutrition');
     expect(find.text('No target set'), findsWidgets);
+    expect(find.text('No meals yet. Add one below.'), findsOneWidget);
     await _pill(tester, 'Supplements');
-    expect(find.text('No supplements added yet.'), findsOneWidget);
+    expect(find.text('None added yet.'), findsOneWidget);
   });
 
   testWidgets('adding water saves a log on the phone', (tester) async {
     final h = await _open(tester);
     await tester.scrollUntilVisible(
-      find.text('+ 250 ml'),
+      find.text('+250 ml'),
       300,
       scrollable: find.byType(Scrollable).first,
     );
-    await _tapVisible(tester, find.text('+ 250 ml'));
+    await _tapVisible(tester, find.text('+250 ml'));
     final logs = await h.local.list('water_logs');
     expect(logs.single['amount_ml'], 250);
-    expect(find.text('250 ml today'), findsOneWidget);
+    expect(find.text('Hydration · 250 ml'), findsOneWidget);
   });
 
   testWidgets(

@@ -181,8 +181,9 @@ void main() {
 
     await tester.tap(_navLabel('Lifestyle'));
     await tester.pumpAndSettle();
-    await _tapPill(tester, 'Nutrition');
-    expect(find.text('Nutrition today'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('tab-Nutrition')));
+    await tester.pumpAndSettle();
+    expect(find.text('Add a meal'), findsOneWidget);
 
     await tester.tap(_navLabel('Reports'));
     await tester.pumpAndSettle();
