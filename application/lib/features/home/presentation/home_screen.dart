@@ -128,8 +128,9 @@ class _FreshnessNote extends ConsumerWidget {
                       () =>
                           ref
                               .read(
-                                insightProvider(dailyBriefingSpec(today))
-                                    .notifier,
+                                insightProvider(
+                                  dailyBriefingSpec(today),
+                                ).notifier,
                               )
                               .refresh(),
                 ),
@@ -259,17 +260,12 @@ class _HeaderButtons extends ConsumerWidget {
           ],
         ),
         const SizedBox(width: 10),
-        button(
-          const Key('home-refresh'),
-          Icons.sync,
-          'Sync and refresh',
-          () {
-            ref.read(syncStatusProvider.notifier).syncNow();
-            ref
-                .read(insightProvider(dailyBriefingSpec(_today())).notifier)
-                .refresh();
-          },
-        ),
+        button(const Key('home-refresh'), Icons.sync, 'Sync and refresh', () {
+          ref.read(syncStatusProvider.notifier).syncNow();
+          ref
+              .read(insightProvider(dailyBriefingSpec(_today())).notifier)
+              .refresh();
+        }),
       ],
     );
   }
@@ -346,9 +342,24 @@ class _TodayCard extends ConsumerWidget {
 
     final (String label, IconData? icon, Color fg, Color bg) = switch (state) {
       _DayState.none => ('Set status', null, p.text, Colors.transparent),
-      _DayState.rest => ('Rest', Icons.nightlight_outlined, p.link, p.link.withValues(alpha: 0.16)),
-      _DayState.skipped => ('Skipped', Icons.skip_next_outlined, p.amber, p.amber.withValues(alpha: 0.16)),
-      _DayState.inProgress => ('In progress', Icons.play_arrow_outlined, p.link, p.link.withValues(alpha: 0.16)),
+      _DayState.rest => (
+        'Rest',
+        Icons.nightlight_outlined,
+        p.link,
+        p.link.withValues(alpha: 0.16),
+      ),
+      _DayState.skipped => (
+        'Skipped',
+        Icons.skip_next_outlined,
+        p.amber,
+        p.amber.withValues(alpha: 0.16),
+      ),
+      _DayState.inProgress => (
+        'In progress',
+        Icons.play_arrow_outlined,
+        p.link,
+        p.link.withValues(alpha: 0.16),
+      ),
       _DayState.completed => ('Completed', Icons.check, p.green, p.greenFill),
     };
 
@@ -360,7 +371,9 @@ class _TodayCard extends ConsumerWidget {
         title =
             entry?.status == 'rescheduled'
                 ? 'Moved to tomorrow'
-                : (plan.hasPlan ? (plan.title ?? 'Workout') : 'No workout planned');
+                : (plan.hasPlan
+                    ? (plan.title ?? 'Workout')
+                    : 'No workout planned');
         body = [
           if (planned != null && planned > 0 && plan.hasPlan)
             _muted(p, '$planned exercises planned'),
@@ -511,10 +524,11 @@ class _TodayCard extends ConsumerWidget {
     child: Text(text, style: TextStyle(color: p.muted, fontSize: 16)),
   );
 
-  static List<Widget> _resume(Future<void> Function({bool linkEntry}) start) => [
-    const SizedBox(height: 14),
-    AppButton.primary('Resume workout', height: 58, onPressed: start),
-  ];
+  static List<Widget> _resume(Future<void> Function({bool linkEntry}) start) =>
+      [
+        const SizedBox(height: 14),
+        AppButton.primary('Resume workout', height: 58, onPressed: start),
+      ];
 }
 
 String _dayName(String localDate) {
@@ -527,7 +541,9 @@ String _dayName(String localDate) {
 Future<void> _moveToTomorrow(BuildContext context, WidgetRef ref) async {
   final messenger = ScaffoldMessenger.of(context);
   try {
-    await ref.read(trainingManagementServiceProvider).moveDayToTomorrow(_today());
+    await ref
+        .read(trainingManagementServiceProvider)
+        .moveDayToTomorrow(_today());
     messenger.showSnackBar(const SnackBar(content: Text('Moved to tomorrow.')));
   } catch (e) {
     messenger.showSnackBar(SnackBar(content: Text(saveErrorText(e))));
@@ -694,9 +710,7 @@ class _StatusDialog extends StatelessWidget {
             decoration: BoxDecoration(
               color: selected ? p.link.withValues(alpha: 0.14) : null,
               borderRadius: BorderRadius.circular(AppTheme.radius),
-              border: Border.all(
-                color: selected ? p.link : Colors.transparent,
-              ),
+              border: Border.all(color: selected ? p.link : Colors.transparent),
             ),
             child: Row(
               children: [
@@ -723,10 +737,7 @@ class _StatusDialog extends StatelessWidget {
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      Text(
-                        sub,
-                        style: TextStyle(color: p.muted, fontSize: 15),
-                      ),
+                      Text(sub, style: TextStyle(color: p.muted, fontSize: 15)),
                     ],
                   ),
                 ),
@@ -743,12 +754,40 @@ class _StatusDialog extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          option('rest', 'Rest', 'Planned day off', Icons.nightlight_outlined, p.link, p.tile),
-          option('skipped', 'Skipped', 'Missed it, not rescheduled', Icons.skip_next_outlined, p.amber, p.amber.withValues(alpha: 0.16)),
-          option('in_progress', 'In progress', 'Training right now', Icons.play_arrow_outlined, p.link, p.link.withValues(alpha: 0.2)),
-          option('completed', 'Completed', 'Finished today’s workout', Icons.check, p.green, p.greenFill),
+          option(
+            'rest',
+            'Rest',
+            'Planned day off',
+            Icons.nightlight_outlined,
+            p.link,
+            p.tile,
+          ),
+          option(
+            'skipped',
+            'Skipped',
+            'Missed it, not rescheduled',
+            Icons.skip_next_outlined,
+            p.amber,
+            p.amber.withValues(alpha: 0.16),
+          ),
+          option(
+            'in_progress',
+            'In progress',
+            'Training right now',
+            Icons.play_arrow_outlined,
+            p.link,
+            p.link.withValues(alpha: 0.2),
+          ),
+          option(
+            'completed',
+            'Completed',
+            'Finished today’s workout',
+            Icons.check,
+            p.green,
+            p.greenFill,
+          ),
           const SizedBox(height: 8),
-          MutedText(
+          const MutedText(
             'Completed without logged sets won’t count in totals or streaks.',
             size: 15,
           ),
@@ -762,10 +801,9 @@ class _StatusDialog extends StatelessWidget {
     final active = ref.read(activeSessionProvider).valueOrNull;
     if (active != null) return 'in_progress';
     final plan = ref.read(todayPlanProvider(today)).valueOrNull;
-    final done =
-        (ref.read(finishedSessionsProvider).valueOrNull ??
-                const <({WorkoutSession session, bool counted})>[])
-            .any((f) => f.session.localDate == today);
+    final done = (ref.read(finishedSessionsProvider).valueOrNull ??
+            const <({WorkoutSession session, bool counted})>[])
+        .any((f) => f.session.localDate == today);
     if (plan?.entry?.status == 'completed' || done) return 'completed';
     if (plan?.entry?.status == 'skipped') return 'skipped';
     if (plan?.isRest == true) return 'rest';
@@ -878,8 +916,10 @@ class _AddWaterDialog extends ConsumerWidget {
   }
 }
 
-Future<void> showLogWeight(BuildContext context) =>
-    showDialog<void>(context: context, builder: (_) => const _LogWeightDialog());
+Future<void> showLogWeight(BuildContext context) => showDialog<void>(
+  context: context,
+  builder: (_) => const _LogWeightDialog(),
+);
 
 class _LogWeightDialog extends ConsumerStatefulWidget {
   const _LogWeightDialog();
@@ -1201,44 +1241,60 @@ class _ConsistencyTile extends ConsumerWidget {
           ),
           const SizedBox(height: 10),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               for (var i = 0; i < 7; i++)
-                Builder(
-                  builder: (_) {
-                    final day = DateTime(monday.year, monday.month, monday.day + i);
-                    final isToday = iso(day) == iso(d);
-                    final did = counted.contains(iso(day));
-                    return Container(
-                      key: Key('week-day-$i'),
-                      width: 24,
-                      height: 32,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: did ? p.greenFill : p.tile,
-                        borderRadius: BorderRadius.circular(9),
-                        border:
-                            isToday
-                                ? Border.all(color: p.link, width: 2)
-                                : null,
-                      ),
-                      child: Text(
-                        letters[i],
-                        style: TextStyle(
-                          color: did ? p.green : (isToday ? p.text : p.muted),
-                          fontSize: 12,
-                          fontWeight: isToday ? FontWeight.w800 : FontWeight.w500,
-                        ),
-                      ),
-                    );
-                  },
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 1),
+                    child: Builder(
+                      builder: (_) {
+                        final day = DateTime(
+                          monday.year,
+                          monday.month,
+                          monday.day + i,
+                        );
+                        final isToday = iso(day) == iso(d);
+                        final did = counted.contains(iso(day));
+
+                        return Container(
+                          key: Key('week-day-$i'),
+                          height: 32,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: did ? p.greenFill : p.tile,
+                            borderRadius: BorderRadius.circular(9),
+                            border:
+                                isToday
+                                    ? Border.all(color: p.link, width: 2)
+                                    : null,
+                          ),
+                          child: Text(
+                            letters[i],
+                            style: TextStyle(
+                              color:
+                                  did ? p.green : (isToday ? p.text : p.muted),
+                              fontSize: 12,
+                              fontWeight:
+                                  isToday ? FontWeight.w800 : FontWeight.w500,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ),
             ],
           ),
           const SizedBox(height: 4),
           stat('This week', '$thisWeek'),
-          stat('Streak', b?.currentStreak == null ? '–' : '${b!.currentStreak}'),
-          stat('Longest', b?.longestStreak == null ? '–' : '${b!.longestStreak}'),
+          stat(
+            'Streak',
+            b?.currentStreak == null ? '–' : '${b!.currentStreak}',
+          ),
+          stat(
+            'Longest',
+            b?.longestStreak == null ? '–' : '${b!.longestStreak}',
+          ),
         ],
       ),
     );
@@ -1275,7 +1331,10 @@ class _LifestyleCard extends ConsumerWidget {
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
-              child: Text(label, style: TextStyle(color: p.muted, fontSize: 13)),
+              child: Text(
+                label,
+                style: TextStyle(color: p.muted, fontSize: 13),
+              ),
             ),
             const SizedBox(height: 4),
             FittedBox(
@@ -1303,13 +1362,21 @@ class _LifestyleCard extends ConsumerWidget {
       children: [
         Row(
           children: [
-            tile('Supplements', '${s?.supplementsTaken ?? 0}', const Key('tile-supplements')),
+            tile(
+              'Supplements',
+              '${s?.supplementsTaken ?? 0}',
+              const Key('tile-supplements'),
+            ),
             const SizedBox(width: 8),
             tile('Meals', meals, const Key('tile-meals')),
             const SizedBox(width: 8),
             tile('Water', '${s?.waterMl ?? 0} ml', const Key('tile-water')),
             const SizedBox(width: 8),
-            tile('Steps', s?.steps?.steps == null ? '–' : '${s!.steps!.steps}', const Key('tile-steps')),
+            tile(
+              'Steps',
+              s?.steps?.steps == null ? '–' : '${s!.steps!.steps}',
+              const Key('tile-steps'),
+            ),
           ],
         ),
         const SizedBox(height: 14),
@@ -1338,7 +1405,8 @@ class _LifestyleCard extends ConsumerWidget {
                           ),
                         ),
                         TextSpan(
-                          text: ' · body fat ${f == null ? '–' : '${_kg(f.value)} %'}',
+                          text:
+                              ' · body fat ${f == null ? '–' : '${_kg(f.value)} %'}',
                           style: TextStyle(color: p.muted, fontSize: 15),
                         ),
                       ],
@@ -1431,7 +1499,10 @@ class _InsightsCard extends ConsumerWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  Text(subtitle, style: TextStyle(color: p.muted, fontSize: 15)),
+                  Text(
+                    subtitle,
+                    style: TextStyle(color: p.muted, fontSize: 15),
+                  ),
                 ],
               ),
             ),
@@ -1503,4 +1574,3 @@ Map<String, dynamic> weightPayload(double kg, DateTime now) {
     'source': 'manual',
   };
 }
-

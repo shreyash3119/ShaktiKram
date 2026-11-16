@@ -200,12 +200,15 @@ class ReportQuery {
       case ReportKind.yearly:
         return year == null ? 'Choose a year.' : null;
       case ReportKind.custom:
-        if (dateFrom == null || dateTo == null){
-          return 'Choose a first and a last day.';}
-        if (dateTo!.isBefore(dateFrom!)){
-          return 'The last day must not be before the first day.';}
-        if (dateTo!.difference(dateFrom!).inDays + 1 > maxCustomDays){
-          return 'A custom range can cover at most $maxCustomDays days.';}
+        if (dateFrom == null || dateTo == null) {
+          return 'Choose a first and a last day.';
+        }
+        if (dateTo!.isBefore(dateFrom!)) {
+          return 'The last day must not be before the first day.';
+        }
+        if (dateTo!.difference(dateFrom!).inDays + 1 > maxCustomDays) {
+          return 'A custom range can cover at most $maxCustomDays days.';
+        }
         return null;
       case ReportKind.complete:
         return null;

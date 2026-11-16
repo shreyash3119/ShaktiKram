@@ -1,12 +1,26 @@
 import '../../../core/time/local_stamp.dart';
 
-const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const monthNames = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
 const weekdayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 String todayDate() => localStampOf(DateTime.now()).localDate;
 
 String _two(int n) => n.toString().padLeft(2, '0');
-String _fmt(DateTime d) => '${d.year.toString().padLeft(4, '0')}-${_two(d.month)}-${_two(d.day)}';
+String _fmt(DateTime d) =>
+    '${d.year.toString().padLeft(4, '0')}-${_two(d.month)}-${_two(d.day)}';
 
 /// Monday of the week that contains [localDate].
 String mondayOf(String localDate) {
@@ -22,7 +36,9 @@ String datePlus(String localDate, int days) {
 /// `Sat, Nov 14`.
 String dateText(String localDate) {
   final d = DateTime.tryParse(localDate);
-  return d == null ? localDate : '${weekdayNames[d.weekday - 1]}, ${monthNames[d.month - 1]} ${d.day}';
+  return d == null
+      ? localDate
+      : '${weekdayNames[d.weekday - 1]}, ${monthNames[d.month - 1]} ${d.day}';
 }
 
 /// `Nov 9 – 15`, or `Nov 30 – Dec 6` when the week crosses a month.
@@ -30,7 +46,9 @@ String weekRangeText(String monday) {
   final a = DateTime.parse(monday);
   final b = DateTime.parse(datePlus(monday, 6));
   final start = '${monthNames[a.month - 1]} ${a.day}';
-  return a.month == b.month ? '$start – ${b.day}' : '$start – ${monthNames[b.month - 1]} ${b.day}';
+  return a.month == b.month
+      ? '$start – ${b.day}'
+      : '$start – ${monthNames[b.month - 1]} ${b.day}';
 }
 
 /// "42 min", "under 1 min", or nothing when the length is unknown.
@@ -48,9 +66,10 @@ String kgText(double v) {
   final digits = parts[0];
   final buf = StringBuffer();
   for (var i = 0; i < digits.length; i++) {
-    if (i > 0 && (digits.length - i) % 3 == 0 && digits[i - 1] != '-') buf.write(',');
+    if (i > 0 && (digits.length - i) % 3 == 0 && digits[i - 1] != '-'){
+      buf.write(',');
     buf.write(digits[i]);
-  }
+  }}
   return parts.length > 1 ? '$buf.${parts[1]}' : '$buf';
 }
 

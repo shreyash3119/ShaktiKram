@@ -452,8 +452,9 @@ class FakeServer implements BackendGateway {
       }
       final rpe = row['rpe'];
       if (rpe != null &&
-          ((rpe as num) < 1 || rpe > 10 || rpe * 2 != (rpe * 2).round())){
-        throw const BackendError('validation_failed', 'ck_sets_rpe');}
+          ((rpe as num) < 1 || rpe > 10 || rpe * 2 != (rpe * 2).round())) {
+        throw const BackendError('validation_failed', 'ck_sets_rpe');
+      }
       final rir = row['rir'];
       if (rir != null && ((rir as num) < 0 || rir > 10)) {
         throw const BackendError('validation_failed', 'ck_sets_rir');
@@ -555,8 +556,9 @@ class FakeServer implements BackendGateway {
         if (live &&
             table.values.any(
               (r) => alive(r) && r['local_date'] == row['local_date'],
-            )){
-          fail('uq_daily_checkins_local_date');}
+            )) {
+          fail('uq_daily_checkins_local_date');
+        }
         for (final k in [
           'energy',
           'sleep_quality',
@@ -574,8 +576,9 @@ class FakeServer implements BackendGateway {
         if (live &&
             table.values.any(
               (r) => alive(r) && r['local_date'] == row['local_date'],
-            )){
-          fail('uq_daily_steps_local_date');}
+            )) {
+          fail('uq_daily_steps_local_date');
+        }
         if ((row['steps'] as num) < 0) {
           fail('ck_daily_steps_steps_nonnegative');
         }
@@ -607,8 +610,9 @@ class FakeServer implements BackendGateway {
           'stairmaster',
           'elliptical',
           'custom',
-        ].contains(row['activity'])){
-          fail('ck_cardio_sessions_activity_values');}
+        ].contains(row['activity'])) {
+          fail('ck_cardio_sessions_activity_values');
+        }
         if (row['activity'] == 'custom' && row['custom_activity'] == null) {
           fail('ck_cardio_sessions_custom_has_name');
         }
@@ -617,16 +621,18 @@ class FakeServer implements BackendGateway {
           fail('ck_body_measurements_value_positive');
         }
         if (row['measurement_type'] == 'body_fat' &&
-            (row['method'] == null || (row['value'] as num) >= 100)){
-          fail('ck_body_measurements_body_fat');}
+            (row['method'] == null || (row['value'] as num) >= 100)) {
+          fail('ck_body_measurements_body_fat');
+        }
       case 'injuries':
         if (row['status'] == 'resolved' && row['resolved_on'] == null) {
           fail('ck_injuries_resolved_has_date');
         }
         final resolved = row['resolved_on'] as String?;
         if (resolved != null &&
-            resolved.compareTo(row['start_date'] as String) < 0){
-          fail('ck_injuries_resolved_after_start');}
+            resolved.compareTo(row['start_date'] as String) < 0) {
+          fail('ck_injuries_resolved_after_start');
+        }
       case 'pain_entries':
         final l = row['level'] as num;
         if (l < 0 || l > 10) {
@@ -643,15 +649,17 @@ class FakeServer implements BackendGateway {
               (r) =>
                   alive(r) &&
                   (r['name'] as String).trim().toLowerCase() == name,
-            )){
-          fail('uq_supplements_name_alive');}
+            )) {
+          fail('uq_supplements_name_alive');
+        }
       case 'supplement_logs':
         if (!['taken', 'missed', 'skipped'].contains(row['outcome'])) {
           fail('ck_supplement_logs_outcome_values');
         }
       case 'meal_plan_entries':
-        if (row['status'] == 'replaced' && row['replaced_by_meal_id'] == null){
-          fail('ck_meal_plan_entries_replaced_has_meal');}
+        if (row['status'] == 'replaced' && row['replaced_by_meal_id'] == null) {
+          fail('ck_meal_plan_entries_replaced_has_meal');
+        }
         if ((row['servings'] as num) <= 0) {
           fail('ck_meal_plan_entries_servings_positive');
         }

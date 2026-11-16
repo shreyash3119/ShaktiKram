@@ -849,8 +849,9 @@ class _GoalsCardState extends ConsumerState<_GoalsCard> {
       return '$status$target';
     }
     if (p == null) return '$status · progress not loaded yet';
-    if (p.progressStatus == 'insufficient_data'){
-      return '$status · not enough data yet. ${_missing(g)}';}
+    if (p.progressStatus == 'insufficient_data') {
+      return '$status · not enough data yet. ${_missing(g)}';
+    }
     final value =
         p.currentValue == null || p.targetValue == null
             ? ''
@@ -862,8 +863,9 @@ class _GoalsCardState extends ConsumerState<_GoalsCard> {
     final m = g.targetMetric;
     if (g.targetValue == null) return 'Set a target value.';
     if (m == null || m.isEmpty) return 'Record values with "Record progress".';
-    if (measuredMetrics.containsKey(m)){
-      return 'Log ${measuredMetrics[m]!.$1.toLowerCase()} on or after the start date.';}
+    if (measuredMetrics.containsKey(m)) {
+      return 'Log ${measuredMetrics[m]!.$1.toLowerCase()} on or after the start date.';
+    }
     return 'Needs logged workouts for that exercise.';
   }
 }

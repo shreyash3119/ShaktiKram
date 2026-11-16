@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -53,8 +51,9 @@ class _ExportTabState extends ConsumerState<ExportTab> {
             widget.request,
             format,
             onProgress: (got, total) {
-              if (mounted && total != null && total > 0){
-                setState(() => _progress = got / total);}
+              if (mounted && total != null && total > 0) {
+                setState(() => _progress = got / total);
+              }
             },
           );
       ref.invalidate(exportHistoryProvider);
@@ -162,7 +161,7 @@ class _ExportTabState extends ConsumerState<ExportTab> {
         const SizedBox(height: 16),
         const TitledCard(
           title: 'Saved on this phone',
-          children: [ ExportHistoryList(reportsOnly: true)],
+          children: [ExportHistoryList(reportsOnly: true)],
         ),
       ],
     );
@@ -177,31 +176,23 @@ Future<void> shareEntry(
   final messenger = ScaffoldMessenger.of(context);
 
   try {
-    final exists =
-        await ref.read(exportServiceProvider).fileExists(entry);
+    final exists = await ref.read(exportServiceProvider).fileExists(entry);
 
     if (!context.mounted) return;
 
     if (!exists) {
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text('That file is no longer on this phone.'),
-        ),
+        const SnackBar(content: Text('That file is no longer on this phone.')),
       );
       return;
     }
 
-    await ref.read(fileSharerProvider).share(
-      entry.path,
-      subject: entry.label,
-    );
+    await ref.read(fileSharerProvider).share(entry.path, subject: entry.label);
   } catch (e) {
     if (!context.mounted) return;
 
     messenger.showSnackBar(
-      SnackBar(
-        content: Text('Could not share the file: $e'),
-      ),
+      SnackBar(content: Text('Could not share the file: $e')),
     );
   }
 }
@@ -229,12 +220,13 @@ class ExportHistoryList extends ConsumerWidget {
           for (final e in all)
             if (e.kind.isReport == reportsOnly) e,
         ];
-        if (items.isEmpty){
+        if (items.isEmpty) {
           return MutedText(
             reportsOnly
                 ? 'No reports saved yet.'
                 : 'No backups or data exports saved yet.',
-          );}
+          );
+        }
         return RowList([
           for (final e in items)
             RowItem(

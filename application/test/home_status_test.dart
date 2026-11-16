@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shaktikram/app.dart';
 import 'package:shaktikram/core/time/local_stamp.dart';
-
+import 'support/store_contract.dart';
 import 'support/fakes.dart';
 
 Future<void> _open(WidgetTester tester, Harness h) async {

@@ -73,11 +73,12 @@ class SyncEngine {
     var pulled = 0;
     try {
       final device = deviceId();
-      if (device == null){
+      if (device == null) {
         return const SyncReport(
           SyncOutcome.error,
           message: 'This device is not registered yet.',
-        );}
+        );
+      }
 
       // 1. Push. Each pass sends at most one operation per record, so an edit never goes out in the same request
       // as the create it depends on (the edit needs the revision the create gets). The next pass is built after the
@@ -109,8 +110,9 @@ class SyncEngine {
         final byId = {for (final r in results) r.opId: r};
         for (final op in batch) {
           final result = byId[op.opId];
-          if (result == null){
-            continue;} // No answer: stays queued for the next round.
+          if (result == null) {
+            continue;
+          } // No answer: stays queued for the next round.
           await store.recordResult(op, result);
           pushed++;
         }
@@ -138,22 +140,25 @@ class SyncEngine {
       await store.setLastSyncAt(DateTime.now().toUtc());
       return SyncReport(SyncOutcome.ok, pushed: pushed, pulled: pulled);
     } on BackendError catch (e) {
-      if (e.isDeviceRevoked){
+      if (e.isDeviceRevoked) {
         return SyncReport(
           SyncOutcome.revoked,
           pushed: pushed,
           pulled: pulled,
           message: e.userMessage,
-        );}
-      if (e.isDeviceNotRegistered){
+        );
+      }
+      if (e.isDeviceNotRegistered) {
         return SyncReport(
           SyncOutcome.notRegistered,
           pushed: pushed,
           pulled: pulled,
           message: e.userMessage,
-        );}
-      if (e.isUnreachable){
-        return SyncReport(SyncOutcome.offline, pushed: pushed, pulled: pulled);}
+        );
+      }
+      if (e.isUnreachable) {
+        return SyncReport(SyncOutcome.offline, pushed: pushed, pulled: pulled);
+      }
       return SyncReport(
         SyncOutcome.error,
         pushed: pushed,

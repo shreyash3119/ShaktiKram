@@ -56,8 +56,9 @@ class _SyncRunnerState extends ConsumerState<SyncRunner>
   Widget build(BuildContext context) {
     ref.listen<SessionState>(sessionControllerProvider, (previous, next) {
       if (next.phase == SessionPhase.ready &&
-          previous?.phase != SessionPhase.ready){
-        _sync();}
+          previous?.phase != SessionPhase.ready) {
+        _sync();
+      }
     });
     return widget.child;
   }

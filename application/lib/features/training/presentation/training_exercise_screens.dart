@@ -7,7 +7,6 @@ import '../../../core/widgets/controls.dart';
 import '../../../core/widgets/editor_sheet.dart';
 import '../../progress/data/progress_models.dart';
 import '../../progress/data/progress_providers.dart';
-import '../data/training_management_service.dart';
 import '../data/training_models.dart';
 import '../data/training_providers.dart';
 import 'training_editor_widgets.dart';
@@ -29,7 +28,7 @@ Future<void> showExerciseEditor(BuildContext context, {Exercise? exercise}) {
             title: 'Edit exercise',
             closeIcon: Icons.close,
             body: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(
+              padding: const EdgeInsets.fromLTRB(
                 AppTheme.pagePadding,
                 8,
                 AppTheme.pagePadding,
@@ -71,7 +70,7 @@ class _FullPage extends StatelessWidget {
         child: Column(
           children: [
             Padding(
-              padding: EdgeInsets.fromLTRB(
+              padding:const EdgeInsets.fromLTRB(
                 AppTheme.pagePadding - 8,
                 8,
                 AppTheme.pagePadding,
@@ -549,7 +548,8 @@ class _ExerciseFormState extends ConsumerState<_ExerciseForm> {
 // Details
 // ---------------------------------------------------------------------------------------------------------------
 
-String _kg(double v) => v == v.roundToDouble() ? '${v.round()}' : v.toStringAsFixed(1);
+String _kg(double v) =>
+    v == v.roundToDouble() ? '${v.round()}' : v.toStringAsFixed(1);
 
 class _ExerciseDetailPage extends ConsumerWidget {
   const _ExerciseDetailPage(this.exerciseId);
@@ -567,10 +567,10 @@ class _ExerciseDetailPage extends ConsumerWidget {
             if (e.id == exerciseId) e,
         ].firstOrNull;
     if (exercise == null) {
-      return _FullPage(
+      return const _FullPage(
         title: 'Exercise details',
         closeIcon: Icons.arrow_back_ios_new,
-        body: const Padding(
+        body:  Padding(
           padding: EdgeInsets.all(20),
           child: MutedText('This exercise is not on this phone.'),
         ),
@@ -696,7 +696,7 @@ class _ExerciseDetailPage extends ConsumerWidget {
           SliverFillRemaining(
             hasScrollBody: false,
             child: Padding(
-              padding: EdgeInsets.fromLTRB(
+              padding:const EdgeInsets.fromLTRB(
                 AppTheme.pagePadding,
                 8,
                 AppTheme.pagePadding,

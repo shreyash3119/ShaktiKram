@@ -89,7 +89,7 @@ void main() {
     ]) {
       await tester.tap(_navLabel(label));
       await tester.pumpAndSettle();
-      
+
       expect(
         find.text(_subtitles()[label]!),
         findsOneWidget,
@@ -185,7 +185,7 @@ void main() {
 
     await tester.tap(_navLabel('Reports'));
     await tester.pumpAndSettle();
-    
+
     // No reporting service is set up in tests.
     expect(
       find.text('Reports are not set up', skipOffstage: false),

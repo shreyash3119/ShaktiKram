@@ -849,8 +849,9 @@ class ReportSummary {
 
   /// Throws [FormatException] when [json] is not a summary (no `period` and no `training`).
   factory ReportSummary.fromJson(Map<String, dynamic> j) {
-    if (j['period'] is! Map || j['training'] is! Map){
-      throw const FormatException('not a report summary');}
+    if (j['period'] is! Map || j['training'] is! Map) {
+      throw const FormatException('not a report summary');
+    }
     return ReportSummary(
       period: ReportPeriodInfo.fromJson(_map(j['period'])),
       training: TrainingSection.fromJson(_map(j['training'])),

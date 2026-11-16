@@ -51,8 +51,9 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
             kind,
             includeMedia: _includeMedia,
             onProgress: (got, total) {
-              if (mounted && total != null && total > 0){
-                setState(() => _progress = got / total);}
+              if (mounted && total != null && total > 0) {
+                setState(() => _progress = got / total);
+              }
             },
           );
       ref.invalidate(exportHistoryProvider);
@@ -217,12 +218,12 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
             const SizedBox(height: 16),
             const TitledCard(
               title: 'Saved on this phone',
-              children:  [ExportHistoryList(reportsOnly: false)],
+              children: [ExportHistoryList(reportsOnly: false)],
             ),
             const SizedBox(height: 16),
             const TitledCard(
               title: 'Restoring a backup',
-              children:  [
+              children: [
                 MutedText(
                   'The app cannot restore a backup. Restoring replaces data, so it is done on a computer with the restore script in the project (backend/scripts/restore_backup.py), after the backup has been checked here.',
                 ),

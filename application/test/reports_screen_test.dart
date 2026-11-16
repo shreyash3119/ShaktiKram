@@ -146,12 +146,12 @@ Future<void> _open(WidgetTester tester, _Setup s, String tab) async {
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
-  ProviderScope(
-    key: ObjectKey(s),
-    overrides: s.overrides,
-    child: const ShaktiKramApp(),
-  ),
-);
+    ProviderScope(
+      key: ObjectKey(s),
+      overrides: s.overrides,
+      child: const ShaktiKramApp(),
+    ),
+  );
   await tester.pumpAndSettle();
   await tester.tap(
     find.descendant(of: find.byType(AppBottomBar), matching: find.text(tab)),
@@ -262,8 +262,6 @@ void main() {
 
       expect(nextPeriod.label, 'December 2099');
       expect(nextPeriod.startsAfter(DateTime.now()), isTrue);
-
-      
 
       expect(
         tester

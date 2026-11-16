@@ -69,8 +69,9 @@ class ChangeWriter {
   /// Changes later in the list see the earlier ones, so a record and the records that point at it can go together.
   Future<List<String>> apply(List<PendingChange> changes) async {
     for (final c in changes) {
-      if (!isWritableEntity(c.entity)){
-        throw ArgumentError('${c.entity} cannot be changed from the app.');}
+      if (!isWritableEntity(c.entity)) {
+        throw ArgumentError('${c.entity} cannot be changed from the app.');
+      }
     }
     final now = _clock().toUtc();
     await _store.saveLocalAll([

@@ -73,8 +73,9 @@ class SessionController extends Notifier<SessionState> {
   void _onAuthChanged(bool signedIn) {
     if (signedIn || _signingOut) return;
     final phase = state.phase;
-    if (phase == SessionPhase.checking || phase == SessionPhase.signedOut){
-      return;}
+    if (phase == SessionPhase.checking || phase == SessionPhase.signedOut) {
+      return;
+    }
     unawaited(_toSignedOut(message: 'You were signed out. Sign in again.'));
   }
 

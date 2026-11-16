@@ -274,17 +274,19 @@ class HttpReportingGateway implements ReportingGateway {
         final response = await http.Response.fromStream(
           streamed,
         ).timeout(idleTimeout);
-        if (response.statusCode != 200){
+        if (response.statusCode != 200) {
           throw ReportError.fromResponse(
             response.statusCode,
             utf8.decode(response.bodyBytes, allowMalformed: true),
-          );}
+          );
+        }
         final decoded = jsonDecode(utf8.decode(response.bodyBytes));
-        if (decoded is! Map){
+        if (decoded is! Map) {
           throw const ReportError(
             ReportErrorKind.badResponse,
             'The reporting service sent an answer the app could not read.',
-          );}
+          );
+        }
         return Map<String, dynamic>.from(decoded);
       });
 
@@ -388,11 +390,12 @@ class HttpReportingGateway implements ReportingGateway {
   @override
   Future<BackupValidation> validateBackup(String filePath) => _guard(() async {
     final file = File(filePath);
-    if (!await file.exists()){
+    if (!await file.exists()) {
       throw const ReportError(
         ReportErrorKind.fileProblem,
         'That file is no longer on this phone.',
-      );}
+      );
+    }
     final streamed = await _send(() async {
       final request = http.MultipartRequest(
         'POST',
@@ -404,17 +407,19 @@ class HttpReportingGateway implements ReportingGateway {
     final response = await http.Response.fromStream(
       streamed,
     ).timeout(backupTimeout);
-    if (response.statusCode != 200){
+    if (response.statusCode != 200) {
       throw ReportError.fromResponse(
         response.statusCode,
         utf8.decode(response.bodyBytes, allowMalformed: true),
-      );}
+      );
+    }
     final decoded = jsonDecode(utf8.decode(response.bodyBytes));
-    if (decoded is! Map){
+    if (decoded is! Map) {
       throw const ReportError(
         ReportErrorKind.badResponse,
         'The reporting service sent an answer the app could not read.',
-      );}
+      );
+    }
     return BackupValidation.fromJson(Map<String, dynamic>.from(decoded));
   });
 
@@ -440,15 +445,19 @@ class HttpReportingGateway implements ReportingGateway {
 
   /// [name], or `name-1.ext`, `name-2.ext` ... when a file of that name exists, so an earlier export is never overwritten.
   static String uniqueName(Directory dir, String name) {
-    if (!File('${dir.path}${Platform.pathSeparator}$name').existsSync()){
-      return name;}
+    if (!File('${dir.path}${Platform.pathSeparator}$name').existsSync()) {
+      return name;
+    }
     final dot = name.lastIndexOf('.');
     final stem = dot > 0 ? name.substring(0, dot) : name;
     final ext = dot > 0 ? name.substring(dot) : '';
     for (var i = 1; i < 1000; i++) {
       final candidate = '$stem-$i$ext';
-      if (!File('${dir.path}${Platform.pathSeparator}$candidate').existsSync()){
-        return candidate;}
+      if (!File(
+        '${dir.path}${Platform.pathSeparator}$candidate',
+      ).existsSync()) {
+        return candidate;
+      }
     }
     return '$stem-${DateTime.now().millisecondsSinceEpoch}$ext';
   }

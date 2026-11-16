@@ -511,7 +511,9 @@ void main() {
   test(
     'NotConfiguredReportingGateway refuses every call with a clear message',
     () async {
-      final g = const NotConfiguredReportingGateway('REPORT_API_URL is not set.');
+      final g = const NotConfiguredReportingGateway(
+        'REPORT_API_URL is not set.',
+      );
       await expectLater(
         g.summary({}),
         throwsA(

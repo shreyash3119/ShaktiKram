@@ -202,8 +202,9 @@ class MemoryLocalStore implements LocalStore {
       final id = row.record['id'] as String?;
       if (id == null) continue;
       final existing = _records[_key(row.entity, id)];
-      if (existing?.serverRev != null && row.rev < existing!.serverRev!){
-        continue;}
+      if (existing?.serverRev != null && row.rev < existing!.serverRev!) {
+        continue;
+      }
       final dirty = existing?.dirty ?? false;
       _records[_key(row.entity, id)] = _Rec(
         serverRev: row.rev,

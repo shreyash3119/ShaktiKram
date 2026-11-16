@@ -62,8 +62,9 @@ class AppConfig {
   /// Android emulator host `10.0.2.2` or a private address), which only debug builds may reach.
   static ReportUrlCheck checkReportUrl(String url) {
     final text = url.trim();
-    if (text.isEmpty){
-      return const ReportUrlCheck.problem('REPORT_API_URL is not set.');}
+    if (text.isEmpty) {
+      return const ReportUrlCheck.problem('REPORT_API_URL is not set.');
+    }
     final uri = Uri.tryParse(text);
     if (uri == null ||
         !uri.hasScheme ||
@@ -73,10 +74,11 @@ class AppConfig {
         'REPORT_API_URL is not a valid web address.',
       );
     }
-    if (uri.hasQuery || uri.hasFragment){
+    if (uri.hasQuery || uri.hasFragment) {
       return const ReportUrlCheck.problem(
         'REPORT_API_URL must not contain a query or fragment.',
-      );}
+      );
+    }
     if (uri.scheme == 'http' && !_isLocalHost(uri.host)) {
       return const ReportUrlCheck.problem(
         'REPORT_API_URL must start with https:// (http:// is only allowed for a computer on your own network).',
@@ -90,8 +92,9 @@ class AppConfig {
   }
 
   static bool _isLocalHost(String host) {
-    if (host == 'localhost' || host == '10.0.2.2' || host.endsWith('.local')){
-      return true;}
+    if (host == 'localhost' || host == '10.0.2.2' || host.endsWith('.local')) {
+      return true;
+    }
     final m = RegExp(r'^(\d+)\.(\d+)\.(\d+)\.(\d+)$').firstMatch(host);
     if (m == null) return false;
     final a = int.parse(m.group(1)!);

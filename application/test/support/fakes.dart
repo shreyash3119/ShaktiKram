@@ -196,8 +196,9 @@ class FakeGateway implements BackendGateway {
     if (error != null) throw error;
     if (failPullAtCall == ++_pullCalls) throw const BackendError.unreachable();
     pullSince.add(sinceRev);
-    if (pullPages.isEmpty){
-      return PullPage(rows: const [], nextRev: sinceRev, hasMore: false);}
+    if (pullPages.isEmpty) {
+      return PullPage(rows: const [], nextRev: sinceRev, hasMore: false);
+    }
     return pullPages.removeAt(0);
   }
 }
@@ -259,7 +260,7 @@ class Harness {
   List<Override> get overrides => overridesWith(gateway);
 
   /// The same app set-up, talking to another backend (for example the fake server).
-    List<Override> overridesWith(BackendGateway backend) => [
+  List<Override> overridesWith(BackendGateway backend) => [
     localStoreProvider.overrideWithValue(local),
     authServiceProvider.overrideWithValue(auth),
     backendGatewayProvider.overrideWithValue(backend),

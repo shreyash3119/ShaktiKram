@@ -898,10 +898,12 @@ class GoalsSectionView extends StatelessWidget {
 
   String _goalLine(GoalRow g) {
     final parts = <String>[];
-    if (g.currentValue != null || g.targetValue != null){
-      parts.add('${fmtNum(g.currentValue)} of ${fmtNum(g.targetValue)}');}
-    if (g.status == 'active' && g.progressPct != null){
-      parts.add(fmtPct(g.progressPct));}
+    if (g.currentValue != null || g.targetValue != null) {
+      parts.add('${fmtNum(g.currentValue)} of ${fmtNum(g.targetValue)}');
+    }
+    if (g.status == 'active' && g.progressPct != null) {
+      parts.add(fmtPct(g.progressPct));
+    }
     final label =
         g.status == 'active' ? progressStatusLabel(g.progressStatus) : '';
     if (label.isNotEmpty) parts.add(label);

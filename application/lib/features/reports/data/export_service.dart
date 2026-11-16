@@ -76,8 +76,9 @@ class ExportService {
     DownloadProgress? onProgress,
   }) async {
     final problem = request.query.validate();
-    if (problem != null){
-      throw ReportError(ReportErrorKind.invalidRequest, problem);}
+    if (problem != null) {
+      throw ReportError(ReportErrorKind.invalidRequest, problem);
+    }
     final file = await _gateway.downloadReport(
       query: request.toParams(),
       format: format,

@@ -87,7 +87,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final session = ref.watch(sessionControllerProvider);
     final themeMode = ref.watch(themeModeProvider);
     final sync = ref.watch(syncStatusProvider);
-  final lastBackup = ref.watch(lastBackupProvider).valueOrNull;
+    final lastBackup = ref.watch(lastBackupProvider).valueOrNull;
 
     const themeLabels = ['Dark', 'Light', 'System'];
     const themeModes = [ThemeMode.dark, ThemeMode.light, ThemeMode.system];
@@ -205,36 +205,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ],
         ),
         TitledCard(
-  title: 'Data & reports',
-  children: [
-    RowList([
-      RowItem(
-        title: 'Sync',
-        subtitle: '$lastSync · ${sync.pendingCount} pending',
-        trailing: syncTitle,
-      ),
-      RowItem(
-        title: 'Export data',
-        subtitle: 'Download a report as Excel or PDF',
-        chevron: true,
-        onTap: () => context.go('${AppRoutes.reports}?tab=export'),
-      ),
-      RowItem(
-        title: 'Backup & data export',
-        subtitle: 'Full backup, CSV export, check a backup file',
-        chevron: true,
-        onTap: () => context.push(AppRoutes.backup),
-      ),
-    ]),
-    const SizedBox(height: 12),
-    MutedText(
-      lastBackup == null
-          ? 'No backup has been made from this phone yet. Backups are never made automatically.'
-          : 'Last backup made from this phone: ${lastBackup.createdAt.toLocal().toString().substring(0, 16)}. Backups are never made automatically.',
-      size: 14,
-    ),
-  ],
-),
+          title: 'Data & reports',
+          children: [
+            RowList([
+              RowItem(
+                title: 'Sync',
+                subtitle: '$lastSync · ${sync.pendingCount} pending',
+                trailing: syncTitle,
+              ),
+              RowItem(
+                title: 'Export data',
+                subtitle: 'Download a report as Excel or PDF',
+                chevron: true,
+                onTap: () => context.go('${AppRoutes.reports}?tab=export'),
+              ),
+              RowItem(
+                title: 'Backup & data export',
+                subtitle: 'Full backup, CSV export, check a backup file',
+                chevron: true,
+                onTap: () => context.push(AppRoutes.backup),
+              ),
+            ]),
+            const SizedBox(height: 12),
+            MutedText(
+              lastBackup == null
+                  ? 'No backup has been made from this phone yet. Backups are never made automatically.'
+                  : 'Last backup made from this phone: ${lastBackup.createdAt.toLocal().toString().substring(0, 16)}. Backups are never made automatically.',
+              size: 14,
+            ),
+          ],
+        ),
         TitledCard(
           title: 'Account',
           children: [
@@ -462,7 +462,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ],
         ),
-        
       ],
     );
   }

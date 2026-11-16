@@ -673,7 +673,8 @@ class _SplitEditorState extends ConsumerState<_SplitEditor> {
               ),
             ),
           ),
-        if (_days.isNotEmpty) DashedButton('+ Add day', onPressed: full ? null : _addDay),
+        if (_days.isNotEmpty)
+          DashedButton('+ Add day', onPressed: full ? null : _addDay),
         const SizedBox(height: 18),
         const FieldLabel('Notes · optional'),
         FieldBox(
