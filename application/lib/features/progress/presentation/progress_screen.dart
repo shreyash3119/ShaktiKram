@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/insights/insight_providers.dart';
 import '../../../core/insights/insight_repository.dart';
+import '../../../core/routing/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/time/local_stamp.dart';
 import '../../../core/widgets/cards.dart';
 import '../../../core/widgets/controls.dart';
 import '../../../core/widgets/insight_status.dart';
 import '../../../core/widgets/meters.dart';
+import '../../../core/widgets/section_widgets.dart';
+import '../../home/presentation/home_screen.dart' show showLogWeight;
 import '../../lifestyle/data/lifestyle_models.dart';
+import '../../training/presentation/training_dialogs.dart' show ModalCard;
 import '../data/progress_insights.dart';
 import '../data/progress_service.dart' show measuredMetrics;
 import 'progress_editors.dart';
@@ -22,58 +27,113 @@ import '../data/progress_providers.dart';
 ///  - records the phone holds (personal records, achievements, goals, measurements) are shown straight from SQLite;
 ///  - values the server calculates (trends, goal progress, body-composition estimates, exposure, ratings, streak) come from
 ///    the insight cache, labelled with how old they are. They are never recalculated here.
-class ProgressScreen extends StatefulWidget {
+class ProgressScreen extends ConsumerStatefulWidget {
   const ProgressScreen({super.key});
 
   @override
-  State<ProgressScreen> createState() => _ProgressScreenState();
+  ConsumerState<ProgressScreen> createState() => _ProgressScreenState();
 }
 
-class _ProgressScreenState extends State<ProgressScreen> {
+class _ProgressScreenState extends ConsumerState<ProgressScreen> {
   static const _tabs = ['Overview', 'Strength', 'Body', 'Muscles', 'Goals'];
   int _tab = 0;
+
+  void _goTo(int tab) => setState(() => _tab = tab);
 
   List<Widget> _content() {
     switch (_tab) {
       case 1:
-        return const [_StrengthTrends(), _E1rmChart(), _PrHistory(full: true)];
+        return const [_StrengthTab()];
       case 2:
-        return const [
-          _BodyWeight(),
-          _BodyCompositionCard(),
-          _MeasurementHistory(),
-        ];
+        return const [_BodyWeight(), _BodyRows()];
       case 3:
         return const [_MuscleRatings(), _Exposure(), _WeakPoints()];
       case 4:
-        return const [_GoalsCard(), _GoalMilestones()];
+        return const [_GoalsTab()];
       default:
-        return const [
-          _Highlights(),
-          _StrengthTrends(),
-          _PrHistory(),
-          _BodyLast(),
-          _GoalsCard(),
-          _Exposure(),
-        ];
+        return [_Overview(onOpenTab: _goTo)];
     }
+  }
+
+  /// "Updated 2 min ago": the newest answer among the server values this screen reads.
+  String _updated() {
+    final today = localStampOf(DateTime.now()).localDate;
+    final stamps = <DateTime?>[
+      ref.watch(dailyBriefingProvider(today)).snapshot.fetchedAt,
+      ref.watch(exerciseTrendsProvider).snapshot.fetchedAt,
+      ref.watch(goalProgressProvider).snapshot.fetchedAt,
+      ref.watch(muscleExposureProvider).snapshot.fetchedAt,
+    ].whereType<DateTime>().toList()..sort();
+    return stamps.isEmpty
+        ? 'Not updated yet'
+        : 'Updated ${ageText(stamps.last)}';
   }
 
   @override
   Widget build(BuildContext context) {
     return ScreenFrame(
       title: 'Progress',
-      subtitle: 'Your history and change over time',
+      subtitle: _updated(),
+      trailing: HeaderIconButton(
+        key: const Key('progress-info'),
+        icon: Icons.info_outline,
+        tooltip: 'About these numbers',
+        onTap:
+            () => showDialog<void>(
+              context: context,
+              builder: (_) => const _AboutDialog(),
+            ),
+      ),
       children: [
-        PillTabs(
+        UnderlineTabs(
           labels: _tabs,
           index: _tab,
-          container: true,
-          layout: PillLayout.scroll,
           onChanged: (i) => setState(() => _tab = i),
         ),
         ..._content(),
       ],
+    );
+  }
+}
+
+class _AboutDialog extends ConsumerWidget {
+  const _AboutDialog();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = context.pal;
+    final today = localStampOf(DateTime.now()).localDate;
+    return ModalCard(
+      title: 'About these numbers',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Records, weights and goals are kept on this phone. Trends, goal progress, exposure and ratings are calculated by the server and shown with how old they are. They are never recalculated here.\n\nNot medical advice.',
+            style: TextStyle(color: p.text, fontSize: 16, height: 1.4),
+          ),
+          const SizedBox(height: 16),
+          AppButton(
+            'Refresh now',
+            key: const Key('progress-refresh'),
+            onPressed: () {
+              for (final spec in [
+                dailyBriefingSpec(today),
+                exerciseTrendsSpec,
+                exerciseSessionBestSpec,
+                goalProgressSpec,
+                goalMilestonesSpec,
+                muscleExposureSpec,
+                muscleRatingsSpec,
+                bodyCompositionSpec,
+              ]) {
+                ref.read(insightProvider(spec).notifier).refresh();
+              }
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      ),
     );
   }
 }
@@ -162,136 +222,6 @@ class _Status extends ConsumerWidget {
   );
 }
 
-// ---- Overview ----
-
-class _Highlights extends ConsumerWidget {
-  const _Highlights();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final p = context.pal;
-    final records =
-        ref.watch(personalRecordsProvider).valueOrNull ??
-        const <PersonalRecord>[];
-    final names = ref.watch(exerciseNamesProvider);
-    final achievements =
-        ref.watch(visibleAchievementsProvider).valueOrNull ??
-        const <Achievement>[];
-    final briefing = ref.watch(
-      dailyBriefingProvider(localStampOf(DateTime.now()).localDate),
-    );
-    final latest = records.isEmpty ? null : records.first;
-    final streak = briefing.briefing?.currentStreak;
-
-    Widget col(String label, String value, String note) => Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: TextStyle(color: p.muted, fontSize: 13)),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              color: p.text,
-              fontSize: 19,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(note, style: TextStyle(color: p.muted, fontSize: 13)),
-        ],
-      ),
-    );
-    return TitledCard(
-      title: 'Recent highlights',
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            col(
-              'Latest record',
-              latest == null
-                  ? '–'
-                  : '${names[latest.exerciseId] ?? 'Workout'} ${_prValue(latest)}',
-              latest == null
-                  ? 'None yet'
-                  : '${_prKind(latest.kind)} · ${_dateText(latest.achievedOn)}',
-            ),
-            const SizedBox(width: 12),
-            col(
-              'Workout streak',
-              streak == null
-                  ? '–'
-                  : '$streak ${streak == 1 ? 'workout' : 'workouts'}',
-              streak == null
-                  ? 'Not loaded yet'
-                  : 'Scheduled sessions in a row · longest ${briefing.briefing?.longestStreak ?? '–'}',
-            ),
-          ],
-        ),
-        if (achievements.isNotEmpty) ...[
-          _gap(),
-          RowList([
-            for (final a in achievements.take(2))
-              RowItem(
-                title: a.title,
-                subtitle: 'Achievement · ${_dateText(a.achievedOn)}',
-              ),
-          ]),
-        ],
-        _gap(10),
-        const MutedText(
-          'Only finished workouts with logged sets count. The streak counts scheduled sessions done in a row, so it needs a schedule.',
-          size: 13,
-        ),
-        InsightStatusLine(
-          snapshot: briefing.snapshot,
-          onRefresh:
-              () =>
-                  ref
-                      .read(
-                        insightProvider(
-                          dailyBriefingSpec(
-                            localStampOf(DateTime.now()).localDate,
-                          ),
-                        ).notifier,
-                      )
-                      .refresh(),
-        ),
-      ],
-    );
-  }
-}
-
-class _BodyLast extends ConsumerWidget {
-  const _BodyLast();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final all =
-        ref.watch(measurementsProvider(null)).valueOrNull ??
-        const <BodyMeasurement>[];
-    final latest = <String, BodyMeasurement>{};
-    for (final m in all) {
-      latest.putIfAbsent(
-        m.type == 'custom' ? 'custom:${m.customLabel}' : m.type,
-        () => m,
-      );
-    }
-    final newest = all.isEmpty ? null : all.first.localDate;
-    return TitledCard(
-      title:
-          newest == null ? 'Body' : 'Body · last measured ${_dateText(newest)}',
-      children: [
-        if (latest.isEmpty)
-          const MutedText('No measurements yet. Log your weight from Home.')
-        else
-          RowList([for (final m in latest.values.take(4)) _measurementRow(m)]),
-      ],
-    );
-  }
-}
-
 RowItem _measurementRow(BodyMeasurement m) {
   final label = m.type == 'custom' ? (m.customLabel ?? 'Custom') : _cap(m.type);
   final unit = switch (m.type) {
@@ -308,6 +238,341 @@ RowItem _measurementRow(BodyMeasurement m) {
   );
 }
 
+/// Shown under a card when its server answer could not be loaded or is old. Healthy answers add nothing.
+class _Problem extends ConsumerWidget {
+  const _Problem(this.spec, this.snapshot);
+
+  final InsightSpec spec;
+  final InsightSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final healthy =
+        snapshot.hasData &&
+        snapshot.error == null &&
+        snapshot.freshness != InsightFreshness.stale;
+    if (healthy) return const SizedBox.shrink();
+    return _Status(spec, snapshot);
+  }
+}
+
+// ---- Overview ----
+
+class _Overview extends ConsumerWidget {
+  const _Overview({required this.onOpenTab});
+
+  final ValueChanged<int> onOpenTab;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = context.pal;
+    final today = localStampOf(DateTime.now()).localDate;
+    final records =
+        ref.watch(personalRecordsProvider).valueOrNull ??
+        const <PersonalRecord>[];
+    final names = ref.watch(exerciseNamesProvider);
+    final briefing = ref.watch(dailyBriefingProvider(today));
+    final weights =
+        ref.watch(measurementsProvider('weight')).valueOrNull ??
+        const <BodyMeasurement>[];
+    final goals = ref.watch(goalsProvider).valueOrNull ?? const <Goal>[];
+    final progress = ref.watch(goalProgressProvider);
+    final goal =
+        goals
+            .where((g) => g.status == 'active')
+            .followedBy(goals.where((g) => g.status == 'paused'))
+            .firstOrNull;
+    final gp = goal == null ? null : _progressFor(progress, goal.id);
+    final latest = records.isEmpty ? null : records.first;
+    final streak = briefing.briefing?.currentStreak;
+    final longest = briefing.briefing?.longestStreak;
+    final w = weights.isEmpty ? null : weights.first;
+    final trends = ref.watch(exerciseTrendsProvider);
+    final trendRows = [
+      for (final t in trends.rows)
+        if (t.signal != 'insufficient_data') t,
+    ];
+    final exposure = ref.watch(muscleExposureProvider);
+    final labels =
+        ref.watch(muscleLabelsProvider).valueOrNull ?? const <String, String>{};
+    final totals = _exposureTotals(exposure.rows);
+
+    Widget tile(
+      Key key,
+      String label,
+      String value,
+      String link,
+      String note,
+      VoidCallback onTap, {
+      double fill = 0,
+    }) => Expanded(
+      child: AppCard(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          key: key,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: TextStyle(color: p.muted, fontSize: 15)),
+            const SizedBox(height: 4),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                value,
+                style: TextStyle(
+                  color: p.text,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            MeterBar(value: fill.clamp(0, 1).toDouble(), trackColor: p.tile),
+            const SizedBox(height: 10),
+            LinkText(link, onTap: onTap),
+            const SizedBox(height: 2),
+            Text(
+              note,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: p.muted, fontSize: 15),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              tile(
+                const Key('tile-record'),
+                'Latest record',
+                latest == null ? '–' : _prValue(latest),
+                'See records',
+                latest == null
+                    ? 'None yet'
+                    : '${names[latest.exerciseId] ?? 'Workout'} · ${_dateText(latest.achievedOn)}',
+                () => onOpenTab(1),
+              ),
+              const SizedBox(width: 12),
+              tile(
+                const Key('tile-streak'),
+                'Workout streak',
+                streak == null ? '–' : '$streak',
+                'See streak',
+                'workouts in a row',
+                () => context.go(AppRoutes.training),
+                fill:
+                    streak == null || longest == null || longest == 0
+                        ? 0
+                        : streak / longest,
+              ),
+            ],
+          ),
+        ),
+        _gap(),
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              tile(
+                const Key('tile-weight'),
+                'Weight',
+                w == null ? '–' : '${_kg(w.value)} kg',
+                'See body',
+                w == null ? 'No weight yet' : _dateText(w.localDate),
+                () => onOpenTab(2),
+              ),
+              const SizedBox(width: 12),
+              tile(
+                const Key('tile-goal'),
+                'Goal',
+                goal == null ? 'None' : goal.title,
+                'See goals',
+                goal == null
+                    ? 'No active goal'
+                    : '${_cap(goal.status)} · ${gp == null ? 'progress not loaded' : _cap(gp.progressStatus)}',
+                () => onOpenTab(4),
+                fill: (gp?.progressPct ?? 0) / 100,
+              ),
+            ],
+          ),
+        ),
+        _gap(),
+        AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _CardTitle('Strength trends'),
+              if (trendRows.isEmpty)
+                NoteRow(
+                  trends.snapshot.hasData
+                      ? 'Log two sessions of an exercise to see a trend.'
+                      : 'Trends appear once they have loaded from the server.',
+                )
+              else
+                RowList([
+                  for (final t in (trendRows..sort((a, b) => (names[a.exerciseId] ?? '').compareTo(names[b.exerciseId] ?? ''))).take(3))
+                    RowItem(
+                      title: names[t.exerciseId] ?? 'Exercise',
+                      subtitle: '${t.sessionsConsidered} sessions',
+                      trailing:
+                          '${_cap(t.signal)}${t.changePct == null ? '' : ' ${t.changePct! >= 0 ? '+' : ''}${t.changePct!.toStringAsFixed(1)}%'}',
+                    ),
+                ]),
+            ],
+          ),
+        ),
+        _gap(),
+        AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _CardTitle('Training exposure · 4 weeks'),
+              if (totals.isEmpty)
+                NoteRow(
+                  exposure.snapshot.hasData
+                      ? 'No counted working sets yet.'
+                      : 'Exposure appears once it has loaded from the server.',
+                )
+              else
+                _ExposureBars(totals: totals, labels: labels, limit: 4),
+            ],
+          ),
+        ),
+        _gap(),
+        const InfoLine('Calculated by the server. Not medical advice.'),
+        _Problem(exerciseTrendsSpec, trends.snapshot),
+        _Problem(muscleExposureSpec, exposure.snapshot),
+      ],
+    );
+  }
+}
+
+class _CardTitle extends StatelessWidget {
+  const _CardTitle(this.text, {this.sub});
+
+  final String text;
+  final String? sub;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.pal;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            text,
+            style: TextStyle(
+              color: p.text,
+              fontSize: 21,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          if (sub != null) ...[
+            const SizedBox(height: 6),
+            Text(sub!, style: TextStyle(color: p.muted, fontSize: 16)),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+GoalProgress? _progressFor(InsightRows<GoalProgress> progress, String goalId) {
+  for (final r in progress.rows) {
+    if (r.goalId == goalId) return r;
+  }
+  return null;
+}
+
+/// Direct working sets per muscle over the last four weeks, least first.
+List<MapEntry<String, double>> _exposureTotals(List<MuscleExposure> rows) {
+  final cutoff = DateTime.now().subtract(const Duration(days: 28));
+  final totals = <String, double>{};
+  for (final e in rows) {
+    if ((DateTime.tryParse(e.weekStart) ?? DateTime(2000)).isAfter(cutoff)) {
+      totals[e.muscleId] = (totals[e.muscleId] ?? 0.0) + e.directSets;
+    }
+  }
+  return totals.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+}
+
+/// One bar per muscle: longer and darker means more direct sets.
+class _ExposureBars extends StatelessWidget {
+  const _ExposureBars({
+    required this.totals,
+    required this.labels,
+    required this.limit,
+  });
+
+  final List<MapEntry<String, double>> totals;
+  final Map<String, String> labels;
+  final int limit;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.pal;
+    final shown = totals.take(limit).toList();
+    final top = shown.isEmpty ? 1.0 : shown.first.value;
+    return Column(
+      children: [
+        for (final e in shown)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 104,
+                  child: Text(
+                    labels[e.key] ?? 'Muscle',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: p.text, fontSize: 15),
+                  ),
+                ),
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: Stack(
+                      children: [
+                        Container(height: 12, color: p.tile),
+                        FractionallySizedBox(
+                          widthFactor: top == 0 ? 0 : (e.value / top).clamp(0.05, 1),
+                          child: Container(
+                            height: 12,
+                            color: p.primary.withValues(
+                              alpha: top == 0 ? 0.4 : 0.35 + 0.65 * (e.value / top),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 36,
+                  child: Text(
+                    '${e.value.round()}',
+                    textAlign: TextAlign.right,
+                    style: TextStyle(color: p.muted, fontSize: 15),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+// ---- Strength ----
 // ---- Strength ----
 
 class _StrengthTrends extends ConsumerWidget {
@@ -471,6 +736,90 @@ class _PrHistory extends ConsumerWidget {
   }
 }
 
+class _StrengthTab extends ConsumerStatefulWidget {
+  const _StrengthTab();
+
+  @override
+  ConsumerState<_StrengthTab> createState() => _StrengthTabState();
+}
+
+class _StrengthTabState extends ConsumerState<_StrengthTab> {
+  int? _open;
+
+  @override
+  Widget build(BuildContext context) {
+    final trends = ref.watch(exerciseTrendsProvider);
+    final best = ref.watch(exerciseSessionBestProvider);
+    final records =
+        ref.watch(personalRecordsProvider).valueOrNull ??
+        const <PersonalRecord>[];
+    final trendCount =
+        trends.rows.where((t) => t.signal != 'insufficient_data').length;
+    final bestCount = {for (final r in best.rows) r.exerciseId}.length;
+    final has = [trendCount > 0, bestCount > 0, records.isNotEmpty];
+    final open = _open ?? has.indexOf(true);
+    String plural(int n, String one, String many) => '$n ${n == 1 ? one : many}';
+
+    Widget detail() => switch (open) {
+      0 => const _StrengthTrends(),
+      1 => const _E1rmChart(),
+      2 => const _PrHistory(full: true),
+      _ => const SizedBox.shrink(),
+    };
+    void toggle(int i) => setState(() => _open = open == i ? -1 : i);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppCard(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+          child: RowList([
+            RowItem(
+              key: const Key('strength-row-trends'),
+              title: 'Strength trends',
+              subtitle: 'Estimated 1RM, last four sessions',
+              trailing: trendCount == 0 ? 'No data' : plural(trendCount, 'exercise', 'exercises'),
+              onTap: () => toggle(0),
+            ),
+            RowItem(
+              key: const Key('strength-row-chart'),
+              title: 'Strength',
+              subtitle: 'Finished workouts with logged sets',
+              trailing: bestCount == 0 ? 'No data' : plural(bestCount, 'exercise', 'exercises'),
+              onTap: () => toggle(1),
+            ),
+            RowItem(
+              key: const Key('strength-row-prs'),
+              title: 'PR history',
+              subtitle: 'Found after a workout syncs',
+              trailing: records.isEmpty ? 'No records' : plural(records.length, 'record', 'records'),
+              onTap: () => toggle(2),
+            ),
+          ]),
+        ),
+        if (!has.contains(true)) ...[
+          _gap(),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                _CardTitle('Nothing to show yet'),
+                NoteRow('Complete a workout with logged sets and your trends will appear here.'),
+              ],
+            ),
+          ),
+        ] else if (open >= 0) ...[
+          _gap(),
+          detail(),
+        ],
+        _gap(),
+        const InfoLine('Estimates are from your records, not direct measurements.'),
+        _Problem(exerciseTrendsSpec, trends.snapshot),
+      ],
+    );
+  }
+}
+
 // ---- Body ----
 
 class _BodyWeight extends ConsumerStatefulWidget {
@@ -486,6 +835,7 @@ class _BodyWeightState extends ConsumerState<_BodyWeight> {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.pal;
     final all =
         ref.watch(measurementsProvider('weight')).valueOrNull ??
         const <BodyMeasurement>[];
@@ -495,62 +845,195 @@ class _BodyWeightState extends ConsumerState<_BodyWeight> {
           for (final m in all)
             if ((m.occurredAt ?? DateTime.now()).isAfter(cutoff)) m,
         ].reversed.toList();
-    return TitledCard(
-      title: 'Body weight',
-      children: [
-        PillTabs(
-          labels: const ['1M', '3M', '6M', '1Y'],
-          index: _range,
-          onChanged: (i) => setState(() => _range = i),
-        ),
-        _gap(10),
-        if (inRange.length < 2)
-          const MutedText('Log your weight on at least two days to see a line.')
-        else ...[
-          Builder(
-            builder: (_) {
-              final a = _axis([for (final m in inRange) m.value]);
-              return LineChartView(
-                values: [for (final m in inRange) m.value],
-                xLabels: _xLabels([for (final m in inRange) m.localDate]),
-                yMin: a.min,
-                yMax: a.max,
-                yTicks: a.ticks,
-              );
-            },
+    final latest = all.isEmpty ? null : all.first;
+    return AppCard(
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            latest == null
+                ? 'Body weight'
+                : 'Body weight · ${_dateText(latest.localDate)}',
+            style: TextStyle(color: p.muted, fontSize: 16),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            latest == null ? '–' : '${_kg(latest.value)} kg',
+            key: const Key('body-weight-value'),
+            style: TextStyle(
+              color: p.text,
+              fontSize: 40,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           _gap(10),
-          MutedText(
-            'Latest ${_kg(inRange.last.value)} kg on ${_dateText(inRange.last.localDate)}. Daily weight moves around; compare longer periods.',
+          PillTabs(
+            labels: const ['1M', '3M', '6M', '1Y'],
+            index: _range,
+            container: true,
+            onChanged: (i) => setState(() => _range = i),
+          ),
+          _gap(14),
+          if (inRange.length < 2) ...[
+            SizedBox(
+              height: 120,
+              child: CustomPaint(
+                painter: _BaselineDot(
+                  line: p.divider,
+                  dot: p.primary,
+                  show: inRange.length == 1,
+                ),
+                child: const SizedBox.expand(),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Log your weight on at least two days to see a line.',
+              style: TextStyle(color: p.muted, fontSize: 15),
+            ),
+          ] else ...[
+            Builder(
+              builder: (_) {
+                final a = _axis([for (final m in inRange) m.value]);
+                return LineChartView(
+                  values: [for (final m in inRange) m.value],
+                  xLabels: _xLabels([for (final m in inRange) m.localDate]),
+                  yMin: a.min,
+                  yMax: a.max,
+                  yTicks: a.ticks,
+                );
+              },
+            ),
+            _gap(10),
+            MutedText(
+              'Daily weight moves around; compare longer periods.',
+              size: 14,
+            ),
+          ],
+          _gap(14),
+          AppButton(
+            'Log weight',
+            key: const Key('progress-log-weight'),
+            height: 56,
+            onPressed: () => showLogWeight(context),
           ),
         ],
-      ],
+      ),
     );
   }
 }
 
-class _BodyCompositionCard extends ConsumerWidget {
-  const _BodyCompositionCard();
+class _BaselineDot extends CustomPainter {
+  _BaselineDot({required this.line, required this.dot, required this.show});
+
+  final Color line;
+  final Color dot;
+  final bool show;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final y = size.height - 8;
+    canvas.drawLine(
+      Offset(0, y),
+      Offset(size.width, y),
+      Paint()
+        ..color = line
+        ..strokeWidth = 1.5,
+    );
+    if (show) {
+      canvas.drawCircle(Offset(size.width * 0.7, y), 5, Paint()..color = dot);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_BaselineDot old) => old.show != show;
+}
+
+class _BodyRows extends ConsumerWidget {
+  const _BodyRows();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final comp = ref.watch(bodyCompositionProvider);
-    final latest = comp.rows.isEmpty ? null : comp.rows.first;
-    return TitledCard(
+    final latestComp = comp.rows.isEmpty ? null : comp.rows.first;
+    final all =
+        ref.watch(measurementsProvider(null)).valueOrNull ??
+        const <BodyMeasurement>[];
+    final weights =
+        ref.watch(measurementsProvider('weight')).valueOrNull ??
+        const <BodyMeasurement>[];
+    final w = weights.isEmpty ? null : weights.first;
+    final fat = latestComp?.bodyFatPct;
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Column(
+        children: [
+          AppCard(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+            child: RowList([
+              RowItem(
+                key: const Key('body-composition-row'),
+                title: 'Body composition',
+                subtitle:
+                    fat == null
+                        ? (comp.snapshot.hasData
+                            ? 'No body-fat readings yet'
+                            : 'Appears once it has loaded')
+                        : 'Body fat${latestComp?.method == null ? '' : ' · ${_cap(latestComp!.method!)}'}',
+                trailing: fat == null ? 'Add in Lifestyle' : '${_kg(fat)}%',
+                onTap:
+                    fat == null
+                        ? () => context.go(AppRoutes.lifestyle)
+                        : () => showDialog<void>(
+                          context: context,
+                          builder: (_) => _CompositionDialog(latestComp!),
+                        ),
+              ),
+              RowItem(
+                key: const Key('body-weight-row'),
+                title: 'Weight',
+                subtitle: w == null ? 'No weight yet' : _dateText(w.localDate),
+                trailing: w == null ? '–' : '${_kg(w.value)} kg',
+                onTap:
+                    all.isEmpty
+                        ? null
+                        : () => showDialog<void>(
+                          context: context,
+                          builder: (_) => ModalCard(
+                            title: 'Measurement history',
+                            child: RowList([
+                              for (final m in all.take(12)) _measurementRow(m),
+                            ]),
+                          ),
+                        ),
+              ),
+            ]),
+          ),
+          _Problem(bodyCompositionSpec, comp.snapshot),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompositionDialog extends StatelessWidget {
+  const _CompositionDialog(this.latest);
+
+  final BodyComposition latest;
+
+  @override
+  Widget build(BuildContext context) {
+    return ModalCard(
       title: 'Body composition',
-      children: [
-        if (latest == null)
-          MutedText(
-            comp.snapshot.hasData
-                ? 'No body-fat readings yet. Add one in Lifestyle.'
-                : 'Body composition appears once it has loaded from the server.',
-          )
-        else ...[
+      subtitle: _dateText(latest.localDate),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           RowList([
             if (latest.weightKg != null)
               RowItem(
                 title: 'Weight',
-                subtitle: _dateText(latest.localDate),
                 trailing: '${_kg(latest.weightKg!)} kg',
               ),
             if (latest.bodyFatPct != null)
@@ -573,33 +1056,12 @@ class _BodyCompositionCard extends ConsumerWidget {
                 trailing: '${_kg(latest.leanMassKg!)} kg',
               ),
           ]),
-          _gap(10),
+          const SizedBox(height: 12),
           const MutedText(
             'Fat and lean mass are estimates from one reading. Readings vary by method; compare like with like.',
           ),
         ],
-        _Status(bodyCompositionSpec, comp.snapshot),
-      ],
-    );
-  }
-}
-
-class _MeasurementHistory extends ConsumerWidget {
-  const _MeasurementHistory();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final all =
-        ref.watch(measurementsProvider(null)).valueOrNull ??
-        const <BodyMeasurement>[];
-    return TitledCard(
-      title: 'Measurement history',
-      children: [
-        if (all.isEmpty)
-          const MutedText('Measurements you log appear here.')
-        else
-          RowList([for (final m in all.take(12)) _measurementRow(m)]),
-      ],
+      ),
     );
   }
 }
@@ -616,37 +1078,39 @@ class _MuscleRatings extends ConsumerWidget {
       for (final r in ratings.rows)
         if (r.currentLevel != null) r,
     ]..sort((a, b) => a.muscleKey.compareTo(b.muscleKey));
-    return TitledCard(
-      title: 'Muscles · your own ratings',
-      children: [
-        const MutedText(
-          'These are the ratings you entered yourself. They are not calculated from training.',
-        ),
-        _gap(10),
-        if (rated.isEmpty)
-          MutedText(
-            ratings.snapshot.hasData
-                ? 'No assessment recorded yet.'
-                : 'Ratings appear once they have loaded from the server.',
-          )
-        else
-          RowList([
-            for (final r in rated)
-              RowItem(
-                title: _cap(r.muscleKey),
-                subtitle:
-                    '${r.category == null ? '' : '${_cap(r.category!)} · '}${r.ratedOn == null ? '' : _dateText(r.ratedOn!)}',
-                trailing:
-                    '${r.currentLevel}${r.previousLevel == null ? '' : ' (was ${r.previousLevel})'}',
-              ),
-          ]),
-        _gap(12),
-        AppButton.primary(
-          rated.isEmpty ? 'Rate your muscles' : 'Update your ratings',
-          onPressed: () => showAssessmentSheet(context),
-        ),
-        _Status(muscleRatingsSpec, ratings.snapshot),
-      ],
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CardTitle(
+            'Your ratings',
+            sub:
+                'Ratings you entered yourself. Not calculated from training.',
+          ),
+          if (rated.isNotEmpty) ...[
+            RowList([
+              for (final r in rated)
+                RowItem(
+                  title: _cap(r.muscleKey),
+                  subtitle:
+                      '${r.category == null ? '' : '${_cap(r.category!)} · '}${r.ratedOn == null ? '' : _dateText(r.ratedOn!)}',
+                  trailing:
+                      '${r.currentLevel}${r.previousLevel == null ? '' : ' (was ${r.previousLevel})'}',
+                ),
+            ]),
+            _gap(12),
+          ] else if (!ratings.snapshot.hasData) ...[
+            const MutedText('Ratings appear once they have loaded from the server.'),
+            _gap(12),
+          ],
+          AppButton.primary(
+            rated.isEmpty ? 'Rate your muscles' : 'Update your ratings',
+            height: 58,
+            onPressed: () => showAssessmentSheet(context),
+          ),
+          _Problem(muscleRatingsSpec, ratings.snapshot),
+        ],
+      ),
     );
   }
 }
@@ -659,42 +1123,31 @@ class _Exposure extends ConsumerWidget {
     final exposure = ref.watch(muscleExposureProvider);
     final labels =
         ref.watch(muscleLabelsProvider).valueOrNull ?? const <String, String>{};
-    final cutoff = DateTime.now().subtract(const Duration(days: 28));
-    final recent = [
-      for (final e in exposure.rows)
-        if ((DateTime.tryParse(e.weekStart) ?? DateTime(2000)).isAfter(cutoff))
-          e,
-    ];
-    final totals = <String, double>{};
-    for (final e in recent) {
-      totals[e.muscleId] = (totals[e.muscleId] ?? 0.0) + e.directSets;
-    }
-    final ordered =
-        totals.entries.toList()..sort((a, b) => a.value.compareTo(b.value));
-    return TitledCard(
-      title: 'Training exposure · last 4 weeks',
-      children: [
-        const MutedText(
-          'Direct working sets per muscle. This counts what you did; it says nothing about how developed a muscle is.',
+    final totals = _exposureTotals(exposure.rows);
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const _CardTitle(
+              'Training exposure · 4 weeks',
+              sub: 'Direct working sets per muscle from finished workouts.',
+            ),
+            if (totals.isEmpty)
+              NoteRow(
+                exposure.snapshot.hasData
+                    ? 'No counted sets yet.'
+                    : 'Exposure appears once it has loaded from the server.',
+              )
+            else
+              _ExposureBars(totals: totals, labels: labels, limit: 10),
+            const SizedBox(height: 12),
+            const MutedText('Darker bar = more direct sets.', size: 15),
+            _Problem(muscleExposureSpec, exposure.snapshot),
+          ],
         ),
-        _gap(10),
-        if (ordered.isEmpty)
-          MutedText(
-            exposure.snapshot.hasData
-                ? 'No counted working sets in the last four weeks. Workouts with no logged sets do not contribute.'
-                : 'Exposure appears once it has loaded from the server.',
-          )
-        else
-          RowList([
-            for (final e in ordered.take(10))
-              RowItem(
-                title: labels[e.key] ?? 'Muscle',
-                subtitle: 'Direct sets, 4 weeks',
-                trailing: '${e.value.round()}',
-              ),
-          ]),
-        _Status(muscleExposureSpec, exposure.snapshot),
-      ],
+      ),
     );
   }
 }
@@ -720,173 +1173,74 @@ class _WeakPoints extends ConsumerWidget {
     if (!briefing.snapshot.hasData) {
       empty = 'Suggestions appear once the daily briefing has loaded.';
     } else if (!hasSets && !hasRatings) {
-      empty =
-          'Not enough data to assess. Log workouts with sets, or rate your muscles, and suggestions will appear here.';
+      empty = 'Log workouts with sets, or rate your muscles, to get suggestions.';
     } else {
       empty = 'No low-exposure muscles detected from the data you have.';
     }
-    return TitledCard(
-      title: 'Muscles that get little direct work',
-      children: [
-        if (weak.isEmpty)
-          MutedText(empty)
-        else
-          RowList([
-            for (final w in weak)
-              RowItem(
-                title: _cap(w.muscleKey),
-                subtitle:
-                    '${w.directSets28d} direct sets in 4 weeks${w.suggestions.isEmpty ? '' : ' · e.g. ${w.suggestions.join(', ')}'}',
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const _CardTitle('Muscles with little direct work'),
+            if (weak.isEmpty)
+              NoteRow(empty)
+            else ...[
+              RowList([
+                for (final w in weak)
+                  RowItem(
+                    title: _cap(w.muscleKey),
+                    subtitle:
+                        '${w.directSets28d} direct sets in 4 weeks${w.suggestions.isEmpty ? '' : ' · e.g. ${w.suggestions.join(', ')}'}',
+                  ),
+              ]),
+              _gap(10),
+              const MutedText(
+                'Suggestions to consider within your split and recovery, not instructions.',
+                size: 14,
               ),
-          ]),
-        _gap(10),
-        const MutedText(
-          'Suggestions to consider within your split and recovery, not instructions.',
+            ],
+            _Problem(dailyBriefingSpec(today), briefing.snapshot),
+          ],
         ),
-        InsightStatusLine(
-          snapshot: briefing.snapshot,
-          onRefresh:
-              () =>
-                  ref
-                      .read(insightProvider(dailyBriefingSpec(today)).notifier)
-                      .refresh(),
-        ),
-      ],
+      ),
     );
   }
 }
 
 // ---- Goals ----
 
-class _GoalsCard extends ConsumerStatefulWidget {
-  const _GoalsCard();
-
-  @override
-  ConsumerState<_GoalsCard> createState() => _GoalsCardState();
-}
-
-class _GoalsCardState extends ConsumerState<_GoalsCard> {
-  bool _archived = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.pal;
-    final goals =
-        (_archived ? ref.watch(allGoalsProvider) : ref.watch(goalsProvider))
-            .valueOrNull ??
-        const <Goal>[];
-    final progress = ref.watch(goalProgressProvider);
-    final byGoal = {for (final g in progress.rows) g.goalId: g};
-    return TitledCard(
-      title: 'Goals',
-      children: [
-        if (goals.isEmpty)
-          const MutedText('No goals yet. Create one to track it here.')
-        else
-          for (final g in goals.take(12)) ...[
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => showGoalActions(context, g),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    g.title,
-                    style: TextStyle(
-                      color: p.text,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _goalLine(g, byGoal[g.id]),
-                    style: TextStyle(color: p.muted, fontSize: 14),
-                  ),
-                  if (_isOpen(g)) ...[
-                    const SizedBox(height: 8),
-                    MeterBar(
-                      value:
-                          ((byGoal[g.id]?.progressPct ?? 0) / 100)
-                              .clamp(0, 1)
-                              .toDouble(),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            _gap(14),
-          ],
-        ToggleRow(
-          title: 'Show archived goals',
-          value: _archived,
-          onChanged: (v) => setState(() => _archived = v),
-        ),
-        _gap(6),
-        AppButton.primary('New goal', onPressed: () => showGoalEditor(context)),
-        if (goals.isNotEmpty) ...[
-          _gap(8),
-          const MutedText(
-            'Tap a goal to edit it, record progress, add milestones, pause, complete or archive it.',
-            size: 13,
-          ),
-          _Status(goalProgressSpec, progress.snapshot),
-        ],
-      ],
-    );
-  }
-
-  static bool _isOpen(Goal g) => g.status == 'active' || g.status == 'paused';
-
-  /// Completed and archived goals are closed: the server's progress percentage no longer applies, so it is not shown.
-  static String _goalLine(Goal g, GoalProgress? p) {
-    final status = g.status == 'abandoned' ? 'Archived' : _cap(g.status);
-    if (!_isOpen(g)) {
-      final target =
-          g.targetValue == null
-              ? ''
-              : ' · target ${_kg(g.targetValue!)}${g.targetUnit == null ? '' : ' ${g.targetUnit}'}';
-      return '$status$target';
-    }
-    if (p == null) return '$status · progress not loaded yet';
-    if (p.progressStatus == 'insufficient_data') {
-      return '$status · not enough data yet. ${_missing(g)}';
-    }
-    final value =
-        p.currentValue == null || p.targetValue == null
-            ? ''
-            : '${_kg(p.currentValue!)} / ${_kg(p.targetValue!)}${g.targetUnit == null ? '' : ' ${g.targetUnit}'} · ';
-    return '$status · $value${_cap(p.progressStatus)}${p.progressPct == null ? '' : ' (${p.progressPct!.round()}%)'}';
-  }
-
-  static String _missing(Goal g) {
-    final m = g.targetMetric;
-    if (g.targetValue == null) return 'Set a target value.';
-    if (m == null || m.isEmpty) return 'Record values with "Record progress".';
-    if (measuredMetrics.containsKey(m)) {
-      return 'Log ${measuredMetrics[m]!.$1.toLowerCase()} on or after the start date.';
-    }
-    return 'Needs logged workouts for that exercise.';
-  }
-}
-
-class _GoalMilestones extends ConsumerWidget {
-  const _GoalMilestones();
+class _GoalsTab extends ConsumerWidget {
+  const _GoalsTab();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final p = context.pal;
     final goals = ref.watch(goalsProvider).valueOrNull ?? const <Goal>[];
-    final server = ref.watch(goalMilestonesProvider);
-    final reached = {for (final m in server.rows) m.milestoneId: m.isReached};
-    final rows = <Widget>[];
-    for (final g in goals) {
+    final all = ref.watch(allGoalsProvider).valueOrNull ?? const <Goal>[];
+    final shownIds = {for (final g in goals) g.id};
+    final archived = [
+      for (final g in all)
+        if (!shownIds.contains(g.id)) g,
+    ];
+    final progress = ref.watch(goalProgressProvider);
+    final byGoal = {for (final g in progress.rows) g.goalId: g};
+
+    final milestoneRows = <Widget>[];
+    final reached = {
+      for (final m in ref.watch(goalMilestonesProvider).rows)
+        m.milestoneId: m.isReached,
+    };
+    var milestoneCount = 0;
+    for (final g in [...goals, ...archived]) {
       final local =
           ref.watch(milestonesProvider(g.id)).valueOrNull ??
           const <Milestone>[];
       for (final m in local) {
+        milestoneCount++;
         final r = reached[m.id];
-        rows.add(
+        milestoneRows.add(
           RowItem(
             title: m.title,
             subtitle: g.title,
@@ -903,15 +1257,164 @@ class _GoalMilestones extends ConsumerWidget {
         );
       }
     }
-    return TitledCard(
-      title: 'Goal milestones',
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (rows.isEmpty)
-          const MutedText('No milestones yet. Open a goal and add one.')
-        else
-          RowList(rows),
-        _Status(goalMilestonesSpec, server.snapshot),
+        if (goals.isEmpty)
+          const AppCard(
+            child: NoteRow('No goals yet. Create one to track it here.'),
+          ),
+        for (final g in goals) ...[
+          InkWell(
+            key: Key('goal-${g.id}'),
+            borderRadius: BorderRadius.circular(AppTheme.cardRadius),
+            onTap: () => showGoalActions(context, g),
+            child: AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          g.title,
+                          style: TextStyle(
+                            color: p.text,
+                            fontSize: 21,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      StatusPill(_cap(g.status)),
+                    ],
+                  ),
+                  if (_isOpen(g)) ...[
+                    const SizedBox(height: 14),
+                    MeterBar(
+                      value:
+                          ((byGoal[g.id]?.progressPct ?? 0) / 100)
+                              .clamp(0, 1)
+                              .toDouble(),
+                      trackColor: p.tile,
+                    ),
+                  ],
+                  const SizedBox(height: 10),
+                  Text(
+                    _goalLine(g, byGoal[g.id]),
+                    style: TextStyle(color: p.muted, fontSize: 16),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          _gap(),
+        ],
+        AppButton.primary(
+          'New goal',
+          height: 58,
+          onPressed: () => showGoalEditor(context),
+        ),
+        _gap(),
+        AppCard(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+          child: RowList([
+            RowItem(
+              key: const Key('archived-goals-row'),
+              title: 'Archived goals (${archived.length})',
+              subtitle:
+                  archived.isEmpty
+                      ? 'None'
+                      : '${archived.first.title} (${_closedWord(archived.first)})${_targetText(archived.first)}',
+              chevron: true,
+              onTap:
+                  archived.isEmpty
+                      ? null
+                      : () => showDialog<void>(
+                        context: context,
+                        builder:
+                            (dialog) => ModalCard(
+                              title: 'Archived goals',
+                              child: RowList([
+                                for (final g in archived)
+                                  RowItem(
+                                    title: g.title,
+                                    subtitle:
+                                        '${_closedWord(g)}${_targetText(g)}',
+                                    chevron: true,
+                                    onTap: () {
+                                      Navigator.of(dialog).pop();
+                                      showGoalActions(context, g);
+                                    },
+                                  ),
+                              ]),
+                            ),
+                      ),
+            ),
+            RowItem(
+              key: const Key('milestones-row'),
+              title: 'Milestones',
+              subtitle:
+                  milestoneCount == 0
+                      ? 'None yet. Open a goal to add one.'
+                      : '$milestoneCount across your goals',
+              chevron: true,
+              onTap:
+                  milestoneCount == 0
+                      ? null
+                      : () => showDialog<void>(
+                        context: context,
+                        builder:
+                            (_) => ModalCard(
+                              title: 'Milestones',
+                              child: RowList(milestoneRows),
+                            ),
+                      ),
+            ),
+          ]),
+        ),
+        _gap(),
+        const InfoLine(
+          'Tap a goal to edit, record progress, pause, complete or archive it.',
+        ),
+        _Problem(goalProgressSpec, progress.snapshot),
+        _Problem(goalMilestonesSpec, ref.watch(goalMilestonesProvider).snapshot),
       ],
     );
+  }
+
+  static bool _isOpen(Goal g) => g.status == 'active' || g.status == 'paused';
+
+  static String _closedWord(Goal g) =>
+      g.status == 'abandoned' ? 'archived' : g.status;
+
+  static String _targetText(Goal g) =>
+      g.targetValue == null
+          ? ''
+          : ' · target ${_kg(g.targetValue!)}${g.targetUnit == null ? '' : ' ${g.targetUnit}'}';
+
+  /// Completed goals are closed: the server's progress percentage no longer applies, so it is not shown.
+  static String _goalLine(Goal g, GoalProgress? p) {
+    if (!_isOpen(g)) return 'Finished${_targetText(g)}';
+    if (p == null) return 'Progress not loaded yet${_targetText(g)}';
+    if (p.progressStatus == 'insufficient_data') {
+      return 'Not enough data yet. ${_missing(g)}';
+    }
+    final value =
+        p.currentValue == null || p.targetValue == null
+            ? ''
+            : '${_kg(p.currentValue!)} / ${_kg(p.targetValue!)}${g.targetUnit == null ? '' : ' ${g.targetUnit}'} · ';
+    return '$value${_cap(p.progressStatus)}${p.progressPct == null ? '' : ' (${p.progressPct!.round()}%)'}';
+  }
+
+  static String _missing(Goal g) {
+    final m = g.targetMetric;
+    if (g.targetValue == null) return 'Set a target value.';
+    if (m == null || m.isEmpty) return 'Record values with "Record progress".';
+    if (measuredMetrics.containsKey(m)) {
+      return 'Log ${measuredMetrics[m]!.$1.toLowerCase()} on or after the start date.';
+    }
+    return 'Needs logged workouts for that exercise.';
   }
 }

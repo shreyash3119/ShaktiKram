@@ -23,7 +23,7 @@ Future<void> _open(WidgetTester tester, Harness h) async {
 }
 
 Future<void> _pill(WidgetTester tester, String label) async {
-  final tab = find.text(label).first;
+  final tab = find.byKey(Key('tab-$label'));
   await tester.ensureVisible(tab);
   await tester.tap(tab);
   await tester.pumpAndSettle();
@@ -37,32 +37,62 @@ void main() {
 
     await _open(tester, h);
 
+    // Overview: four tiles and two cards, all empty.
     expect(find.text('None yet'), findsOneWidget);
+    expect(find.text('Log two sessions of an exercise to see a trend.'), findsOneWidget);
+    expect(find.text('No counted working sets yet.'), findsOneWidget);
+    expect(find.text('Calculated by the server. Not medical advice.'), findsOneWidget);
 
-    // PR history is lower down on the Overview tab.
-    await tester.scrollUntilVisible(
-      find.text('PR history'),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
+    await _pill(tester, 'Strength');
+    expect(find.text('No data'), findsNWidgets(2));
+    expect(find.text('No records'), findsOneWidget);
+    expect(find.text('Nothing to show yet'), findsOneWidget);
+    expect(find.text('Estimates are from your records, not direct measurements.'), findsOneWidget);
 
-    expect(
-      find.textContaining(
-        'Personal records are found by the server after a workout syncs.',
-      ),
-      findsOneWidget,
-    );
-
-    // Select Goals directly. The tab bar has its own horizontal scrollable.
     await _pill(tester, 'Goals');
-    await tester.pumpAndSettle();
+    expect(find.text('No goals yet. Create one to track it here.'), findsOneWidget);
+    expect(find.text('New goal'), findsOneWidget);
+    expect(find.text('Archived goals (0)'), findsOneWidget);
+    expect(find.text('None yet. Open a goal to add one.'), findsOneWidget);
+  });
 
-    expect(find.text('Goals'), findsWidgets);
-    expect(
-      find.textContaining('No goals yet. Create one to track it here.'),
-      findsOneWidget,
-    );
+  testWidgets('Body and Muscles show their empty states and actions', (tester) async {
+    final h = Harness.ready();
+    await _open(tester, h);
+
+    await _pill(tester, 'Body');
+    expect(find.text('Log your weight on at least two days to see a line.'), findsOneWidget);
+    expect(find.text('Log weight'), findsOneWidget);
+    expect(find.text('Add in Lifestyle'), findsOneWidget);
+
+    await _pill(tester, 'Muscles');
+    expect(find.text('Your ratings'), findsOneWidget);
+    expect(find.text('Rate your muscles'), findsOneWidget);
+    expect(find.text('No counted sets yet.'), findsOneWidget);
+    expect(find.text('Darker bar = more direct sets.'), findsOneWidget);
+    expect(find.text('Muscles with little direct work'), findsOneWidget);
+  });
+
+  testWidgets('a logged weight shows on the Overview tile and the Body tab', (tester) async {
+    final h = Harness.ready();
+    await h.local.applyPulled([
+      pulled('body_measurements', 1, {
+        'id': uid(1),
+        'occurred_at': '2026-11-10T07:00:00Z',
+        'local_date': '2026-11-10',
+        'tz_offset_minutes': 0,
+        'measurement_type': 'weight',
+        'value': 78,
+        'source': 'manual',
+      }),
+    ], 1);
+    await _open(tester, h);
+    expect(find.descendant(of: find.byKey(const Key('tile-weight')), matching: find.text('78 kg')), findsOneWidget);
+
+    await _pill(tester, 'Body');
+    expect(find.byKey(const Key('body-weight-value')), findsOneWidget);
+    expect(find.text('Body weight · Nov 10'), findsOneWidget);
+    expect(find.byKey(const Key('body-weight-row')), findsOneWidget);
   });
 
   testWidgets(
@@ -86,7 +116,16 @@ void main() {
           'start_date': '2026-10-01',
           'target_value': 90,
         }),
-      ], 2);
+        pulled('goals', 3, {
+          'id': uid(3),
+          'type': 'body',
+          'title': 'Lean bulk',
+          'status': 'abandoned',
+          'start_date': '2026-01-01',
+          'target_value': 80,
+          'target_unit': 'kg',
+        }),
+      ], 3);
       h.gateway.viewRows['v_goal_progress'] = [
         {
           'goal_id': uid(2),
@@ -100,10 +139,18 @@ void main() {
         },
       ];
       await _open(tester, h);
+      expect(find.descendant(of: find.byKey(const Key('tile-record')), matching: find.text('85 kg')), findsOneWidget);
+
+      await _pill(tester, 'Strength');
+      expect(find.text('1 record'), findsOneWidget);
       expect(find.textContaining('Heaviest weight'), findsWidgets);
+
       await _pill(tester, 'Goals');
       expect(find.text('Bench 90 kg'), findsWidgets);
+      expect(find.text('Active'), findsOneWidget);
       expect(find.textContaining('On track (80%)'), findsOneWidget);
+      expect(find.text('Archived goals (1)'), findsOneWidget);
+      expect(find.textContaining('Lean bulk (archived) · target 80 kg'), findsOneWidget);
     },
   );
 
@@ -132,4 +179,12 @@ void main() {
       expect(find.byKey(const Key('insight-status')), findsWidgets);
     },
   );
+
+  testWidgets('the info button explains where the numbers come from', (tester) async {
+    await _open(tester, Harness.ready());
+    await tester.tap(find.byKey(const Key('progress-info')));
+    await tester.pumpAndSettle();
+    expect(find.text('About these numbers'), findsOneWidget);
+    expect(find.byKey(const Key('progress-refresh')), findsOneWidget);
+  });
 }

@@ -38,7 +38,7 @@ Finder _navLabel(String label) =>
 Map<String, String> _subtitles() => {
   'Home': dateLine(DateTime.now()),
   'Training': 'Splits, exercises and workouts',
-  'Progress': 'Your history and change over time',
+  'Progress': 'Calculated by the server. Not medical advice.',
   'Lifestyle': 'Recovery, nutrition and daily activity',
   'Reports': 'Analyze history and export',
   'Settings': 'Profile, sync, preferences and data',
@@ -175,8 +175,9 @@ void main() {
 
     await tester.tap(_navLabel('Progress'));
     await tester.pumpAndSettle();
-    await _tapPill(tester, 'Goals');
-    expect(find.text('Goal milestones'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('tab-Goals')));
+    await tester.pumpAndSettle();
+    expect(find.text('Milestones'), findsOneWidget);
 
     await tester.tap(_navLabel('Lifestyle'));
     await tester.pumpAndSettle();
