@@ -419,6 +419,7 @@ void main() {
     expect(find.text('Restore…'), findsNothing);
     expect(find.textContaining('never made automatically'), findsOneWidget);
 
+    await _tap(tester, find.text('Data & sync'));
     await _tap(tester, find.text('Export data'));
     expect(find.text('Export a report'), findsOneWidget);
   });
@@ -428,7 +429,8 @@ void main() {
     (tester) async {
       final s = _Setup();
       await _open(tester, s, 'Settings');
-      await _tap(tester, find.text('Backup & data export').first);
+      await _tap(tester, find.text('Data & sync'));
+      await _tap(tester, find.text('Backup & data export'));
 
       expect(find.byKey(const Key('last-backup')), findsOneWidget);
       expect(
@@ -466,7 +468,8 @@ void main() {
   ) async {
     final s = _Setup();
     await _open(tester, s, 'Settings');
-    await _tap(tester, find.text('Backup & data export').first);
+    await _tap(tester, find.text('Data & sync'));
+      await _tap(tester, find.text('Backup & data export'));
     await _tap(tester, find.byType(Switch));
     await _tap(tester, find.text('Make a full backup'));
     expect(s.export.calls.single, 'backup:fullZip:media=true');
@@ -486,7 +489,8 @@ void main() {
         mediaIncluded: false,
       );
       await _open(tester, s, 'Settings');
-      await _tap(tester, find.text('Backup & data export').first);
+      await _tap(tester, find.text('Data & sync'));
+      await _tap(tester, find.text('Backup & data export'));
       await _tap(tester, find.text('Choose a file to check'));
 
       expect(s.export.calls.single, 'validate:/phone/fitness-backup.zip');
@@ -504,7 +508,8 @@ void main() {
   ) async {
     final s = _Setup();
     await _open(tester, s, 'Settings');
-    await _tap(tester, find.text('Backup & data export').first);
+    await _tap(tester, find.text('Data & sync'));
+      await _tap(tester, find.text('Backup & data export'));
     await _tap(tester, find.text('Choose a file to check'));
     expect(s.export.calls, isEmpty);
     expect(find.byKey(const Key('validation-verdict')), findsNothing);

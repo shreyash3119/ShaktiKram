@@ -321,12 +321,16 @@ class ScreenFrame extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.trailing,
+    this.leading,
     required this.children,
   });
 
   final String title;
   final String? subtitle;
   final Widget? trailing;
+
+  /// A back button shown before the title on pages opened from another page.
+  final Widget? leading;
   final List<Widget> children;
 
   @override
@@ -346,6 +350,7 @@ class ScreenFrame extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (leading != null) ...[leading!, const SizedBox(width: 14)],
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

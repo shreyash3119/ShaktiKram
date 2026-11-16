@@ -161,9 +161,14 @@ void main() {
 
       await tester.tap(_navLabel('Settings'));
       await tester.pumpAndSettle();
-      await _scrollTo(tester, find.byKey(const Key('sign-out-tile')));
+      await tester.tap(find.text('Account'));
+      await tester.pumpAndSettle();
+      expect(find.text('owner@example.com'), findsNothing);
+      await tester.tap(find.byKey(const Key('show-email')));
+      await tester.pumpAndSettle();
       expect(find.text('owner@example.com'), findsOneWidget);
       expect(find.text('Test phone'), findsOneWidget);
+      await _scrollTo(tester, find.byKey(const Key('sign-out-tile')));
 
       await tester.tap(find.byKey(const Key('sign-out-tile')));
       await tester.pumpAndSettle();
@@ -199,6 +204,8 @@ void main() {
       await _pump(tester, h);
 
       await tester.tap(_navLabel('Settings'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Account'));
       await tester.pumpAndSettle();
       await _scrollTo(tester, find.text('Manage devices'));
       await tester.tap(find.text('Manage devices'));
@@ -236,6 +243,8 @@ void main() {
     await _pump(tester, h);
 
     await tester.tap(_navLabel('Settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Account'));
     await tester.pumpAndSettle();
     await _scrollTo(tester, find.text('Manage devices'));
     await tester.tap(find.text('Manage devices'));

@@ -13,6 +13,7 @@ import '../../features/reports/presentation/backup_screen.dart';
 import '../../features/reports/presentation/reports_screen.dart';
 import '../../features/settings/presentation/devices_screen.dart';
 import '../../features/training/presentation/workout_session_screen.dart';
+import '../../features/settings/presentation/settings_pages.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/training/presentation/training_screen.dart';
 import '../auth/session_controller.dart';
@@ -29,6 +30,11 @@ class AppRoutes {
   static const settings = '/settings';
   static const devices = '/settings/devices';
   static const backup = '/settings/backup';
+  static const settingsTraining = '/settings/training';
+  static const settingsNotifications = '/settings/notifications';
+  static const settingsAppearance = '/settings/appearance';
+  static const settingsData = '/settings/data';
+  static const settingsAccount = '/settings/account';
   static const session = '/workout'; // full screen, outside the bottom bar
 
   // Outside the main navigation: shown while there is no usable session.
@@ -154,6 +160,26 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'devices',
                     builder: (context, state) => const DevicesScreen(),
+                  ),
+                  GoRoute(
+                    path: 'training',
+                    builder: (context, state) => const TrainingSettingsPage(),
+                  ),
+                  GoRoute(
+                    path: 'notifications',
+                    builder: (context, state) => const NotificationsPage(),
+                  ),
+                  GoRoute(
+                    path: 'appearance',
+                    builder: (context, state) => const AppearancePage(),
+                  ),
+                  GoRoute(
+                    path: 'data',
+                    builder: (context, state) => const DataSyncPage(),
+                  ),
+                  GoRoute(
+                    path: 'account',
+                    builder: (context, state) => const AccountPage(),
                   ),
                   GoRoute(
                     path: 'backup',

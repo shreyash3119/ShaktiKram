@@ -41,7 +41,7 @@ Map<String, String> _subtitles() => {
   'Progress': 'Calculated by the server. Not medical advice.',
   'Lifestyle': 'Recovery, nutrition and daily activity',
   'Reports': 'Analyze history and export',
-  'Settings': 'Profile, sync, preferences and data',
+  'Settings': 'Profile, sync and data',
 };
 
 Future<void> _tapPill(WidgetTester tester, String label) async {
