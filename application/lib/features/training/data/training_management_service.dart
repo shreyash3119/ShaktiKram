@@ -571,6 +571,48 @@ class TrainingManagementService {
     ]);
   }
 
+  /// Marks [localDate] as skipped: a planned workout that was missed. A day with no entry gets one, so the skip is
+  /// remembered. A finished workout stays.
+  Future<void> markDaySkipped(String localDate) async {
+    if (DateTime.tryParse(localDate) == null) throw const ManagementError('That date is not valid.');
+    final existing = await repository.scheduleFor(localDate);
+    if (existing != null && existing.status == 'completed') throw const ManagementError('That workout is already done, so it stays on the schedule.');
+    await writer.apply([
+      if (existing == null)
+        PendingChange.upsert('schedule_entries', {'local_date': localDate, 'is_rest_day': false, 'status': 'skipped'})
+      else
+        PendingChange.upsert('schedule_entries', {'is_rest_day': false, 'status': 'skipped'}, id: existing.id),
+    ]);
+  }
+
+  /// Moves the planned workout of [localDate] to the next day: today's entry becomes "rescheduled" and tomorrow gets
+  /// the same plan. Tomorrow's own unfinished entry, if any, is replaced. Returns the new date.
+  Future<String> moveDayToTomorrow(String localDate) async {
+    final from = DateTime.tryParse(localDate);
+    if (from == null) throw const ManagementError('That date is not valid.');
+    final existing = await repository.scheduleFor(localDate);
+    if (existing == null) throw const ManagementError('There is no planned workout to move.');
+    if (existing.status == 'completed') throw const ManagementError('That workout is already done, so it stays on the schedule.');
+    final next = DateTime(from.year, from.month, from.day + 1);
+    String two(int n) => n.toString().padLeft(2, '0');
+    final tomorrow = '${next.year}-${two(next.month)}-${two(next.day)}';
+    final other = await repository.scheduleFor(tomorrow);
+    if (other != null && other.status == 'completed') throw const ManagementError('Tomorrow already has a finished workout.');
+    await writer.apply([
+      PendingChange.upsert('schedule_entries', {'status': 'rescheduled', 'rescheduled_to': tomorrow}, id: existing.id),
+      if (other != null) PendingChange.delete('schedule_entries', other.id),
+      PendingChange.upsert('schedule_entries', {
+        'local_date': tomorrow,
+        'is_rest_day': existing.isRestDay,
+        'status': 'planned',
+        if (existing.splitVersionId != null) 'split_version_id': existing.splitVersionId,
+        if (existing.splitDayId != null) 'split_day_id': existing.splitDayId,
+        if (existing.templateVersionId != null) 'template_version_id': existing.templateVersionId,
+      }),
+    ]);
+    return tomorrow;
+  }
+
   /// Fills [days] dates from [from] following the split's pattern. Dates that already have an entry are left alone.
   /// Returns how many days were planned.
   Future<int> planFromSplit(ActiveSplit split, String from, int days) async {

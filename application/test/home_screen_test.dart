@@ -43,11 +43,17 @@ void main() {
 
     expect(find.byKey(const Key('readiness-level')), findsOneWidget);
     expect(find.text('Moderate'), findsOneWidget);
+
+    // The reasons are one tap away, in the readiness dialog.
+    await tester.tap(find.byKey(const Key('readiness-dial')));
+    await tester.pumpAndSettle();
     expect(find.text('You logged 5.5 hours of sleep.'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('dialog-close')));
+    await tester.pumpAndSettle();
 
     // Scroll to the Insights card before checking its contents.
     await tester.scrollUntilVisible(
-      find.text('Insights & suggestions'),
+      find.byKey(const Key('home-insights')),
       300,
       scrollable: find.byType(Scrollable).first,
     );
@@ -55,6 +61,7 @@ void main() {
 
     expect(find.text('Squat: Plateau'), findsOneWidget);
     expect(find.byKey(const Key('insight-status')), findsWidgets);
+    expect(find.text('Decision support only, not medical advice.'), findsOneWidget);
   });
 
   testWidgets('offline, Home keeps the saved briefing and says so', (
@@ -74,7 +81,7 @@ void main() {
     expect(find.textContaining('Offline'), findsWidgets);
   });
 
-  testWidgets('an unfinished session on the phone shows as an alert', (
+  testWidgets('an unfinished session on the phone shows as a notification', (
     tester,
   ) async {
     final h = Harness.ready();
@@ -91,16 +98,18 @@ void main() {
 
     await _open(tester, h);
 
-    expect(find.text('Continue workout'), findsOneWidget);
+    expect(find.text('Resume workout'), findsOneWidget);
 
-    // Scroll down to the Alerts card.
-    await tester.scrollUntilVisible(
-      find.text('Alerts'),
-      300,
-      scrollable: find.byType(Scrollable).first,
+    // The bell counts it, and the notifications dialog lists it.
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('home-bell-badge')),
+        matching: find.text('1'),
+      ),
+      findsOneWidget,
     );
+    await tester.tap(find.byKey(const Key('home-bell')));
     await tester.pumpAndSettle();
-
     expect(find.text('Unfinished session'), findsOneWidget);
   });
 }

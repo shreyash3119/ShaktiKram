@@ -266,6 +266,32 @@ class WorkoutSessionService {
     await writer.apply(changes);
   }
 
+  /// Records today's workout as finished with nothing logged, for "Completed" chosen on Home when no workout was run in
+  /// the app. It is kept but never counted (no working sets). The day's schedule entry is linked to it; a rest or
+  /// skipped entry is replaced by a planned one first. Throws [SessionAlreadyActive] when a workout is in progress.
+  Future<String> completeWithoutSets({String? name, String? templateVersionId, String? splitVersionId, String? splitDayId}) async {
+    final active = await repository.activeSession();
+    if (active != null) throw SessionAlreadyActive(active.id);
+    final stamp = localStampOf(_clock());
+    final existing = await repository.scheduleFor(stamp.localDate);
+    if (existing != null && existing.status == 'completed') throw StateError('Today\'s workout is already completed.');
+    String? entryId = existing != null && !existing.isRestDay && existing.status == 'planned' ? existing.id : null;
+    if (entryId == null) {
+      if (existing != null) await writer.apply([PendingChange.delete('schedule_entries', existing.id)]);
+      entryId = await writer.upsert('schedule_entries', {
+        'local_date': stamp.localDate,
+        'is_rest_day': false,
+        'status': 'planned',
+        if (templateVersionId != null) 'template_version_id': templateVersionId,
+        if (splitVersionId != null) 'split_version_id': splitVersionId,
+        if (splitDayId != null) 'split_day_id': splitDayId,
+      });
+    }
+    final id = await startSession(name: name, scheduleEntryId: entryId, splitVersionId: splitVersionId, splitDayId: splitDayId);
+    await completeSession(id);
+    return id;
+  }
+
   /// Opens a finished workout again so sets can be added. Only for a workout with no logged working sets (a workout
   /// that counts is never reopened). Exercises that were marked "Not done" when it was finished are restored, and a
   /// linked schedule entry goes back to planned. Throws [SessionAlreadyActive] when another workout is in progress.

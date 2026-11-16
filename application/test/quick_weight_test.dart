@@ -48,29 +48,39 @@ void main() {
     },
   );
 
-  testWidgets('Quick log weight saves to the phone', (tester) async {
+  testWidgets('Log weight saves to the phone', (tester) async {
     final h = Harness.ready();
     await tester.pumpWidget(
       ProviderScope(overrides: h.overrides, child: const ShaktiKramApp()),
     );
     await tester.pumpAndSettle();
-    final field = find.byKey(const Key('quick-weight-field'));
-    await tester.scrollUntilVisible(
-      field,
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.enterText(field, '77.5');
-    final save = find.byKey(const Key('quick-weight-save'));
-    await tester.ensureVisible(save);
+    await tester.tap(find.byKey(const Key('quick-log-weight')));
     await tester.pumpAndSettle();
-    await tester.tap(save);
+    await tester.enterText(find.byKey(const Key('quick-weight-field')), '77.5');
+    await tester.tap(find.byKey(const Key('quick-weight-save')));
     await tester.pumpAndSettle();
     final rows = await h.local.list('body_measurements');
     expect(rows.single['value'], 77.5);
     expect(
-      find.text('Saved on this phone. It will sync when online.'),
+      find.text('Weight saved on this phone. It will sync when online.'),
       findsOneWidget,
     );
+    // The Lifestyle card now shows it.
+    expect(find.textContaining('77.5 kg'), findsOneWidget);
+  });
+
+  testWidgets('Log weight refuses a value that cannot be right', (tester) async {
+    final h = Harness.ready();
+    await tester.pumpWidget(
+      ProviderScope(overrides: h.overrides, child: const ShaktiKramApp()),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('home-weight-log')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('quick-weight-field')), '5');
+    await tester.tap(find.byKey(const Key('quick-weight-save')));
+    await tester.pumpAndSettle();
+    expect(find.text('Enter a weight between 20 and 400 kg.'), findsOneWidget);
+    expect(await h.local.list('body_measurements'), isEmpty);
   });
 }
