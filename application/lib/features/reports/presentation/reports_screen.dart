@@ -9,6 +9,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/cards.dart';
 import '../../../core/widgets/controls.dart';
 import '../../../core/widgets/insight_status.dart' show ageText;
+import '../../../core/widgets/section_widgets.dart';
+import '../../training/presentation/training_dialogs.dart' show ModalCard;
 import '../data/report_period.dart';
 import '../data/report_repository.dart';
 import 'export_tab.dart';
@@ -84,32 +86,53 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     final request = ref.watch(reportRequestProvider);
     final isExport = _tab == reportTabs.length - 1;
 
+    // "Updated 2 min ago" once a report is on the phone; otherwise the screen's purpose.
+    final configured = ref.watch(reportingConfiguredProvider);
+    final usable =
+        configured &&
+        query.validate() == null &&
+        !query.startsAfter(DateTime.now());
+    final snap =
+        usable ? ref.watch(reportSummaryProvider(request)).valueOrNull : null;
+    final subtitle =
+        snap != null && snap.hasData
+            ? 'Updated ${ageText(snap.fetchedAt)}'
+            : 'Analyze history and export';
+
     return ScreenFrame(
       title: 'Reports',
-      subtitle: 'Analyze history and export',
+      subtitle: subtitle,
+      trailing: HeaderIconButton(
+        key: const Key('reports-info'),
+        icon: Icons.info_outline,
+        tooltip: 'About reports',
+        onTap:
+            () => showDialog<void>(
+              context: context,
+              builder: (_) => _AboutDialog(request: request),
+            ),
+      ),
       children: [
-        const SizedBox(height: 16),
-        PillTabs(
+        UnderlineTabs(
           labels: reportTabs,
           index: _tab,
-          layout: PillLayout.scroll,
-          container: true,
           onChanged: (i) => setState(() => _tab = i),
         ),
         const SizedBox(height: 14),
-        if (!isExport) ...[
-          PillTabs(
-            labels: [for (final k in ReportKind.values) k.label],
-            index: ReportKind.values.indexOf(query.kind),
-            layout: PillLayout.scroll,
-            onChanged: _selectKind,
-          ),
-          const SizedBox(height: 10),
-          _PeriodBar(
-            query: query,
-            onPickRange: () => _pickRange(query),
-            onChanged: (q) => ref.read(reportQueryProvider.notifier).state = q,
-          ),
+        PillTabs(
+          labels: [for (final k in ReportKind.values) k.label],
+          index: ReportKind.values.indexOf(query.kind),
+          layout: PillLayout.scroll,
+          container: true,
+          onChanged: _selectKind,
+        ),
+        const SizedBox(height: 10),
+        _PeriodBar(
+          query: query,
+          onPickRange: () => _pickRange(query),
+          onChanged: (q) => ref.read(reportQueryProvider.notifier).state = q,
+        ),
+        if (_tab == 0)
           ToggleRow(
             title: 'Compare with the previous period',
             subtitle: 'Adds change figures to the Overview',
@@ -117,14 +140,51 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
             onChanged:
                 (v) => ref.read(reportCompareProvider.notifier).state = v,
           ),
-          const _UnsyncedNotice(),
-          const SizedBox(height: 4),
+        const _UnsyncedNotice(),
+        const SizedBox(height: 4),
+        if (isExport)
+          ExportTab(request: request)
+        else
           _ReportBody(request: request, tab: _tab),
-        ] else ...[
-          ExportTab(request: request),
-        ],
         const SizedBox(height: 8),
       ],
+    );
+  }
+}
+
+/// What the figures are and where they come from, with a way to ask the server again.
+class _AboutDialog extends ConsumerWidget {
+  const _AboutDialog({required this.request});
+
+  final ReportRequest request;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = context.pal;
+    final configured = ref.watch(reportingConfiguredProvider);
+    return ModalCard(
+      title: 'About reports',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Calculated by the server from your records. The phone only shows the figures and keeps the last answer for offline use.\n\nNot medical advice.',
+            style: TextStyle(color: p.muted, fontSize: 16, height: 1.4),
+          ),
+          if (configured) ...[
+            const SizedBox(height: 16),
+            AppButton(
+              'Refresh report',
+              key: const Key('report-refresh'),
+              height: 52,
+              onPressed: () {
+                ref.read(reportSummaryProvider(request).notifier).refresh();
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -301,9 +361,16 @@ class _ReportBody extends ConsumerWidget {
         snap.refreshing
             ? null
             : () => ref.read(reportSummaryProvider(request).notifier).refresh();
+    final problem =
+        snap.refreshing ||
+        snap.error != null ||
+        !snap.hasData ||
+        snap.freshness == InsightFreshness.stale;
     final children = <Widget>[
-      _StatusLine(snapshot: snap, configured: configured, onRefresh: refresh),
-      const SizedBox(height: 12),
+      if (problem) ...[
+        _StatusLine(snapshot: snap, configured: configured, onRefresh: refresh),
+        const SizedBox(height: 12),
+      ],
     ];
     final summary = snap.summary;
     if (summary == null) {

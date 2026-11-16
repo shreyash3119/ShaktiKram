@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/routing/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/cards.dart';
+import '../../../core/widgets/controls.dart';
 import '../../../core/widgets/meters.dart';
+import '../../../core/widgets/section_widgets.dart';
 import '../data/report_models.dart';
 import 'report_format.dart';
 
@@ -16,8 +20,101 @@ class KindNote extends StatelessWidget {
     final text = valueKindNote(kind);
     if (text == null) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.only(top: 10),
-      child: MutedText(text, size: 12),
+      padding: const EdgeInsets.only(top: 12),
+      child: InfoLine(text),
+    );
+  }
+}
+
+/// A short summary row with an info tile: "Attendance · None scheduled".
+class _SummaryRow extends StatelessWidget {
+  const _SummaryRow(this.title, this.value);
+  final String title;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.pal;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: p.tile,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(Icons.info_outline, color: p.link, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(color: p.text, fontSize: 18),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: TextStyle(color: p.muted, fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A card that holds only [_SummaryRow]s.
+class _SummaryCard extends StatelessWidget {
+  const _SummaryCard({this.title, required this.rows});
+  final String? title;
+  final List<_SummaryRow> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.pal;
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (title != null) ...[
+            Text(
+              title!,
+              style: TextStyle(
+                color: p.text,
+                fontSize: 21,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+          RowList(rows),
+        ],
+      ),
+    );
+  }
+}
+
+/// A small rounded fact: "Top 50 kg".
+class _FactChip extends StatelessWidget {
+  const _FactChip(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.pal;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: p.divider),
+      ),
+      child: Text(text, style: TextStyle(color: p.muted, fontSize: 15)),
     );
   }
 }
@@ -35,7 +132,7 @@ Widget _gap([double h = 12]) => SizedBox(height: h);
 
 Widget _empty(String text) => Padding(
   padding: const EdgeInsets.symmetric(vertical: 4),
-  child: MutedText(text),
+  child: NoteRow(text),
 );
 
 /// Overview: headline figures, consistency, observations and the comparison.
@@ -141,6 +238,10 @@ class OverviewSection extends StatelessWidget {
         _Comparison(summary: summary),
         if (summary.comparison != null) _gap(16),
         _Observations(summary.observations),
+        _gap(12),
+        const InfoLine(
+          'These are statements taken from your records. They are not medical advice or a diagnosis.',
+        ),
       ],
     );
   }
@@ -211,10 +312,6 @@ class _Observations extends StatelessWidget {
                 ),
               ),
             ),
-        const MutedText(
-          'These are statements taken from your records. They are not medical advice or a diagnosis.',
-          size: 12,
-        ),
       ],
     );
   }
@@ -266,6 +363,22 @@ class WorkoutsSection extends StatelessWidget {
           ],
         ),
         _gap(16),
+        if (a.scheduled == 0 &&
+            a.breakDays == 0 &&
+            ctx.splits.isEmpty &&
+            ctx.breaks.isEmpty &&
+            ctx.deloads.isEmpty) ...[
+          const _SummaryCard(
+            rows: [
+              _SummaryRow('Attendance', 'None scheduled'),
+              _SummaryRow('Training context', 'No changes'),
+            ],
+          ),
+          _gap(12),
+          const InfoLine(
+            'Attendance counts scheduled training days. Split changes, breaks and deloads appear in Training context.',
+          ),
+        ] else ...[
         TitledCard(
           title: 'Attendance',
           children: [
@@ -351,6 +464,7 @@ class WorkoutsSection extends StatelessWidget {
             ],
           ],
         ),
+        ],
       ],
     );
   }
@@ -371,53 +485,54 @@ class StrengthSectionView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TitledCard(
-          title: 'Exercises',
-          children: [
-            if (s.exercises.isEmpty)
-              _empty('No finished workouts with logged sets in this period.')
-            else
-              RowList([
-                for (final e in s.exercises)
-                  RowItem(
-                    title: e.exercise,
-                    subtitle:
-                        '${e.sessions} ${e.sessions == 1 ? 'session' : 'sessions'} · top ${fmtKg(e.topWeightKg)} · volume ${fmtNum(e.volumeKg, decimals: 0)} kg',
-                    trailing:
-                        e.e1rmChangePct == null
-                            ? null
-                            : fmtChange(e.e1rmChangePct),
+        if (s.exercises.isEmpty)
+          TitledCard(
+            title: 'Exercises',
+            children: [
+              _empty('No finished workouts with logged sets in this period.'),
+            ],
+          )
+        else
+          for (final e in s.exercises)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TitledCard(
+                title: e.exercise,
+                children: [
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      _FactChip(
+                        '${e.sessions} ${e.sessions == 1 ? 'session' : 'sessions'}',
+                      ),
+                      _FactChip('Top ${fmtKg(e.topWeightKg)}'),
+                      _FactChip('Volume ${fmtNum(e.volumeKg, decimals: 0)} kg'),
+                      if (e.e1rmChangePct != null)
+                        _FactChip('1RM ${fmtChange(e.e1rmChangePct)}'),
+                    ],
                   ),
-              ]),
-            KindNote(s.valueKind),
-            if (s.exercises.isNotEmpty)
-              const Padding(
-                padding: EdgeInsets.only(top: 6),
-                child: MutedText(
-                  'The change is the estimated 1RM from the first to the last session. It needs at least two sessions.',
-                  size: 12,
-                ),
+                ],
               ),
-          ],
-        ),
-        _gap(16),
+            ),
+        _gap(12),
         TitledCard(
-          title: 'Estimated 1RM over time',
+          title: 'Estimated 1RM trend',
           children: [
             if (charts.isEmpty)
               _empty(
-                'A trend needs at least two sessions of the same exercise in this period.',
+                'Log two sessions of the same exercise to see a trend.',
               )
             else
               for (final e in charts) _E1rmChart(name: e.key, points: e.value),
           ],
         ),
-        _gap(16),
+        _gap(12),
         TitledCard(
           title: 'Personal records',
           children: [
             if (s.records.isEmpty)
-              _empty('No personal records were set in this period.')
+              _empty('No records set yet.')
             else
               RowList([
                 for (final r in s.records)
@@ -431,6 +546,7 @@ class StrengthSectionView extends StatelessWidget {
               ]),
           ],
         ),
+        KindNote(s.valueKind),
       ],
     );
   }
@@ -492,9 +608,32 @@ class BodySectionView extends StatelessWidget {
       for (final w in b.weightSeries)
         if (w.value != null) w,
     ];
+    final nothingLogged =
+        b.measurements.isEmpty &&
+        weights.isEmpty &&
+        b.composition.isEmpty &&
+        inj.injuries.isEmpty &&
+        inj.painEntries == 0;
+    final exposureMax = m.exposure.fold<int>(
+      1,
+      (a, e) => e.directSets + e.indirectSets > a
+          ? e.directSets + e.indirectSets
+          : a,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (nothingLogged)
+          const _SummaryCard(
+            title: 'Nothing logged this period',
+            rows: [
+              _SummaryRow('Measurements', 'Add'),
+              _SummaryRow('Body weight', 'Log'),
+              _SummaryRow('Body composition', 'Add'),
+              _SummaryRow('Injuries and pain', 'None'),
+            ],
+          )
+        else ...[
         TitledCard(
           title: 'Measurements',
           children: [
@@ -554,66 +693,6 @@ class BodySectionView extends StatelessWidget {
         ),
         _gap(16),
         TitledCard(
-          title: 'Muscle ratings and exposure',
-          children: [
-            if (m.ratings.isEmpty &&
-                m.exposure.isEmpty &&
-                m.priorityChanges.isEmpty)
-              _empty('No muscle ratings or training exposure in this period.')
-            else ...[
-              if (m.ratings.isNotEmpty) ...[
-                const GroupLabel('Your ratings'),
-                RowList([
-                  for (final r in m.ratings)
-                    RowItem(
-                      title: prettyKey(r.muscleKey),
-                      subtitle:
-                          '${ratingChangeLabel(r.change)} · ${r.assessments} ${r.assessments == 1 ? 'assessment' : 'assessments'}',
-                      trailing:
-                          r.firstLevel == r.lastLevel
-                              ? '${r.lastLevel ?? '—'}/5'
-                              : '${r.firstLevel ?? '—'} → ${r.lastLevel ?? '—'}',
-                    ),
-                ]),
-                KindNote(m.valueKind),
-              ],
-              if (m.exposure.isNotEmpty) ...[
-                _gap(),
-                const GroupLabel('Sets that trained each muscle'),
-                RowList([
-                  for (final e in m.exposure)
-                    RowItem(
-                      title: prettyKey(e.muscleKey),
-                      subtitle: '${e.indirectSets} supporting',
-                      trailing: '${e.directSets} direct',
-                    ),
-                ]),
-                const Padding(
-                  padding: EdgeInsets.only(top: 6),
-                  child: MutedText(
-                    'Only finished workouts with logged sets count towards exposure.',
-                    size: 12,
-                  ),
-                ),
-              ],
-              if (m.priorityChanges.isNotEmpty) ...[
-                _gap(),
-                const GroupLabel('Priority changes'),
-                RowList([
-                  for (final c in m.priorityChanges)
-                    RowItem(
-                      title: prettyKey(c.muscleKey),
-                      subtitle: fmtDate(c.fromDate),
-                      trailing:
-                          c.priority == null ? null : prettyKey(c.priority!),
-                    ),
-                ]),
-              ],
-            ],
-          ],
-        ),
-        _gap(16),
-        TitledCard(
           title: 'Injuries and pain',
           children: [
             if (inj.injuries.isEmpty && inj.painEntries == 0)
@@ -640,6 +719,128 @@ class BodySectionView extends StatelessWidget {
               ],
             ],
           ],
+        ),
+        ],
+        _gap(16),
+        TitledCard(
+          title: 'Muscle ratings and exposure',
+          children: [
+            if (m.ratings.isEmpty &&
+                m.exposure.isEmpty &&
+                m.priorityChanges.isEmpty)
+              _empty('No muscle ratings or training exposure in this period.')
+            else ...[
+              if (m.ratings.isNotEmpty) ...[
+                const GroupLabel('Your ratings'),
+                RowList([
+                  for (final r in m.ratings)
+                    RowItem(
+                      title: prettyKey(r.muscleKey),
+                      subtitle:
+                          '${ratingChangeLabel(r.change)} · ${r.assessments} ${r.assessments == 1 ? 'assessment' : 'assessments'}',
+                      trailing:
+                          r.firstLevel == r.lastLevel
+                              ? '${r.lastLevel ?? '—'}/5'
+                              : '${r.firstLevel ?? '—'} → ${r.lastLevel ?? '—'}',
+                    ),
+                ]),
+                KindNote(m.valueKind),
+              ],
+              if (m.exposure.isNotEmpty) ...[
+                _gap(),
+                const GroupLabel('Muscle exposure'),
+                for (final e in m.exposure)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: _ExposureRow(
+                      name: prettyKey(e.muscleKey),
+                      direct: e.directSets,
+                      supporting: e.indirectSets,
+                      max: exposureMax,
+                    ),
+                  ),
+                const Padding(
+                  padding: EdgeInsets.only(top: 6),
+                  child: InfoLine(
+                    'Darker blue = direct sets. Light blue = supporting. Finished workouts only.',
+                  ),
+                ),
+              ],
+              if (m.priorityChanges.isNotEmpty) ...[
+                _gap(),
+                const GroupLabel('Priority changes'),
+                RowList([
+                  for (final c in m.priorityChanges)
+                    RowItem(
+                      title: prettyKey(c.muscleKey),
+                      subtitle: fmtDate(c.fromDate),
+                      trailing:
+                          c.priority == null ? null : prettyKey(c.priority!),
+                    ),
+                ]),
+              ],
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// One muscle: its name, "N direct · M supporting", and a two-tone bar (direct sets, then supporting).
+class _ExposureRow extends StatelessWidget {
+  const _ExposureRow({
+    required this.name,
+    required this.direct,
+    required this.supporting,
+    required this.max,
+  });
+  final String name;
+  final int direct;
+  final int supporting;
+  final int max;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.pal;
+    final total = max <= 0 ? 1 : max;
+    final d = direct.clamp(0, total);
+    final sup = supporting.clamp(0, total - d);
+    final rest = total - d - sup;
+    Widget seg(int flex, Color c) =>
+        flex <= 0
+            ? const SizedBox.shrink()
+            : Expanded(flex: flex, child: Container(color: c));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                name,
+                style: TextStyle(color: p.text, fontSize: 18),
+              ),
+            ),
+            Text(
+              '$direct direct · $supporting supporting',
+              style: TextStyle(color: p.muted, fontSize: 15),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: SizedBox(
+            height: 12,
+            child: Row(
+              children: [
+                seg(d, p.primary),
+                seg(sup, p.link.withValues(alpha: 0.55)),
+                seg(rest, p.tile),
+              ],
+            ),
+          ),
         ),
       ],
     );
@@ -680,6 +881,34 @@ class LifestyleSectionView extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = summary.lifestyle;
     final r = summary.recovery;
+    final nothing =
+        r.checkinDays == 0 &&
+        r.sleepNights == 0 &&
+        l.stepDaysLogged == 0 &&
+        l.cardioSessions == 0 &&
+        l.hydrationDays == 0 &&
+        l.nutritionDays == 0 &&
+        l.supplements.isEmpty;
+    if (nothing) {
+      return const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SummaryCard(
+            title: 'Nothing logged this period',
+            rows: [
+              _SummaryRow('Recovery', 'Check-ins, sleep'),
+              _SummaryRow('Activity', 'Steps, cardio'),
+              _SummaryRow('Hydration and nutrition', 'Water, meals'),
+              _SummaryRow('Supplements', 'Doses'),
+            ],
+          ),
+          SizedBox(height: 12),
+          InfoLine(
+            'Estimated values are calculated from your records, not direct measurements.',
+          ),
+        ],
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -826,9 +1055,16 @@ class GoalsSectionView extends StatelessWidget {
         TitledCard(
           title: 'Goals',
           children: [
-            if (g.goals.isEmpty)
-              _empty('No goals yet. Add one on the Progress tab.')
-            else
+            if (g.goals.isEmpty) ...[
+              _empty('No goals yet. Add one on the Progress tab.'),
+              _gap(),
+              AppButton(
+                'Go to Progress',
+                key: const Key('goals-go-progress'),
+                height: 56,
+                onPressed: () => context.go(AppRoutes.progress),
+              ),
+            ] else
               for (final goal in g.goals)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 14),
@@ -863,19 +1099,15 @@ class GoalsSectionView extends StatelessWidget {
                     ],
                   ),
                 ),
-            const MutedText(
-              'Goals show where they stand when the report is made, not only inside the period.',
-              size: 12,
-            ),
           ],
         ),
-        _gap(16),
-        TitledCard(
-          title: 'Milestones',
-          children: [
-            if (g.milestones.isEmpty)
-              _empty('No milestones.')
-            else
+        _gap(12),
+        if (g.milestones.isEmpty)
+          const _SummaryCard(rows: [_SummaryRow('Milestones', 'None yet')])
+        else
+          TitledCard(
+            title: 'Milestones',
+            children: [
               RowList([
                 for (final m in g.milestones)
                   RowItem(
@@ -890,7 +1122,11 @@ class GoalsSectionView extends StatelessWidget {
                     trailingColor: m.isReached ? p.green : null,
                   ),
               ]),
-          ],
+            ],
+          ),
+        _gap(12),
+        const InfoLine(
+          'Goals show where they stand when the report is made, not only inside the period.',
         ),
       ],
     );

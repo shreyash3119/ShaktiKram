@@ -9,7 +9,6 @@ import 'package:shaktikram/core/backend/reporting_gateway.dart';
 import 'package:shaktikram/core/db/export_log.dart';
 import 'package:shaktikram/core/routing/app_shell.dart';
 import 'package:shaktikram/core/sync/sync_status.dart';
-import 'package:shaktikram/core/widgets/controls.dart';
 import 'package:shaktikram/features/reports/data/export_service.dart';
 import 'package:shaktikram/features/reports/data/report_period.dart';
 import 'package:shaktikram/features/reports/data/report_repository.dart';
@@ -160,10 +159,7 @@ Future<void> _open(WidgetTester tester, _Setup s, String tab) async {
 }
 
 Future<void> _pill(WidgetTester tester, String label) async {
-  final target = find.descendant(
-    of: find.byType(PillTabs).first,
-    matching: find.text(label),
-  );
+  final target = find.byKey(Key('tab-$label'));
   await tester.ensureVisible(target);
   await tester.pumpAndSettle();
   await tester.tap(target);
@@ -188,7 +184,7 @@ void main() {
       'year': '2026',
       'month': '11',
     });
-    expect(find.textContaining('Calculated by the server'), findsOneWidget);
+    expect(find.textContaining('Updated'), findsOneWidget);
     expect(find.text('12,450'), findsOneWidget);
     expect(
       find.text('Training volume was 12,450 kg over 2 workouts.'),
@@ -389,8 +385,8 @@ void main() {
         'report:xlsx:November 2026',
         'report:pdf:November 2026',
       ]);
-      expect(find.textContaining('Excel report ·'), findsOneWidget);
-      expect(find.textContaining('PDF report ·'), findsOneWidget);
+      expect(find.text('XLS'), findsOneWidget);
+      expect(find.text('PDF'), findsOneWidget);
 
       await _tap(tester, find.textContaining('Saved report_pdf.bin').first);
       expect(s.sharer.shared.single, '/unused/report_pdf.bin');

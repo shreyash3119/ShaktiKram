@@ -78,21 +78,13 @@ class _ExportTabState extends ConsumerState<ExportTab> {
         TitledCard(
           title: 'Export a report',
           children: [
-            Text(
-              query.label,
-              style: TextStyle(
-                color: p.text,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 4),
             MutedText(
               widget.request.compare
-                  ? 'With a comparison to the previous period. Change the period on another tab.'
-                  : 'Change the period on another tab. The file is made by the reporting service.',
+                  ? 'Period: ${query.label}, with a comparison to the previous period. Change it above.'
+                  : 'Period: ${query.label}. Change it above.',
+              size: 16,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             if (!configured)
               const MutedText(
                 'Exports need the reporting service. This build has no REPORT_API_URL.',
@@ -104,6 +96,7 @@ class _ExportTabState extends ConsumerState<ExportTab> {
                 busy && _busy == ReportFormat.xlsx
                     ? 'Preparing Excel…'
                     : 'Download Excel (.xlsx)',
+                height: 58,
                 onPressed: busy ? null : () => _export(ReportFormat.xlsx),
               ),
               const SizedBox(height: 10),
@@ -111,6 +104,7 @@ class _ExportTabState extends ConsumerState<ExportTab> {
                 busy && _busy == ReportFormat.pdf
                     ? 'Preparing PDF…'
                     : 'Download PDF',
+                height: 58,
                 onPressed: busy ? null : () => _export(ReportFormat.pdf),
               ),
             ],
@@ -145,26 +139,41 @@ class _ExportTabState extends ConsumerState<ExportTab> {
           ],
         ),
         const SizedBox(height: 16),
-        TitledCard(
-          title: 'Backup and data export',
-          children: [
-            const MutedText(
-              'Make a full backup, export your data as CSV, or check a backup file.',
-            ),
-            const SizedBox(height: 12),
-            AppButton(
-              'Open backup',
-              onPressed: () => context.push(AppRoutes.backup),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
         const TitledCard(
           title: 'Saved on this phone',
           children: [ExportHistoryList(reportsOnly: true)],
         ),
+        const SizedBox(height: 16),
+        TitledCard(
+          title: 'Backup',
+          children: [
+            const MutedText(
+              'Full backup or CSV export of all your data.',
+              size: 16,
+            ),
+            const SizedBox(height: 14),
+            AppButton(
+              'Open backup',
+              height: 58,
+              onPressed: () => context.push(AppRoutes.backup),
+            ),
+          ],
+        ),
       ],
     );
+  }
+}
+
+String _badge(ExportKind k) {
+  switch (k) {
+    case ExportKind.reportXlsx:
+      return 'XLS';
+    case ExportKind.reportPdf:
+      return 'PDF';
+    case ExportKind.backupZip:
+      return 'ZIP';
+    case ExportKind.dataCsv:
+      return 'CSV';
   }
 }
 
@@ -229,13 +238,57 @@ class ExportHistoryList extends ConsumerWidget {
         }
         return RowList([
           for (final e in items)
-            RowItem(
-              title: e.label,
-              subtitle:
-                  '${e.kind.label} · ${whenText(e.createdAt)} · ${fmtBytes(e.sizeBytes)}',
-              trailing: 'Options',
-              trailingColor: p.link,
+            InkWell(
               onTap: () => _options(context, ref, e),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: p.tile,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Text(
+                        _badge(e.kind),
+                        style: TextStyle(
+                          color: p.link,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            e.label,
+                            style: TextStyle(
+                              color: p.text,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            '${whenText(e.createdAt).substring(0, 10)} · ${fmtBytes(e.sizeBytes)}',
+                            style: TextStyle(color: p.muted, fontSize: 15),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.more_vert,
+                      key: Key('file-options-${e.fileName}'),
+                      color: p.muted,
+                    ),
+                  ],
+                ),
+              ),
             ),
         ]);
       },
