@@ -77,6 +77,7 @@ class _LifestyleScreenState extends State<LifestyleScreen> {
       title: 'Lifestyle',
       subtitle: 'Recovery, nutrition and daily activity',
       trailing: SizedBox(
+        width: 96,
         height: 48,
         child: FilledButton(
           key: const Key('lifestyle-log'),
@@ -413,7 +414,9 @@ class _StatTiles extends ConsumerWidget {
               tile(
                 const Key('tile-meals'),
                 'Meals',
-                day == null ? '0 / 0' : '${day.mealsEaten} / ${day.mealsPlanned}',
+                day == null
+                    ? '0 / 0'
+                    : '${day.mealsEaten} / ${day.mealsPlanned}',
                 day == null || day.mealsPlanned == 0
                     ? null
                     : day.mealsEaten / day.mealsPlanned,
@@ -589,11 +592,19 @@ class _Hydration extends ConsumerWidget {
         Row(
           children: [
             Expanded(
-              child: AppButton('+250 ml', height: 58, onPressed: () => add(250)),
+              child: AppButton(
+                '+250 ml',
+                height: 58,
+                onPressed: () => add(250),
+              ),
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: AppButton('+500 ml', height: 58, onPressed: () => add(500)),
+              child: AppButton(
+                '+500 ml',
+                height: 58,
+                onPressed: () => add(500),
+              ),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -1104,6 +1115,7 @@ class _InjuriesBodyState extends ConsumerState<_InjuriesBody> {
           ref.read(lifestyleServiceProvider).updateInjury(i.id, status: choice),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     final injuries =
@@ -1326,7 +1338,9 @@ class _NutritionToday extends ConsumerWidget {
           children: [
             stat(
               '${_kg(t.kcal)} kcal',
-              kcalTarget == null ? 'No target set' : 'of ${_kg(kcalTarget)} kcal',
+              kcalTarget == null
+                  ? 'No target set'
+                  : 'of ${_kg(kcalTarget)} kcal',
               const Key('nutrition-kcal'),
             ),
             stat(

@@ -361,13 +361,13 @@ class _ReportBody extends ConsumerWidget {
         snap.refreshing
             ? null
             : () => ref.read(reportSummaryProvider(request).notifier).refresh();
-    final problem =
+    final showStatus =
         snap.refreshing ||
         snap.error != null ||
         !snap.hasData ||
         snap.freshness == InsightFreshness.stale;
     final children = <Widget>[
-      if (problem) ...[
+      if (showStatus) ...[
         _StatusLine(snapshot: snap, configured: configured, onRefresh: refresh),
         const SizedBox(height: 12),
       ],

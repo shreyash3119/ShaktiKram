@@ -799,10 +799,10 @@ class _StrengthTabState extends ConsumerState<_StrengthTab> {
         ),
         if (!has.contains(true)) ...[
           _gap(),
-          AppCard(
+         const AppCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children:  [
                 _CardTitle('Nothing to show yet'),
                 NoteRow('Complete a workout with logged sets and your trends will appear here.'),
               ],
@@ -906,7 +906,7 @@ class _BodyWeightState extends ConsumerState<_BodyWeight> {
               },
             ),
             _gap(10),
-            MutedText(
+            const MutedText(
               'Daily weight moves around; compare longer periods.',
               size: 14,
             ),
@@ -1082,7 +1082,7 @@ class _MuscleRatings extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _CardTitle(
+          const _CardTitle(
             'Your ratings',
             sub:
                 'Ratings you entered yourself. Not calculated from training.',
