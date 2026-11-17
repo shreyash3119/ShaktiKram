@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shaktikram/app.dart';
-import 'package:shaktikram/core/routing/app_shell.dart';
 
 import 'support/fakes.dart';
 

@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shaktikram/app.dart';
-import 'package:shaktikram/core/routing/app_shell.dart';
 import 'package:shaktikram/core/time/local_stamp.dart';
-import 'package:shaktikram/core/widgets/controls.dart';
 
 import 'support/fakes.dart';
 import 'support/store_contract.dart';
