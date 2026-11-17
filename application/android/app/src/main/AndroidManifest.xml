@@ -2,7 +2,7 @@
     <!-- Needed for every network call (Supabase and the reporting service) in release builds. -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="shaktikram"
+        android:label="ShaktiKram"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

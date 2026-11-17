@@ -80,7 +80,7 @@ class _FullPage extends StatelessWidget {
               child: Row(
                 children: [
                   SizedBox(
-                    width: 72,
+                    width: 92,
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: IconButton(
@@ -103,7 +103,7 @@ class _FullPage extends StatelessWidget {
                     ),
                   ),
                   SizedBox(
-                    width: 72,
+                    width: 92,
                     child: Align(
                       alignment: Alignment.centerRight,
                       child: trailing,
@@ -695,8 +695,12 @@ class _ExerciseDetailPage extends ConsumerWidget {
       closeIcon: Icons.arrow_back_ios_new,
       trailing: OutlinedButton(
         key: const Key('exercise-edit'),
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(0, 44),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+        ),
         onPressed: () => showExerciseEditor(context, exercise: exercise),
-        child: const Text('Edit'),
+        child: const Text('Edit', maxLines: 1, softWrap: false),
       ),
       body: CustomScrollView(
         slivers: [

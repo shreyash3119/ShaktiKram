@@ -14,10 +14,7 @@ Future<void> _open(WidgetTester tester, Harness h) async {
   );
   await tester.pumpAndSettle();
   await tester.tap(
-    find.descendant(
-      of: find.byType(AppBottomBar),
-      matching: find.text('Progress'),
-    ),
+    find.byKey(const Key('nav-Progress')),
   );
   await tester.pumpAndSettle();
 }

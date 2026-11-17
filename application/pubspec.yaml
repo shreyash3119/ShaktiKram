@@ -29,8 +29,31 @@ dev_dependencies:
   integration_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  # App icon and launch screen, generated from assets/branding/shaktikram_logo.png (see assets/branding/README.md).
+  flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.4
 
 flutter:
   uses-material-design: true
   assets:
-    - assets/
+    - assets/branding/
+
+# Run after adding the logo:
+#   dart run flutter_launcher_icons
+#   dart run flutter_native_splash:create
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/branding/shaktikram_logo.png"
+  adaptive_icon_background: "#0B111D"
+  adaptive_icon_foreground: "assets/branding/shaktikram_logo.png"
+  min_sdk_android: 21
+
+flutter_native_splash:
+  color: "#0B111D"
+  image: "assets/branding/shaktikram_logo.png"
+  android: true
+  ios: false
+  android_12:
+    color: "#0B111D"
+    image: "assets/branding/shaktikram_logo.png"

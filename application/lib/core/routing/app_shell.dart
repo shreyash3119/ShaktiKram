@@ -4,13 +4,16 @@ import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
 
 class _NavItem {
-  const _NavItem(this.label, this.icon, this.selectedIcon);
+  const _NavItem(this.label, this.icon, this.accent);
   final String label;
   final IconData icon;
-  final IconData selectedIcon;
+
+  /// The colour of the selected pill: icon, label, tinted fill and border.
+  final Color accent;
 }
 
-/// Floating bottom bar with the six sections. The order must match the branch order in app_router.dart.
+/// Floating pill-shaped bottom bar with the six sections. The selected section grows into a coloured pill that shows
+/// its icon and name; the others stay as muted icons. The order must match the branch order in app_router.dart.
 class AppBottomBar extends StatelessWidget {
   const AppBottomBar({
     super.key,
@@ -22,40 +25,48 @@ class AppBottomBar extends StatelessWidget {
   final ValueChanged<int> onSelected;
 
   static const _items = <_NavItem>[
-    _NavItem('Home', Icons.home_outlined, Icons.home_rounded),
-    _NavItem('Training', Icons.fitness_center, Icons.fitness_center),
-    _NavItem('Progress', Icons.trending_up, Icons.trending_up),
-    _NavItem('Lifestyle', Icons.favorite_border, Icons.favorite_rounded),
-    _NavItem('Reports', Icons.bar_chart_rounded, Icons.bar_chart_rounded),
-    _NavItem('Settings', Icons.tune, Icons.tune),
+    _NavItem('Home', Icons.home_rounded, Color(0xFF4C8DFF)),
+    _NavItem('Training', Icons.fitness_center, Color(0xFFB57BFF)),
+    _NavItem('Progress', Icons.show_chart_rounded, Color(0xFF34D399)),
+    _NavItem('Lifestyle', Icons.monitor_heart_rounded, Color(0xFFFF6B81)),
+    _NavItem('Reports', Icons.align_horizontal_left_rounded, Color(0xFFFBBF24)),
+    _NavItem('Settings', Icons.tune_rounded, Color(0xFF22D3EE)),
   ];
+
+  static const _inactiveWidth = 44.0;
+  static const _pillHeight = 54.0;
 
   @override
   Widget build(BuildContext context) {
     final p = context.pal;
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return SafeArea(
       top: false,
       child: Container(
-        margin: const EdgeInsets.fromLTRB(10, 0, 10, 8),
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        margin: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+        padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: p.card,
-          borderRadius: BorderRadius.circular(34),
+          color: dark ? const Color(0xFF0F1420) : p.card,
+          borderRadius: BorderRadius.circular(40),
+          border: Border.all(color: p.divider.withValues(alpha: 0.5)),
         ),
-        child: Row(
-          children: [
-            for (var i = 0; i < _items.length; i++)
-              Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => onSelected(i),
-                  child: _NavButton(
+        child: LayoutBuilder(
+          builder: (context, c) {
+            // The selected pill takes whatever the five compact icons leave.
+            final activeWidth = c.maxWidth - _inactiveWidth * (_items.length - 1);
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                for (var i = 0; i < _items.length; i++)
+                  _NavButton(
                     item: _items[i],
                     selected: i == currentIndex,
+                    width: i == currentIndex ? activeWidth : _inactiveWidth,
+                    onTap: () => onSelected(i),
                   ),
-                ),
-              ),
-          ],
+              ],
+            );
+          },
         ),
       ),
     );
@@ -63,54 +74,70 @@ class AppBottomBar extends StatelessWidget {
 }
 
 class _NavButton extends StatelessWidget {
-  const _NavButton({required this.item, required this.selected});
+  const _NavButton({
+    required this.item,
+    required this.selected,
+    required this.width,
+    required this.onTap,
+  });
+
   final _NavItem item;
   final bool selected;
+  final double width;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final p = context.pal;
-    final color = selected ? p.link : p.muted;
-    return Container(
-      height: 62,
-      decoration: BoxDecoration(
-        color: selected ? p.tile : Colors.transparent,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            selected ? item.selectedIcon : item.icon,
-            size: 22,
-            color: color,
-          ),
-          SizedBox(
-            height: 6,
-            child:
-                selected
-                    ? Center(
-                      child: Container(
-                        width: 4,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: p.link,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    )
-                    : null,
-          ),
-          Text(
-            item.label,
-            maxLines: 1,
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+    final color = selected ? item.accent : p.muted;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: item.label,
+      child: GestureDetector(
+        key: Key('nav-${item.label}'),
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          width: width,
+          height: AppBottomBar._pillHeight,
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          decoration: BoxDecoration(
+            color: selected ? item.accent.withValues(alpha: 0.18) : null,
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(
+              color: selected
+                  ? item.accent.withValues(alpha: 0.45)
+                  : Colors.transparent,
             ),
           ),
-        ],
+          child: Center(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(item.icon, size: 24, color: color),
+                  if (selected) ...[
+                    const SizedBox(width: 6),
+                    Text(
+                      item.label,
+                      maxLines: 1,
+                      softWrap: false,
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

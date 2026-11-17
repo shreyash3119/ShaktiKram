@@ -213,12 +213,15 @@ class MuscleChip extends StatelessWidget {
               Icon(Icons.check, size: 18, color: fg),
               const SizedBox(width: 6),
             ],
-            Text(
-              label,
-              style: TextStyle(
-                color: fg,
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
+            // Long names (for example "Transverse abdominis (deep core)") wrap inside the chip instead of overflowing.
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: fg,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
             if (onRemove != null) ...[

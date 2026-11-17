@@ -153,7 +153,7 @@ Future<void> _open(WidgetTester tester, _Setup s, String tab) async {
   );
   await tester.pumpAndSettle();
   await tester.tap(
-    find.descendant(of: find.byType(AppBottomBar), matching: find.text(tab)),
+    find.byKey(Key('nav-$tab')),
   );
   await tester.pumpAndSettle();
 }

@@ -22,10 +22,7 @@ Future<ProviderContainer> _open(WidgetTester tester, Harness h) async {
   );
   await tester.pumpAndSettle();
   await tester.tap(
-    find.descendant(
-      of: find.byType(AppBottomBar),
-      matching: find.text('Training'),
-    ),
+    find.byKey(const Key('nav-Training')),
   );
   await tester.pumpAndSettle();
   return ProviderScope.containerOf(tester.element(find.byType(ShaktiKramApp)));

@@ -31,8 +31,7 @@ Future<void> _pumpApp(
   await tester.pumpAndSettle();
 }
 
-Finder _navLabel(String label) =>
-    find.descendant(of: find.byType(AppBottomBar), matching: find.text(label));
+Finder _navLabel(String label) => find.byKey(Key('nav-$label'));
 
 /// A line that only that screen shows (its subtitle).
 Map<String, String> _subtitles() => {

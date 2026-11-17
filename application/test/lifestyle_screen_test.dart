@@ -13,10 +13,7 @@ Future<Harness> _open(WidgetTester tester) async {
   );
   await tester.pumpAndSettle();
   await tester.tap(
-    find.descendant(
-      of: find.byType(AppBottomBar),
-      matching: find.text('Lifestyle'),
-    ),
+    find.byKey(const Key('nav-Lifestyle')),
   );
   await tester.pumpAndSettle();
   return h;

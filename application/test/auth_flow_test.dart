@@ -17,8 +17,7 @@ Future<void> _pump(WidgetTester tester, Harness h) async {
   await tester.pumpAndSettle();
 }
 
-Finder _navLabel(String label) =>
-    find.descendant(of: find.byType(AppBottomBar), matching: find.text(label));
+Finder _navLabel(String label) => find.byKey(Key('nav-$label'));
 
 /// Home has its greeting; the Devices screen still uses an app bar.
 Finder _appBarTitle(String title) =>

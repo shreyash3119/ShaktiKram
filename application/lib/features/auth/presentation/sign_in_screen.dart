@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/auth/auth_service.dart';
 import '../../../core/auth/session_controller.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_logo.dart';
 
 /// The owner signs in once per device. There is no registration and no account creation (decision D3).
 class SignInScreen extends ConsumerStatefulWidget {
@@ -74,7 +75,13 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text('ShaktiKram', style: text.headlineMedium),
+                      const Center(child: AppLogo(size: 96)),
+                      const SizedBox(height: 12),
+                      Text(
+                        'ShaktiKram',
+                        textAlign: TextAlign.center,
+                        style: text.headlineMedium,
+                      ),
                       const SizedBox(height: 4),
                       const Text(
                         'Sign in with your owner account. You only do this once on this phone.',
