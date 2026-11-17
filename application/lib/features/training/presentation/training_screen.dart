@@ -6,12 +6,14 @@ import '../../../core/insights/insight_repository.dart' show InsightSnapshot;
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/cards.dart';
 import '../../../core/widgets/controls.dart';
+import '../../../core/widgets/section_widgets.dart';
 import '../../../core/widgets/editor_sheet.dart';
 import '../../../core/widgets/insight_status.dart' show ageText;
 import '../../progress/data/progress_insights.dart';
 import '../../progress/data/progress_providers.dart';
 import '../data/training_models.dart';
 import '../data/training_providers.dart';
+import 'equipment_groups.dart';
 import 'training_dialogs.dart';
 import 'training_format.dart';
 import 'training_management_screens.dart';
@@ -77,13 +79,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
               ? 'Browse and search movements'
               : 'Splits, exercises and workouts',
       children: [
-        PillTabs(
-          labels: _tabs,
-          index: _tab,
-          container: true,
-          layout: PillLayout.scroll,
-          onChanged: _goTo,
-        ),
+        UnderlineTabs(labels: _tabs, index: _tab, onChanged: _goTo),
         ..._content(),
       ],
     );
@@ -743,6 +739,7 @@ class _ExerciseLibrary extends ConsumerStatefulWidget {
 class _ExerciseLibraryState extends ConsumerState<_ExerciseLibrary> {
   String _query = '';
   String? _group;
+  EquipmentGroup? _kind;
   bool _archived = false;
 
   @override
@@ -760,6 +757,11 @@ class _ExerciseLibraryState extends ConsumerState<_ExerciseLibrary> {
     final groupOf = {for (final m in muscles) m.id: m.groupKey};
     final labelOf = {for (final m in muscles) m.id: m.label};
     final equipmentOf = {for (final e in equipment) e.id: e.label};
+    final equipmentById = {for (final e in equipment) e.id: e};
+    final kinds = [
+      for (final g in EquipmentGroup.values)
+        if (equipment.any((e) => equipmentGroupOf(e.key) == g)) g,
+    ];
     final groups =
         {
             for (final m in muscles) m.groupKey,
@@ -773,6 +775,10 @@ class _ExerciseLibraryState extends ConsumerState<_ExerciseLibrary> {
       if (_group != null &&
           !(links[e.id] ?? const []).any((l) => groupOf[l.muscleId] == _group)){
         return false;}
+      if (_kind != null) {
+        final q = equipmentById[e.equipmentId];
+        if (q == null || equipmentGroupOf(q.key) != _kind) return false;
+      }
       return true;
     }
 
@@ -848,10 +854,11 @@ class _ExerciseLibraryState extends ConsumerState<_ExerciseLibrary> {
             children: [
               _FilterChip(
                 label: 'All',
-                selected: _group == null && !_archived,
+                selected: _group == null && _kind == null && !_archived,
                 onTap:
                     () => setState(() {
                       _group = null;
+                      _kind = null;
                       _archived = false;
                     }),
               ),
@@ -872,6 +879,24 @@ class _ExerciseLibraryState extends ConsumerState<_ExerciseLibrary> {
             ],
           ),
         ),
+        if (kinds.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (final g in kinds) ...[
+                  _FilterChip(
+                    label: g.label,
+                    selected: _kind == g,
+                    onTap: () => setState(() => _kind = _kind == g ? null : g),
+                  ),
+                  const SizedBox(width: 10),
+                ],
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 16),
         if (shown.isEmpty)
           MutedText(
@@ -902,7 +927,11 @@ class _ExerciseLibraryState extends ConsumerState<_ExerciseLibrary> {
                         color: p.tile,
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Icon(Icons.fitness_center, color: p.muted),
+                      child: Icon(
+                        iconForEquipment(equipmentById[e.equipmentId]),
+                        key: Key('exercise-icon-${e.id}'),
+                        color: p.muted,
+                      ),
                     ),
                     const SizedBox(width: 14),
                     Expanded(

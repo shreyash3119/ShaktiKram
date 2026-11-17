@@ -3,8 +3,10 @@ import 'dart:ui' show PathMetric;
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/controls.dart';
 import '../../../core/widgets/editor_sheet.dart';
 import '../data/training_models.dart';
+import 'equipment_groups.dart';
 
 /// Small building blocks shared by the training editors (exercise, template, split).
 
@@ -417,45 +419,152 @@ Future<Set<String>?> pickMuscles(
   );
 }
 
-/// Opens a sheet to pick one piece of equipment. Returns its id, '' for "none", or null if dismissed.
+/// Opens a sheet to pick one piece of equipment: a search box, group filters, and the equipment under group headings
+/// (alphabetical). Returns its id, '' for "none", or null if dismissed. Done stays at the bottom while the list scrolls.
 Future<String?> pickEquipment(
   BuildContext context, {
   required List<EquipmentRef> equipment,
   String? selected,
 }) {
+  var chosen = selected;
+  var query = '';
+  EquipmentGroup? filter;
   return showEditorSheet<String>(
     context,
     title: 'Equipment',
     builder:
-        (sheet) => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
+        (sheet) => StatefulBuilder(
+          builder: (_, setState) {
+            final p = sheet.pal;
+            final q = query.trim().toLowerCase();
+            final shown = [
+              for (final e in equipment)
+                if ((filter == null || equipmentGroupOf(e.key) == filter) &&
+                    (q.isEmpty || e.label.toLowerCase().contains(q)))
+                  e,
+            ];
+            final groups = [
+              for (final g in EquipmentGroup.values)
+                if (shown.any((e) => equipmentGroupOf(e.key) == g)) g,
+            ];
+            Widget filterChip(String label, EquipmentGroup? g) => Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: MuscleChip(
+                label,
+                key: Key('equipment-filter-$label'),
+                selected: filter == g,
+                onTap: () => setState(() => filter = g),
+              ),
+            );
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                for (final q in equipment)
-                  MuscleChip(
-                    q.label,
-                    key: Key('equipment-${q.id}'),
-                    selected: q.id == selected,
-                    onTap: () => Navigator.of(sheet).pop(q.id),
+                FieldBox(
+                  hint: 'Search equipment…',
+                  fieldKey: const Key('equipment-search'),
+                  textAlign: TextAlign.start,
+                  onChanged: (v) => setState(() => query = v),
+                ),
+                const SizedBox(height: 12),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      filterChip('All', null),
+                      for (final g in EquipmentGroup.values)
+                        filterChip(g.label, g),
+                    ],
                   ),
+                ),
+                const SizedBox(height: 14),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(sheet).size.height * 0.42,
+                  ),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (equipment.isEmpty)
+                          Text(
+                            'No equipment on this phone yet.',
+                            style: TextStyle(color: p.muted, fontSize: 14),
+                          )
+                        else if (shown.isEmpty)
+                          Text(
+                            'No equipment matches.',
+                            style: TextStyle(color: p.muted, fontSize: 15),
+                          ),
+                        for (final g in groups) ...[
+                          Padding(
+                            padding: const EdgeInsets.only(top: 6, bottom: 10),
+                            child: Text(
+                              g.label.toUpperCase(),
+                              style: TextStyle(
+                                color: p.muted,
+                                fontSize: 14,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: [
+                              for (final e
+                                  in ([
+                                    for (final e in shown)
+                                      if (equipmentGroupOf(e.key) == g) e,
+                                  ]..sort(
+                                    (a, b) => a.label.toLowerCase().compareTo(
+                                      b.label.toLowerCase(),
+                                    ),
+                                  )))
+                                MuscleChip(
+                                  e.label,
+                                  key: Key('equipment-${e.id}'),
+                                  selected: e.id == chosen,
+                                  onTap: () => setState(() => chosen = e.id),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        chosen == null ? 'None selected' : '1 selected',
+                        key: const Key('equipment-count'),
+                        style: TextStyle(color: p.muted, fontSize: 15),
+                      ),
+                    ),
+                    if (chosen != null)
+                      TextButton(
+                        key: const Key('equipment-none'),
+                        onPressed: () => Navigator.of(sheet).pop(''),
+                        child: const Text('No equipment'),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: FilledButton(
+                    key: const Key('equipment-done'),
+                    onPressed: () => Navigator.of(sheet).pop(chosen ?? ''),
+                    child: const Text('Done'),
+                  ),
+                ),
               ],
-            ),
-            if (equipment.isEmpty)
-              Text(
-                'No equipment on this phone yet.',
-                style: TextStyle(color: sheet.pal.muted, fontSize: 14),
-              ),
-            if (selected != null) ...[
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () => Navigator.of(sheet).pop(''),
-                child: const Text('No equipment'),
-              ),
-            ],
-          ],
+            );
+          },
         ),
   );
 }

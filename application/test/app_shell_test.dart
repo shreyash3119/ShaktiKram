@@ -46,10 +46,7 @@ Map<String, String> _subtitles() => {
 
 Future<void> _tapPill(WidgetTester tester, String label) async {
   await tester.tap(
-    find.descendant(
-      of: find.byType(PillTabs).first,
-      matching: find.text(label),
-    ),
+    find.byKey(Key('tab-$label')),
   );
   await tester.pumpAndSettle();
 }

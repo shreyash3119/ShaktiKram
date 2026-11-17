@@ -9,6 +9,7 @@ import '../../progress/data/progress_models.dart';
 import '../../progress/data/progress_providers.dart';
 import '../data/training_models.dart';
 import '../data/training_providers.dart';
+import 'equipment_groups.dart';
 import 'training_editor_widgets.dart';
 
 /// Adds an exercise (no [exercise], a sheet) or edits one (a full page).
@@ -362,7 +363,13 @@ class _ExerciseFormState extends ConsumerState<_ExerciseForm> {
             onTap: () => _pickEquipment(equipment),
             child: Row(
               children: [
-                Icon(Icons.fitness_center, color: p.muted, size: 22),
+                Icon(
+                  iconForEquipment(
+                    equipment.where((q) => q.id == _equipment).firstOrNull,
+                  ),
+                  color: p.muted,
+                  size: 22,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(

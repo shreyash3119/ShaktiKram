@@ -355,7 +355,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
             ]),
           ],
         ),
-        const SignOutAndDanger(title: 'Clear data'),
+        const SignOutAndDanger(),
       ],
     );
   }

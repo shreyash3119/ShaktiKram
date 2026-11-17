@@ -432,7 +432,7 @@ Future<void> _confirmClear(BuildContext context) {
   );
 }
 
-/// Sign out and the danger zone, at the bottom of the hub and of the Account page.
+/// Sign out and the danger zone, at the bottom of the Account page.
 class SignOutAndDanger extends ConsumerWidget {
   const SignOutAndDanger({super.key, this.title = 'Danger zone'});
 
@@ -471,9 +471,7 @@ class SignOutAndDanger extends ConsumerWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                title == 'Danger zone'
-                    ? 'Delete selected data or reset the app. This cannot be undone.'
-                    : 'Delete selected data or reset the app. You type DELETE to confirm. This cannot be undone.',
+                'Delete selected data or reset the app. You type DELETE to confirm. This cannot be undone.',
                 style: TextStyle(color: p.muted, fontSize: 16, height: 1.3),
               ),
               const SizedBox(height: 14),

@@ -32,10 +32,7 @@ Future<ProviderContainer> _open(WidgetTester tester, Harness h) async {
 }
 
 Future<void> _pill(WidgetTester tester, String label) async {
-  final target = find.descendant(
-    of: find.byType(PillTabs).first,
-    matching: find.text(label),
-  );
+  final target = find.byKey(Key('tab-$label'));
   await tester.ensureVisible(target);
   await tester.pumpAndSettle();
   await tester.tap(target);

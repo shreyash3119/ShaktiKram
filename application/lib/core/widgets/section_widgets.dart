@@ -5,7 +5,7 @@ import '../theme/app_theme.dart';
 /// Small building blocks shared by the Progress and Lifestyle tabs.
 
 /// Text tabs with an underline under the selected one, scrolling sideways when they do not fit.
-class UnderlineTabs extends StatelessWidget {
+class UnderlineTabs extends StatefulWidget {
   const UnderlineTabs({
     super.key,
     required this.labels,
@@ -18,8 +18,48 @@ class UnderlineTabs extends StatelessWidget {
   final ValueChanged<int> onChanged;
 
   @override
+  State<UnderlineTabs> createState() => _UnderlineTabsState();
+}
+
+class _UnderlineTabsState extends State<UnderlineTabs> {
+  late List<GlobalKey> _spots;
+
+  @override
+  void initState() {
+    super.initState();
+    _spots = [for (final _ in widget.labels) GlobalKey()];
+    _reveal();
+  }
+
+  @override
+  void didUpdateWidget(UnderlineTabs old) {
+    super.didUpdateWidget(old);
+    if (_spots.length != widget.labels.length) {
+      _spots = [for (final _ in widget.labels) GlobalKey()];
+    }
+    if (old.index != widget.index) _reveal();
+  }
+
+  /// Slides the row so the selected tab is on screen (narrow phones scroll sideways).
+  void _reveal() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || widget.index < 0 || widget.index >= _spots.length) return;
+      final ctx = _spots[widget.index].currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 200),
+          alignment: 0.5,
+        );
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final p = context.pal;
+    final labels = widget.labels;
+    final index = widget.index;
     return Container(
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: p.divider)),
@@ -31,8 +71,9 @@ class UnderlineTabs extends StatelessWidget {
             for (var i = 0; i < labels.length; i++)
               InkWell(
                 key: Key('tab-${labels[i]}'),
-                onTap: () => onChanged(i),
+                onTap: () => widget.onChanged(i),
                 child: Container(
+                  key: _spots[i],
                   padding: const EdgeInsets.fromLTRB(0, 10, 0, 12),
                   margin: const EdgeInsets.only(right: 22),
                   decoration: BoxDecoration(

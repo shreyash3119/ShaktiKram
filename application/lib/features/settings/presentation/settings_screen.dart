@@ -2,28 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/auth/session_controller.dart';
 import '../../../core/routing/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/cards.dart';
 import 'settings_common.dart';
 
 /// Settings hub: profile summary, a backup reminder, five pages (training, notifications, appearance, data & sync,
-/// account), the sync state, sign out and the danger zone. The profile numbers are still placeholders until the
-/// profile is stored on the phone.
+/// account) and the sync state. Sign out and the danger zone live on the Account page. The profile numbers are
+/// still placeholders until the profile is stored on the phone.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final p = context.pal;
-    final session = ref.watch(sessionControllerProvider);
-    final mode = ref.watch(themeModeProvider);
-    final theme = switch (mode) {
-      ThemeMode.dark => 'Dark',
-      ThemeMode.light => 'Light',
-      ThemeMode.system => 'System',
-    };
     return ScreenFrame(
       title: 'Settings',
       subtitle: 'Profile, sync and data',
@@ -88,30 +80,24 @@ class SettingsScreen extends ConsumerWidget {
               ),
               NavRow(
                 'Notifications',
-                summary: 'Reminders, timers',
                 onTap: () => context.push(AppRoutes.settingsNotifications),
               ),
               NavRow(
                 'Appearance',
-                summary: '$theme · Units: metric',
                 onTap: () => context.push(AppRoutes.settingsAppearance),
               ),
               NavRow(
                 'Data & sync',
-                summary: 'Export, backup, sync',
                 onTap: () => context.push(AppRoutes.settingsData),
               ),
               NavRow(
                 'Account',
-                summary:
-                    '${maskedEmail(session.email)} · This device',
                 onTap: () => context.push(AppRoutes.settingsAccount),
               ),
             ]),
           ],
         ),
         const SyncCard(),
-        const SignOutAndDanger(),
         Center(
           child: Text(
             'Personal Fitness Manager v1.0.0',

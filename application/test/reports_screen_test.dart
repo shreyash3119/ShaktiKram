@@ -418,6 +418,8 @@ void main() {
     expect(find.textContaining('Auto-backup'), findsNothing);
     expect(find.text('Restore…'), findsNothing);
     expect(find.textContaining('never made automatically'), findsOneWidget);
+    expect(find.text('Sign out'), findsNothing);
+    expect(find.text('Danger zone'), findsNothing);
 
     await _tap(tester, find.text('Data & sync'));
     await _tap(tester, find.text('Export data'));
