@@ -75,7 +75,8 @@ class _StepsHistoryScreenState extends ConsumerState<StepsHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.pal;
-    final history = ref.watch(stepHistoryProvider).valueOrNull ?? const <DailySteps>[];
+    final history =
+        ref.watch(stepHistoryProvider).valueOrNull ?? const <DailySteps>[];
     final target = ref.watch(targetsProvider).valueOrNull?.stepTarget;
     final byDay = {for (final d in history) d.localDate: d};
     final today = _today;
@@ -99,7 +100,8 @@ class _StepsHistoryScreenState extends ConsumerState<StepsHistoryScreen> {
         if (!d.isAfter(today)) d,
     ];
     final total = periodDays.fold<int>(0, (a, d) => a + stepsOn(d));
-    final withData = periodDays.where((d) => byDay.containsKey(dateKey(d))).length;
+    final withData =
+        periodDays.where((d) => byDay.containsKey(dateKey(d))).length;
     final average = withData == 0 ? 0 : (total / withData).round();
 
     final listDays = [
@@ -128,11 +130,12 @@ class _StepsHistoryScreenState extends ConsumerState<StepsHistoryScreen> {
           labels: const ['Day', 'Week', 'Month'],
           index: _range.index,
           container: true,
-          onChanged: (i) => setState(() {
-            _range = _Range.values[i];
-            // Keep the anchor inside today's period when switching so the view never lands in the future.
-            if (_anchor.isAfter(today)) _anchor = today;
-          }),
+          onChanged:
+              (i) => setState(() {
+                _range = _Range.values[i];
+                // Keep the anchor inside today's period when switching so the view never lands in the future.
+                if (_anchor.isAfter(today)) _anchor = today;
+              }),
         ),
         AppCard(
           child: Column(
@@ -151,14 +154,21 @@ class _StepsHistoryScreenState extends ConsumerState<StepsHistoryScreen> {
                       _periodLabel(),
                       key: const Key('steps-period'),
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: p.text, fontSize: 17, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        color: p.text,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                   IconButton(
                     key: const Key('steps-next'),
                     tooltip: 'Next',
                     onPressed: canNext ? () => _step(1) : null,
-                    icon: Icon(Icons.chevron_right, color: canNext ? p.text : p.faint),
+                    icon: Icon(
+                      Icons.chevron_right,
+                      color: canNext ? p.text : p.faint,
+                    ),
                   ),
                 ],
               ),
@@ -169,11 +179,18 @@ class _StepsHistoryScreenState extends ConsumerState<StepsHistoryScreen> {
                     Text(
                       formatSteps(total),
                       key: const Key('steps-total'),
-                      style: TextStyle(color: p.text, fontSize: 40, fontWeight: FontWeight.w800, height: 1.05),
+                      style: TextStyle(
+                        color: p.text,
+                        fontSize: 40,
+                        fontWeight: FontWeight.w800,
+                        height: 1.05,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      _range == _Range.day ? 'steps' : 'steps · avg ${formatSteps(average)} a day',
+                      _range == _Range.day
+                          ? 'steps'
+                          : 'steps · avg ${formatSteps(average)} a day',
                       style: TextStyle(color: p.muted, fontSize: 14),
                     ),
                   ],
@@ -182,7 +199,9 @@ class _StepsHistoryScreenState extends ConsumerState<StepsHistoryScreen> {
               const SizedBox(height: 18),
               _StepsBars(
                 days: chartDays,
-                steps: [for (final d in chartDays) d.isAfter(today) ? 0 : stepsOn(d)],
+                steps: [
+                  for (final d in chartDays) d.isAfter(today) ? 0 : stepsOn(d),
+                ],
                 target: target,
                 highlight: _range == _Range.day ? start : null,
                 month: _range == _Range.month,
@@ -194,7 +213,14 @@ class _StepsHistoryScreenState extends ConsumerState<StepsHistoryScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('By date', style: TextStyle(color: p.text, fontSize: 18, fontWeight: FontWeight.w800)),
+              Text(
+                'By date',
+                style: TextStyle(
+                  color: p.text,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
               const SizedBox(height: 6),
               if (listDays.isEmpty)
                 const Padding(
@@ -208,9 +234,10 @@ class _StepsHistoryScreenState extends ConsumerState<StepsHistoryScreen> {
                     day: listDays[i],
                     record: byDay[dateKey(listDays[i])]!,
                     target: target,
-                    onTap: _range == _Range.day
-                        ? null
-                        : () => setState(() {
+                    onTap:
+                        _range == _Range.day
+                            ? null
+                            : () => setState(() {
                               _range = _Range.day;
                               _anchor = listDays[i];
                             }),
@@ -229,7 +256,12 @@ class _StepsHistoryScreenState extends ConsumerState<StepsHistoryScreen> {
 }
 
 class _DayRow extends StatelessWidget {
-  const _DayRow({required this.day, required this.record, required this.target, this.onTap});
+  const _DayRow({
+    required this.day,
+    required this.record,
+    required this.target,
+    this.onTap,
+  });
 
   final DateTime day;
   final DailySteps record;
@@ -252,17 +284,39 @@ class _DayRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(longDay(day), style: TextStyle(color: p.text, fontSize: 16, fontWeight: FontWeight.w600)),
+                  Text(
+                    longDay(day),
+                    style: TextStyle(
+                      color: p.text,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   const SizedBox(height: 2),
                   Text(
-                    record.source == 'device_import' ? 'Health Connect' : (record.source == 'estimate' ? 'Estimate' : 'Typed by hand'),
+                    record.source == 'device_import'
+                        ? 'Health Connect'
+                        : (record.source == 'estimate'
+                            ? 'Estimate'
+                            : 'Typed by hand'),
                     style: TextStyle(color: p.muted, fontSize: 12.5),
                   ),
                 ],
               ),
             ),
-            if (met) Padding(padding: const EdgeInsets.only(right: 6), child: Icon(Icons.check_circle, size: 16, color: p.green)),
-            Text('${formatSteps(record.steps)} steps', style: TextStyle(color: p.text, fontSize: 16, fontWeight: FontWeight.w700)),
+            if (met)
+              Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: Icon(Icons.check_circle, size: 16, color: p.green),
+              ),
+            Text(
+              '${formatSteps(record.steps)} steps',
+              style: TextStyle(
+                color: p.text,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ],
         ),
       ),
@@ -271,6 +325,8 @@ class _DayRow extends StatelessWidget {
 }
 
 /// Bars for each day, a dashed goal line and a few date labels underneath.
+/// Google Fit-inspired chart with a consistent 10,000-step scale,
+/// horizontal reference lines, and daily bars.
 class _StepsBars extends StatelessWidget {
   const _StepsBars({
     required this.days,
@@ -286,87 +342,194 @@ class _StepsBars extends StatelessWidget {
   final DateTime? highlight;
   final bool month;
 
-  static const _plot = 150.0;
+  static const double _plot = 180;
 
   @override
   Widget build(BuildContext context) {
     final p = context.pal;
-    var top = target ?? 0;
-    for (final v in steps) {
-      if (v > top) top = v;
+
+    // Keep the scale at 10,000 instead of stretching the tallest bar.
+    var top = 10000;
+
+    if (target != null && target! > top) {
+      top = target!;
     }
-    if (top <= 0) top = 1;
-    final goalY = target == null ? null : _plot * (target! / top);
+
+    for (final value in steps) {
+      if (value > top) top = value;
+    }
+
+    final goal = target ?? 10000;
+    final goalTop = _plot * (1 - goal / top);
 
     String label(int i) {
       final d = days[i];
-      if (!month) return weekdayNames[d.weekday - 1].substring(0, 3);
-      return (d.day == 1 || (d.day - 1) % 7 == 0) && d.day <= 29 ? '${d.day}' : '';
+
+      if (!month) {
+        return weekdayNames[d.weekday - 1].substring(0, 3);
+      }
+
+      return (d.day == 1 || (d.day - 1) % 7 == 0) && d.day <= 29
+          ? '${d.day}'
+          : '';
     }
 
     return Column(
       children: [
         SizedBox(
           height: _plot,
-          child: Stack(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (goalY != null)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: goalY,
-                  child: Row(
-                    children: [
-                      Expanded(child: Container(key: const Key('steps-goal-line'), height: 1, color: p.green.withValues(alpha: 0.6))),
-                    ],
-                  ),
+              Expanded(
+                child: Stack(
+                  children: [
+                    // Horizontal reference lines.
+                    Positioned.fill(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(height: 1, color: p.divider),
+                          Container(height: 1, color: p.divider),
+                          Container(height: 2, color: p.divider),
+                        ],
+                      ),
+                    ),
+
+                    // Dashed step goal line.
+                    Positioned(
+                      top: goalTop.clamp(0.0, _plot - 1),
+                      left: 0,
+                      right: 0,
+                      child: Row(
+                        children: [
+                          for (var i = 0; i < 36; i++)
+                            Expanded(
+                              child: Container(
+                                height: 1,
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 2,
+                                ),
+                                color:
+                                    i.isEven
+                                        ? p.muted.withValues(alpha: 0.7)
+                                        : Colors.transparent,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+
+                    // Daily bars.
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          for (var i = 0; i < days.length; i++)
+                            Expanded(
+                              child: Align(
+                                alignment: Alignment.bottomCenter,
+                                child: Container(
+                                  key: Key('steps-bar-${dateKey(days[i])}'),
+                                  width: month ? 5 : 18,
+                                  height:
+                                      steps[i] == 0
+                                          ? 2
+                                          : (_plot * steps[i] / top)
+                                              .clamp(2, _plot)
+                                              .toDouble(),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        steps[i] == 0
+                                            ? p.tile
+                                            : (highlight == null ||
+                                                    days[i] == highlight
+                                                ? p.primary
+                                                : p.primary.withValues(
+                                                  alpha: 0.65,
+                                                )),
+                                    borderRadius: BorderRadius.circular(
+                                      month ? 2 : 5,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              ),
+
+              // Right-side scale labels.
+              SizedBox(
+                width: 46,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      formatSteps(top),
+                      style: TextStyle(color: p.muted, fontSize: 11),
+                    ),
+                    Text(
+                      formatSteps(top ~/ 2),
+                      style: TextStyle(color: p.muted, fontSize: 11),
+                    ),
+                    Text('0', style: TextStyle(color: p.muted, fontSize: 11)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        // Day labels aligned with their respective bars.
+        Row(
+          children: [
+            Expanded(
+              child: Row(
                 children: [
                   for (var i = 0; i < days.length; i++)
                     Expanded(
-                      child: Center(
-                        child: Container(
-                          key: Key('steps-bar-${dateKey(days[i])}'),
-                          width: month ? 5 : 18,
-                          height: steps[i] == 0 ? 3 : (_plot * steps[i] / top).clamp(3, _plot).toDouble(),
-                          decoration: BoxDecoration(
-                            color: steps[i] == 0
-                                ? p.tile
-                                : (highlight == null || days[i] == highlight ? p.primary : p.primary.withValues(alpha: 0.45)),
-                            borderRadius: BorderRadius.circular(month ? 2 : 5),
+                      child: SizedBox(
+                        height: 18,
+                        child: Center(
+                          child: Text(
+                            label(i),
+                            softWrap: false,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: p.faint,
+                              fontSize: 11,
+                              fontWeight:
+                                  highlight == days[i]
+                                      ? FontWeight.w700
+                                      : FontWeight.normal,
+                            ),
                           ),
                         ),
                       ),
                     ),
                 ],
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            for (var i = 0; i < days.length; i++)
-              Expanded(
-                child: OverflowBox(
-                  maxWidth: 40,
-                  child: Text(
-                    label(i),
-                    softWrap: false,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: p.faint, fontSize: 11),
-                  ),
-                ),
-              ),
+            ),
+            const SizedBox(width: 46),
           ],
         ),
+
         if (target != null) ...[
           const SizedBox(height: 8),
           Align(
             alignment: Alignment.centerLeft,
-            child: Text('Goal ${formatSteps(target!)}', style: TextStyle(color: p.green, fontSize: 12)),
+            child: Text(
+              'Goal ${formatSteps(target!)}',
+              style: TextStyle(color: p.green, fontSize: 12),
+            ),
           ),
         ],
       ],

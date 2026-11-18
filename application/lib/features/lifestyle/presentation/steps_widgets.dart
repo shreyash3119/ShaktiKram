@@ -53,7 +53,14 @@ class StepsSummaryCard extends ConsumerWidget {
                       children: [
                         Icon(Icons.directions_walk, size: 18, color: p.link),
                         const SizedBox(width: 6),
-                        Text('Steps', style: TextStyle(color: p.muted, fontSize: 15, fontWeight: FontWeight.w600)),
+                        Text(
+                          'Steps',
+                          style: TextStyle(
+                            color: p.muted,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                         Icon(Icons.chevron_right, size: 18, color: p.muted),
                       ],
                     ),
@@ -61,13 +68,22 @@ class StepsSummaryCard extends ConsumerWidget {
                     Text(
                       todayRow == null ? '–' : formatSteps(todayRow.steps),
                       key: const Key('steps-today'),
-                      style: TextStyle(color: p.text, fontSize: 34, fontWeight: FontWeight.w800, height: 1.05),
+                      style: TextStyle(
+                        color: p.text,
+                        fontSize: 34,
+                        fontWeight: FontWeight.w800,
+                        height: 1.05,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       todayRow == null
-                          ? (target == null ? 'No steps yet today' : 'Goal ${formatSteps(target)}')
-                          : (target == null ? 'today' : 'of ${formatSteps(target)} today'),
+                          ? (target == null
+                              ? 'No steps yet today'
+                              : 'Goal ${formatSteps(target)}')
+                          : (target == null
+                              ? 'today'
+                              : 'of ${formatSteps(target)} today'),
                       style: TextStyle(color: p.muted, fontSize: 14),
                     ),
                   ],
@@ -87,16 +103,29 @@ class StepsSummaryCard extends ConsumerWidget {
                           children: [
                             Container(
                               width: 10,
-                              height: values[i] == 0 ? 3 : (50 * values[i] / top).clamp(3, 50).toDouble(),
+                              height:
+                                  values[i] == 0
+                                      ? 3
+                                      : (50 * values[i] / top)
+                                          .clamp(3, 50)
+                                          .toDouble(),
                               decoration: BoxDecoration(
-                                color: i == days.length - 1
-                                    ? p.primary
-                                    : (values[i] == 0 ? p.tile : p.primary.withValues(alpha: 0.45)),
+                                color:
+                                    i == days.length - 1
+                                        ? p.primary
+                                        : (values[i] == 0
+                                            ? p.tile
+                                            : p.primary.withValues(
+                                              alpha: 0.45,
+                                            )),
                                 borderRadius: BorderRadius.circular(3),
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Text(dayInitial(days[i]), style: TextStyle(color: p.faint, fontSize: 11)),
+                            Text(
+                              dayInitial(days[i]),
+                              style: TextStyle(color: p.faint, fontSize: 11),
+                            ),
                           ],
                         ),
                       ),
@@ -124,16 +153,27 @@ class ManualLogButton extends StatelessWidget {
       child: InkWell(
         key: const Key('manual-steps'),
         borderRadius: BorderRadius.circular(AppTheme.cardRadius),
-        onTap: () => showDialog<void>(context: context, builder: (_) => const ManualStepsDialog()),
+        onTap:
+            () => showDialog<void>(
+              context: context,
+              builder: (_) => const ManualStepsDialog(),
+            ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.edit_outlined, size: 18, color: p.text),
               const SizedBox(width: 8),
-              Text('Manual log', style: TextStyle(color: p.text, fontSize: 15, fontWeight: FontWeight.w700)),
+              Text(
+                'Manual log',
+                style: TextStyle(
+                  color: p.text,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ],
           ),
         ),
@@ -169,11 +209,15 @@ class _ManualStepsDialogState extends ConsumerState<ManualStepsDialog> {
     final messenger = ScaffoldMessenger.of(context);
     final n = int.tryParse(_text.trim().replaceAll(',', ''));
     if (n == null || n < 0) {
-      messenger.showSnackBar(const SnackBar(content: Text('Enter the number of steps.')));
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Enter the number of steps.')),
+      );
       return;
     }
     try {
-      await ref.read(lifestyleServiceProvider).setSteps(n, localDate: dateKey(_day));
+      await ref
+          .read(lifestyleServiceProvider)
+          .setSteps(n, localDate: dateKey(_day));
     } on ArgumentError catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('${e.message}')));
       return;
@@ -183,7 +227,11 @@ class _ManualStepsDialogState extends ConsumerState<ManualStepsDialog> {
     }
     if (!mounted) return;
     Navigator.of(context).pop();
-    messenger.showSnackBar(const SnackBar(content: Text('Saved on this phone. It will sync when online.')));
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('Saved on this phone. It will sync when online.'),
+      ),
+    );
   }
 
   @override
@@ -209,7 +257,10 @@ class _ManualStepsDialogState extends ConsumerState<ManualStepsDialog> {
           ),
           const SizedBox(height: 8),
           if (existing != null)
-            MutedText('Replaces ${formatSteps(existing.steps)} steps already saved for this day.', size: 13),
+            MutedText(
+              'Replaces ${formatSteps(existing.steps)} steps already saved for this day.',
+              size: 13,
+            ),
           Align(
             alignment: Alignment.centerLeft,
             child: InkWell(
@@ -217,12 +268,19 @@ class _ManualStepsDialogState extends ConsumerState<ManualStepsDialog> {
               onTap: _pickDay,
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text('Change day', style: TextStyle(color: p.link, fontSize: 15)),
+                child: Text(
+                  'Change day',
+                  style: TextStyle(color: p.link, fontSize: 15),
+                ),
               ),
             ),
           ),
           const SizedBox(height: 8),
-          AppButton.primary('Save', key: const Key('steps-save'), onPressed: _save),
+          AppButton.primary(
+            'Save',
+            key: const Key('steps-save'),
+            onPressed: _save,
+          ),
         ],
       ),
     );

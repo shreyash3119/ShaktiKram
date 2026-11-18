@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shaktikram/core/auth/session_controller.dart';
 import 'package:shaktikram/core/sync/change_writer.dart';
 import 'package:shaktikram/core/sync/sync_status.dart';
-import 'package:shaktikram/features/lifestyle/data/lifestyle_providers.dart';
 import 'package:shaktikram/features/lifestyle/data/lifestyle_repository.dart';
 import 'package:shaktikram/features/lifestyle/data/lifestyle_service.dart';
 import 'package:shaktikram/features/lifestyle/data/step_import_service.dart';

@@ -11,9 +11,7 @@ Future<Harness> _open(WidgetTester tester) async {
     ProviderScope(overrides: h.overrides, child: const ShaktiKramApp()),
   );
   await tester.pumpAndSettle();
-  await tester.tap(
-    find.byKey(const Key('nav-Lifestyle')),
-  );
+  await tester.tap(find.byKey(const Key('nav-Lifestyle')));
   await tester.pumpAndSettle();
   return h;
 }
@@ -58,7 +56,7 @@ void main() {
     expect(find.text('Hydration · 250 ml'), findsOneWidget);
   });
 
-  Future<void> _logSteps(WidgetTester tester, String value) async {
+  Future<void> logSteps(WidgetTester tester, String value) async {
     await _tapVisible(tester, find.byKey(const Key('manual-steps')));
     // A centred dialog, not a new page: the Activity tab stays underneath it.
     expect(find.text('Log steps'), findsOneWidget);
@@ -72,11 +70,11 @@ void main() {
     (tester) async {
       final h = await _open(tester);
       await _pill(tester, 'Activity');
-      await _logSteps(tester, '4200');
+      await logSteps(tester, '4200');
       expect(find.text('Log steps'), findsNothing);
       expect(find.text('4,200'), findsOneWidget);
 
-      await _logSteps(tester, '9000');
+      await logSteps(tester, '9000');
       final rows = await h.local.list('daily_steps');
       expect(rows.single['steps'], 9000);
       expect(rows.single['source'], 'manual');
@@ -89,7 +87,7 @@ void main() {
   ) async {
     final h = await _open(tester);
     await _pill(tester, 'Activity');
-    await _logSteps(tester, '');
+    await logSteps(tester, '');
     expect(find.text('Log steps'), findsOneWidget);
     expect(await h.local.list('daily_steps'), isEmpty);
   });
@@ -99,7 +97,7 @@ void main() {
   ) async {
     await _open(tester);
     await _pill(tester, 'Activity');
-    await _logSteps(tester, '5000');
+    await logSteps(tester, '5000');
     await _tapVisible(tester, find.byKey(const Key('steps-card')));
 
     // Opens on Week: today's steps are the week's total and appear in the date list.
@@ -113,10 +111,7 @@ void main() {
     // Going back a week shows an empty period; next is available again, and disabled on the current one.
     await tester.tap(find.byKey(const Key('steps-prev')));
     await tester.pumpAndSettle();
-    expect(
-      tester.widget<Text>(find.byKey(const Key('steps-total'))).data,
-      '0',
-    );
+    expect(tester.widget<Text>(find.byKey(const Key('steps-total'))).data, '0');
     expect(find.text('No steps saved for these days.'), findsOneWidget);
     await tester.tap(find.byKey(const Key('steps-next')));
     await tester.pumpAndSettle();

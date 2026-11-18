@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/cards.dart';
 import '../../../core/widgets/insight_status.dart' show ageText;
 import '../data/step_providers.dart';
 
