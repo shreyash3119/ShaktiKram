@@ -22,6 +22,8 @@ dependencies:
   path_provider: ^2.1.5
   share_plus: ^10.1.4
   file_picker: ^8.1.6
+  # Phone and watch steps from Android Health Connect (read only). See docs/FLUTTER_STEPS_HEALTH_CONNECT.md.
+  health: ^13.3.1
 
 dev_dependencies:
   flutter_test:

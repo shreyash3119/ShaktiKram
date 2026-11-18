@@ -1,5 +1,6 @@
 package com.shaktikram.shaktikram
 
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-class MainActivity : FlutterActivity()
+// Health Connect's permission screen needs a FragmentActivity.
+class MainActivity : FlutterFragmentActivity()

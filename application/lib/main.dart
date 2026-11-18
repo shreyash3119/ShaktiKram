@@ -14,6 +14,9 @@ import 'core/db/local_store.dart';
 import 'core/db/sqflite_local_store.dart';
 import 'core/sync/sync_runner.dart';
 import 'features/auth/presentation/startup_problem_app.dart';
+import 'features/lifestyle/data/health_connect_step_source.dart';
+import 'features/lifestyle/data/step_source.dart';
+import 'features/lifestyle/presentation/step_import_runner.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,8 +47,11 @@ Future<void> main() async {
           ),
           deviceStoreProvider.overrideWithValue(SharedPrefsDeviceStore(prefs)),
           localStoreProvider.overrideWithValue(localStore),
+          stepSourceProvider.overrideWithValue(HealthConnectStepSource()),
         ],
-        child: const SyncRunner(child: ShaktiKramApp()),
+        child: const SyncRunner(
+          child: StepImportRunner(child: ShaktiKramApp()),
+        ),
       ),
     );
   } catch (e) {

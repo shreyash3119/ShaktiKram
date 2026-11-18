@@ -16,6 +16,7 @@ import '../../training/presentation/training_dialogs.dart' show ModalCard;
 import '../data/lifestyle_models.dart';
 import '../data/lifestyle_providers.dart';
 import '../data/lifestyle_service.dart';
+import 'step_import_card.dart';
 
 /// Lifestyle section: Overview, Recovery, Nutrition, Supplements and Activity. Everything is read from the phone and
 /// saved through [LifestyleService] (local first, synced later). Wording stays observational, never medical advice.
@@ -60,7 +61,12 @@ class _LifestyleScreenState extends State<LifestyleScreen> {
       case 3:
         return const [_SupplementsToday(), _AddSupplement()];
       case 4:
-        return const [_StepsCard(), _LogCardio(), _Hydration()];
+        return const [
+          _StepsCard(),
+          StepImportCard(),
+          _LogCardio(),
+          _Hydration(),
+        ];
       default:
         return [
           _StatTiles(onGo: _go),
@@ -1990,7 +1996,10 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
           ],
         ],
         _gap(10),
-        const MutedText('Entered by hand for now.', size: 15),
+        const MutedText(
+          'Type a day by hand, or connect Health Connect below.',
+          size: 15,
+        ),
       ],
     );
   }
