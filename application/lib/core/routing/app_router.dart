@@ -8,6 +8,7 @@ import '../../features/auth/presentation/sign_in_screen.dart';
 import '../../features/auth/presentation/splash_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/lifestyle/presentation/lifestyle_screen.dart';
+import '../../features/lifestyle/presentation/steps_history_screen.dart';
 import '../../features/progress/presentation/progress_screen.dart';
 import '../../features/reports/presentation/backup_screen.dart';
 import '../../features/reports/presentation/reports_screen.dart';
@@ -26,6 +27,7 @@ class AppRoutes {
   static const training = '/training';
   static const progress = '/progress';
   static const lifestyle = '/lifestyle';
+  static const steps = '/lifestyle/steps';
   static const reports = '/reports';
   static const settings = '/settings';
   static const devices = '/settings/devices';
@@ -137,6 +139,12 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.lifestyle,
                 builder: (context, state) => const LifestyleScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'steps',
+                    builder: (context, state) => const StepsHistoryScreen(),
+                  ),
+                ],
               ),
             ],
           ),

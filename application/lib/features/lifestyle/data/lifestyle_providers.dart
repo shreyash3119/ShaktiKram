@@ -48,6 +48,11 @@ final stepsForProvider = FutureProvider.family<DailySteps?, String>(
   (ref, localDate) => _reload(ref, (r) => r.stepsFor(localDate)),
 );
 
+/// Every day that has a step count, newest first. Feeds the Steps card and the Steps History screen.
+final stepHistoryProvider = FutureProvider<List<DailySteps>>(
+  (ref) => _reload(ref, (r) => r.recentSteps(limit: 2000)),
+);
+
 final waterForProvider = FutureProvider.family<List<WaterLog>, String>(
   (ref, localDate) => _reload(ref, (r) => r.waterFor(localDate)),
 );

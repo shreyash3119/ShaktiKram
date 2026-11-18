@@ -3,12 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/cards.dart';
-import '../../../core/widgets/controls.dart';
 import '../../../core/widgets/insight_status.dart' show ageText;
 import '../data/step_providers.dart';
 
-/// Activity tab: connect Health Connect so steps from the Google Health app, a watch or the phone are imported.
+/// Activity tab: a compact Health Connect tile. An icon, the name and one line of status; tapping it connects or
+/// updates. Steps from the Google Health app, a watch or the phone are imported by the same controller as before.
 class StepImportCard extends ConsumerStatefulWidget {
   const StepImportCard({super.key});
 
@@ -25,49 +26,71 @@ class _StepImportCardState extends ConsumerState<StepImportCard> {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.pal;
     final s = ref.watch(stepSyncProvider);
     final c = ref.read(stepSyncProvider.notifier);
-    final String text;
-    String? button;
+    final String status;
+    IconData icon = Icons.link;
     VoidCallback? action;
+    var busy = false;
     switch (s.phase) {
       case StepSyncPhase.checking:
-        text = 'Checking Health Connect…';
+        status = 'Checking…';
+        busy = true;
       case StepSyncPhase.unsupported:
-        text = 'Phone step import is not available on this device.';
+        status = 'Not available on this phone';
+        icon = Icons.block;
       case StepSyncPhase.notInstalled:
-        text = 'Health Connect is needed. Install or update it, then come back.';
-        button = 'Get Health Connect';
+        status = 'Install to connect';
         action = () => unawaited(c.connect());
       case StepSyncPhase.needsAccess:
-        text = 'Allow this app to read your steps from Health Connect. It only reads steps, and you can remove access any time in Health Connect.';
-        button = 'Connect steps';
+        status = 'Not connected · tap to connect';
         action = () => unawaited(c.connect());
       case StepSyncPhase.syncing:
-        text = 'Reading steps…';
+        status = 'Reading steps…';
+        busy = true;
       case StepSyncPhase.error:
-        text = s.message ?? 'Something went wrong.';
-        button = 'Try again';
+        status = 'Could not sync · tap to retry';
+        icon = Icons.refresh;
         action = () => unawaited(c.connect());
       case StepSyncPhase.ready:
-        final today = s.todaySteps == null ? '' : ' Today so far: ${s.todaySteps} steps.';
-        text = 'Connected. Steps are imported from Health Connect, which combines the Google Health app, your watch and other apps.$today'
-            '${s.lastSyncAt == null ? '' : ' Updated ${ageText(s.lastSyncAt)}.'}';
-        button = 'Update steps now';
+        status = s.lastSyncAt == null ? 'Connected' : 'Updated ${ageText(s.lastSyncAt)}';
+        icon = Icons.sync;
         action = () => unawaited(c.sync());
     }
-    return TitledCard(title: 'Phone and watch steps', children: [
-      MutedText(text, size: 15),
-      if (s.phase == StepSyncPhase.ready && s.keptManualDays > 0) ...[
-        const SizedBox(height: 8),
-        MutedText('${s.keptManualDays} day${s.keptManualDays == 1 ? '' : 's'} you entered by hand ${s.keptManualDays == 1 ? 'was' : 'were'} left as you entered.', size: 13),
+    final connected = s.phase == StepSyncPhase.ready || s.phase == StepSyncPhase.syncing;
+    final tile = Row(
+      children: [
+        Icon(Icons.favorite, size: 22, color: connected ? p.green : p.muted),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Health Connect', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: p.text, fontSize: 15, fontWeight: FontWeight.w700)),
+              Text(status, key: const Key('step-import-status'), maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: p.muted, fontSize: 12.5)),
+            ],
+          ),
+        ),
+        const SizedBox(width: 6),
+        busy
+            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+            : Icon(icon, size: 20, color: action == null ? p.faint : p.link),
       ],
-      if (button != null) ...[
-        const SizedBox(height: 12),
-        AppButton(button, key: const Key('step-import-button'), onPressed: action),
-      ],
-      const SizedBox(height: 10),
-      const MutedText('A day you type in by hand is never overwritten by an import.', size: 13),
-    ]);
+    );
+    return Material(
+      color: p.card,
+      borderRadius: BorderRadius.circular(AppTheme.cardRadius),
+      child: InkWell(
+        key: action == null ? null : const Key('step-import-button'),
+        borderRadius: BorderRadius.circular(AppTheme.cardRadius),
+        onTap: action,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: tile,
+        ),
+      ),
+    );
   }
 }

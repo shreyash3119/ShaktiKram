@@ -17,6 +17,7 @@ import '../data/lifestyle_models.dart';
 import '../data/lifestyle_providers.dart';
 import '../data/lifestyle_service.dart';
 import 'step_import_card.dart';
+import 'steps_widgets.dart';
 
 /// Lifestyle section: Overview, Recovery, Nutrition, Supplements and Activity. Everything is read from the phone and
 /// saved through [LifestyleService] (local first, synced later). Wording stays observational, never medical advice.
@@ -62,8 +63,8 @@ class _LifestyleScreenState extends State<LifestyleScreen> {
         return const [_SupplementsToday(), _AddSupplement()];
       case 4:
         return const [
-          _StepsCard(),
-          StepImportCard(),
+          StepsSummaryCard(),
+          _StepsActions(),
           _LogCardio(),
           _Hydration(),
         ];
@@ -1914,93 +1915,21 @@ class _AddSupplementState extends ConsumerState<_AddSupplement> {
 
 // ---- Activity ----
 
-class _StepsCard extends ConsumerStatefulWidget {
-  const _StepsCard();
-
-  @override
-  ConsumerState<_StepsCard> createState() => _StepsCardState();
-}
-
-class _StepsCardState extends ConsumerState<_StepsCard> {
-  String _steps = '';
-  int _reset = 0;
+/// One short row under the Steps card: the Health Connect tile and the Manual log button.
+class _StepsActions extends StatelessWidget {
+  const _StepsActions();
 
   @override
   Widget build(BuildContext context) {
-    final p = context.pal;
-    final steps = ref.watch(stepsForProvider(_today())).valueOrNull;
-    final targets = ref.watch(targetsProvider).valueOrNull;
-    final target = steps?.targetSteps ?? targets?.stepTarget;
-    final count = steps?.steps;
-    return _Card(
-      title: 'Steps today',
-      children: [
-        const FieldLabel('Steps'),
-        Row(
-          children: [
-            Expanded(
-              child: _field(
-                '0',
-                (v) => _steps = v,
-                keyboard: TextInputType.number,
-                resetKey: _reset,
-                fieldKey: const Key('steps-field'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            SizedBox(
-              width: 120,
-              child: AppButton(
-                'Save',
-                height: 56,
-                onPressed: () async {
-                  final n = int.tryParse(_steps.trim());
-                  if (n == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Enter the number of steps.'),
-                      ),
-                    );
-                    return;
-                  }
-                  if (await _save(
-                    context,
-                    () => ref.read(lifestyleServiceProvider).setSteps(n),
-                  )) {
-                    setState(() {
-                      _steps = '';
-                      _reset++;
-                    });
-                  }
-                },
-              ),
-            ),
-          ],
-        ),
-        if (count != null) ...[
-          _gap(12),
-          Text(
-            target == null ? '$count steps' : '$count / $target steps',
-            style: TextStyle(
-              color: p.text,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          if (target != null) ...[
-            _gap(8),
-            MeterBar(
-              value: (count / target).clamp(0, 1).toDouble(),
-              trackColor: p.tile,
-            ),
-          ],
+    return const SizedBox(
+      height: 62,
+      child: Row(
+        children: [
+          Expanded(child: StepImportCard()),
+          SizedBox(width: 10),
+          SizedBox(width: 132, child: ManualLogButton()),
         ],
-        _gap(10),
-        const MutedText(
-          'Type a day by hand, or connect Health Connect below.',
-          size: 15,
-        ),
-      ],
+      ),
     );
   }
 }
