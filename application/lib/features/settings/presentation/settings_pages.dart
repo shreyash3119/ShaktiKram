@@ -224,7 +224,11 @@ class NotificationsPage extends ConsumerWidget {
                 value: reminderClock(s.workoutMinutes),
                 chevron: true,
                 onTap:
-                    () => _pickTime(context, s.workoutMinutes, n.setWorkoutMinutes),
+                    () => _pickTime(
+                      context,
+                      s.workoutMinutes,
+                      n.setWorkoutMinutes,
+                    ),
               ),
               PlainRow(
                 'Supplement time',
@@ -247,8 +251,8 @@ class NotificationsPage extends ConsumerWidget {
             ]),
           ],
         ),
-        _SectionLabel('Rest timer'),
-        SettingsCard(
+        const _SectionLabel('Rest timer'),
+        const SettingsCard(
           children: [
             RowList([
               PrefToggle(

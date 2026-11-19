@@ -15,7 +15,7 @@ import '../data/training_repository.dart';
 import '../data/workout_session_service.dart';
 import 'exercise_picker_screen.dart';
 import 'workout_builder.dart';
-import 'training_format.dart' show dateText;
+import 'training_format.dart' show dateText, todayDate;
 
 /// Starts a workout (from [templateVersionId] when given) and opens the session screen. If one is already running
 /// the screen simply continues it. Used by the Training and Home start buttons.
@@ -249,7 +249,9 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     if (!logged && args.mode == WorkoutLogMode.create) {
       await _run(() => _service.discardSession(id));
       messenger.showSnackBar(
-        const SnackBar(content: Text('Nothing was logged, so nothing was saved.')),
+        const SnackBar(
+          content: Text('Nothing was logged, so nothing was saved.'),
+        ),
       );
       if (mounted) _exit();
       return;
@@ -278,10 +280,11 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
   Future<void> _editSet(LoggedSet s) async {
     final result = await showDialog<(String, String)>(
       context: context,
-      builder: (_) => _EditSetDialog(
-        kg: s.weightKg == null ? '' : _kgText(s.weightKg!),
-        reps: s.reps == null ? '' : '${s.reps}',
-      ),
+      builder:
+          (_) => _EditSetDialog(
+            kg: s.weightKg == null ? '' : _kgText(s.weightKg!),
+            reps: s.reps == null ? '' : '${s.reps}',
+          ),
     );
     if (result == null || !mounted) return;
     final kg = double.tryParse(result.$1.trim().replaceAll(',', '.'));
@@ -769,8 +772,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
         ),
       );
     }
-    final subtitle =
-        'Exercise ${_exercise + 1} of ${exercises.length} · $day';
+    final subtitle = 'Exercise ${_exercise + 1} of ${exercises.length} · $day';
 
     return _shell(
       detail,
@@ -1237,7 +1239,10 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
   Future<void> _addMore(WorkoutSession session) async {
     final have = [
       for (final e
-          in ref.read(sessionDetailProvider(session.id)).valueOrNull?.exercises ??
+          in ref
+                  .read(sessionDetailProvider(session.id))
+                  .valueOrNull
+                  ?.exercises ??
               const <SessionExerciseDetail>[])
         e.exercise.exerciseId,
     ];
@@ -1282,58 +1287,59 @@ class _DoneSetRow extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: onEdit,
       child: Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: p.tile,
-        borderRadius: BorderRadius.circular(AppTheme.radius + 2),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: p.greenFill,
-              shape: BoxShape.circle,
-            ),
-            child: Text(
-              number,
-              style: TextStyle(
-                color: p.green,
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: p.tile,
+          borderRadius: BorderRadius.circular(AppTheme.radius + 2),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: p.greenFill,
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                number,
+                style: TextStyle(
+                  color: p.green,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: p.text,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: p.text,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-                Text(text, style: TextStyle(color: p.muted, fontSize: 14)),
-              ],
+                  Text(text, style: TextStyle(color: p.muted, fontSize: 14)),
+                ],
+              ),
             ),
-          ),
-          GestureDetector(
-            key: Key('remove-set-$number-$label'),
-            onTap: onRemove,
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Icon(Icons.close, size: 20, color: p.muted),
+            GestureDetector(
+              key: Key('remove-set-$number-$label'),
+              onTap: onRemove,
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Icon(Icons.close, size: 20, color: p.muted),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ));
+    );
   }
 }
 
@@ -1368,7 +1374,11 @@ class _EditSetDialogState extends State<_EditSetDialog> {
           children: [
             Text(
               'Edit set',
-              style: TextStyle(color: p.text, fontSize: 18, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                color: p.text,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 14),
             Row(
@@ -1378,7 +1388,9 @@ class _EditSetDialogState extends State<_EditSetDialog> {
                     fieldKey: const Key('edit-kg-field'),
                     initial: _kg,
                     hint: 'kg',
-                    keyboard: const TextInputType.numberWithOptions(decimal: true),
+                    keyboard: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     onChanged: (v) => _kg = v,
                   ),
                 ),
@@ -1398,7 +1410,10 @@ class _EditSetDialogState extends State<_EditSetDialog> {
             Row(
               children: [
                 Expanded(
-                  child: AppButton('Cancel', onPressed: () => Navigator.of(context).pop()),
+                  child: AppButton(
+                    'Cancel',
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(

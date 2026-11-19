@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/animation.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/scheduler.dart';
 
 /// The continuous position of a row of pages while the user drags them sideways (like a `PageController`, without a
 /// `PageView`). [pos] is 2.0 when page 2 fills the view and 2.4 when the drag has moved 40% of the way to page 3.
