@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/widgets/state_views.dart';
-
-/// Shown for a moment while the app reads what is stored on this device.
+/// The route used while the app reads what is stored on this device. The Android launch screen already covers that
+/// moment (the first frame is held back in `main.dart` until it is over), so this draws nothing of its own: no logo,
+/// text or spinner. It only exists so the sign-in state machine keeps its "checking" location.
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const Scaffold(body: LoadingView(message: 'Starting…'));
-  }
+  Widget build(BuildContext context) => const Scaffold(body: SizedBox.shrink());
 }
