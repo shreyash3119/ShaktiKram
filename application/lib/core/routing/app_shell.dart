@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../theme/app_theme.dart';
+import '../widgets/sub_tab_registry.dart';
 
 class _NavItem {
   const _NavItem(this.label, this.icon, this.accent);
@@ -143,23 +144,104 @@ class _NavButton extends StatelessWidget {
   }
 }
 
-class AppShell extends StatelessWidget {
+/// The six sections around the bottom bar. It also owns two gestures:
+///
+/// * a horizontal swipe moves between the sub-tabs of the section being shown, or, when the section has none (Home,
+///   Settings), between the main sections. One recognizer decides, so a swipe never does both;
+/// * the Android Back button: sub-tab other than the first -> first sub-tab; another main section -> Home; on Home a
+///   second press within two seconds leaves the app. A dialog, a bottom sheet, a pushed page or the workout screen
+///   on top keeps the normal Back behaviour (they close first; the workout screen asks before leaving).
+///
+/// Every section stays alive in the indexed stack, so its sub-tab, scroll position and screen state survive switching.
+class AppShell extends StatefulWidget {
   const AppShell({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
   @override
+  State<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends State<AppShell> {
+  static const _exitWindow = Duration(seconds: 2);
+  static const _swipeDistance = 80.0;
+  static const _flingDistance = 40.0;
+  static const _flingSpeed = 800.0;
+
+  final SubTabRegistry _subTabs = SubTabRegistry();
+  double _drag = 0;
+  DateTime? _lastBack;
+
+  StatefulNavigationShell get _shell => widget.navigationShell;
+
+  void _onSwipeEnd(DragEndDetails d) {
+    final dx = _drag;
+    _drag = 0;
+    final v = d.primaryVelocity ?? 0;
+    final far = dx.abs() >= _swipeDistance;
+    final fast = v.abs() >= _flingSpeed && dx.abs() >= _flingDistance;
+    if (!far && !fast) return; // a small finger movement
+    final direction = dx < 0 ? 1 : -1; // swipe left -> next
+    if (_subTabs.step(direction)) return; // the section has sub-tabs: they own the swipe
+    final next = _shell.currentIndex + direction;
+    if (next < 0 || next >= AppBottomBar._items.length) return;
+    _shell.goBranch(next);
+  }
+
+  Future<bool> _onBack() async {
+    // Something is above the sections (dialog, sheet, workout screen) or a page is pushed inside one: normal Back.
+    final route = ModalRoute.of(context);
+    if (route != null && !route.isCurrent) return false;
+    if (GoRouter.of(context).canPop()) return false;
+
+    if (_subTabs.backToDefault()) return true;
+    if (_shell.currentIndex != 0) {
+      _lastBack = null;
+      _shell.goBranch(0);
+      return true;
+    }
+    final now = DateTime.now();
+    final last = _lastBack;
+    if (last != null && now.difference(last) <= _exitWindow) {
+      return false; // second press in time: let the app exit
+    }
+    _lastBack = now;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text('Press back again to exit.'),
+          duration: _exitWindow,
+        ),
+      );
+    return true;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: AppBottomBar(
-        currentIndex: navigationShell.currentIndex,
-        // Tapping the current tab returns to that section's first screen.
-        onSelected:
-            (index) => navigationShell.goBranch(
-              index,
-              initialLocation: index == navigationShell.currentIndex,
-            ),
+    return SubTabScope(
+      registry: _subTabs,
+      child: BackButtonListener(
+        onBackButtonPressed: _onBack,
+        child: Scaffold(
+          body: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onHorizontalDragStart: (_) => _drag = 0,
+            onHorizontalDragUpdate: (d) => _drag += d.delta.dx,
+            onHorizontalDragCancel: () => _drag = 0,
+            onHorizontalDragEnd: _onSwipeEnd,
+            child: _shell,
+          ),
+          bottomNavigationBar: AppBottomBar(
+            currentIndex: _shell.currentIndex,
+            // Tapping the current tab returns to that section's first screen.
+            onSelected:
+                (index) => _shell.goBranch(
+                  index,
+                  initialLocation: index == _shell.currentIndex,
+                ),
+          ),
+        ),
       ),
     );
   }
