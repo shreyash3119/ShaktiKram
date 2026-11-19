@@ -71,6 +71,72 @@ class WorkoutSessionService {
     return session.id;
   }
 
+  /// Creates a finished workout dated [localDate] (`YYYY-MM-DD`, today or earlier) for the Workout Calendar. The session is
+  /// stamped at noon of that day (or now, for today before noon) so its date can never slip to a neighbouring day, and it
+  /// is created as completed, so it never becomes "the workout in progress" and never blocks today's workout. With
+  /// [templateVersionId] its exercises are added in the template's order. A session with no logged sets on that date
+  /// (left over from an earlier visit) is replaced, so a date never collects duplicate sessions. Nothing is logged for
+  /// the person: sets are entered, then [completeSession] (with `endedAt`) links the schedule entry.
+  Future<String> startHistoricalSession(
+    String localDate, {
+    String? name,
+    String? scheduleEntryId,
+    String? splitVersionId,
+    String? splitDayId,
+    String? templateVersionId,
+  }) async {
+    final day = localDate.length == 10 ? DateTime.tryParse(localDate) : null;
+    if (day == null) throw ArgumentError('That date is not valid.');
+    final now = _clock();
+    if (localDate.compareTo(localStampOf(now).localDate) > 0) {
+      throw ArgumentError('A workout can only be logged for today or an earlier day.');
+    }
+    final changes = <PendingChange>[];
+    for (final s in await repository.sessions()) {
+      if (s.localDate != localDate || s.status != 'completed') continue;
+      if (await repository.hasLoggedSets(s.id)) {
+        throw StateError('That day already has a workout. Open it to edit it.');
+      }
+      for (final e in await repository.sessionExercises(s.id)) {
+        for (final set in await repository.sets(e.id)) {
+          changes.add(PendingChange.delete(_set, set.id));
+        }
+        changes.add(PendingChange.delete(_exercise, e.id));
+      }
+      changes.add(PendingChange.delete(_session, s.id));
+    }
+    var at = DateTime(day.year, day.month, day.day, 12);
+    if (at.isAfter(now)) at = now;
+    final stamp = localStampOf(at);
+    final session = PendingChange.upsert(_session, {
+      ...stamp.toPayload(),
+      'status': 'completed',
+      'ended_at': stamp.occurredAt,
+      'paused_seconds': 0,
+      if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
+      if (scheduleEntryId != null) 'schedule_entry_id': scheduleEntryId,
+      if (splitVersionId != null) 'split_version_id': splitVersionId,
+      if (splitDayId != null) 'split_day_id': splitDayId,
+      if (templateVersionId != null) 'template_version_id': templateVersionId,
+    });
+    changes.add(session);
+    if (templateVersionId != null) {
+      for (final te in await repository.templateExercises(templateVersionId)) {
+        changes.add(
+          PendingChange.upsert(_exercise, {
+            'session_id': session.id,
+            'exercise_id': te.exerciseId,
+            'position': te.position,
+            'status': 'done',
+            'template_exercise_id': te.id,
+          }),
+        );
+      }
+    }
+    await writer.apply(changes);
+    return session.id;
+  }
+
   /// Adds an exercise that was not in the plan, at the end. Returns the session exercise id.
   Future<String> addExercise(String sessionId, String exerciseId) async {
     final existing = await repository.sessionExercises(sessionId);
@@ -223,14 +289,17 @@ class WorkoutSessionService {
 
   /// Finishes the workout. Exercises with no sets logged are marked skipped (reason "Not done") unless
   /// [markUntouchedAsSkipped] is false. A linked schedule entry is marked completed.
+  ///
+  /// [endedAt] is for a workout logged afterwards for an earlier day: its end is then the time it was dated, not now.
   Future<void> completeSession(
     String sessionId, {
     String? postNotes,
     bool markUntouchedAsSkipped = true,
+    DateTime? endedAt,
   }) async {
     final session = await repository.session(sessionId);
     if (session == null) throw StateError('That workout is not on this phone.');
-    var end = _clock().toUtc();
+    var end = (endedAt ?? _clock()).toUtc();
     if (end.isBefore(session.startedAt)) end = session.startedAt;
 
     final changes = <PendingChange>[];

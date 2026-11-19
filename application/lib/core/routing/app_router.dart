@@ -17,6 +17,7 @@ import '../../features/training/presentation/workout_session_screen.dart';
 import '../../features/settings/presentation/settings_pages.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/training/presentation/training_screen.dart';
+import '../../features/training/presentation/workout_calendar_screen.dart';
 import '../auth/session_controller.dart';
 import 'app_shell.dart';
 
@@ -25,6 +26,7 @@ class AppRoutes {
   AppRoutes._();
   static const home = '/home';
   static const training = '/training';
+  static const trainingCalendar = '/training/calendar';
   static const progress = '/progress';
   static const lifestyle = '/lifestyle';
   static const steps = '/lifestyle/steps';
@@ -100,7 +102,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.session,
-        builder: (context, state) => const WorkoutSessionScreen(),
+        builder:
+            (context, state) =>
+                WorkoutSessionScreen(args: state.extra as WorkoutLogArgs?),
       ),
       StatefulShellRoute.indexedStack(
         builder:
@@ -123,6 +127,12 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.training,
                 builder: (context, state) => const TrainingScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'calendar',
+                    builder: (context, state) => const WorkoutCalendarScreen(),
+                  ),
+                ],
               ),
             ],
           ),

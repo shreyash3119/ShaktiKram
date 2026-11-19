@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/insights/insight_providers.dart';
 import '../../../core/insights/insight_repository.dart' show InsightSnapshot;
+import '../../../core/routing/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/cards.dart';
 import '../../../core/widgets/controls.dart';
@@ -78,6 +80,15 @@ class _TrainingScreenState extends State<TrainingScreen> {
           exercises
               ? 'Browse and search movements'
               : 'Splits, exercises and workouts',
+      trailing:
+          _tab == 0
+              ? HeaderIconButton(
+                key: const Key('training-calendar'),
+                icon: Icons.calendar_month_outlined,
+                tooltip: 'Workout calendar',
+                onTap: () => context.push(AppRoutes.trainingCalendar),
+              )
+              : null,
       children: [
         UnderlineTabs(labels: _tabs, index: _tab, onChanged: _goTo),
         ..._content(),

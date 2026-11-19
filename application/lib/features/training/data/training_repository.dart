@@ -1,5 +1,6 @@
 import '../../../core/db/local_store.dart';
 import 'training_models.dart';
+import 'workout_calendar.dart';
 
 /// Reads training data from the local database. Nothing here talks to the server.
 class TrainingRepository {
@@ -314,6 +315,69 @@ class TrainingRepository {
       }
     }
     return false;
+  }
+
+  /// Finished sessions whose local date is from [fromDate] to [toDate] inclusive, newest first, each marked with whether
+  /// it counts (it has logged working sets).
+  Future<List<({WorkoutSession session, bool counted})>> finishedSessionsBetween(
+    String fromDate,
+    String toDate,
+  ) async {
+    final out = <({WorkoutSession session, bool counted})>[];
+    for (final s in await sessions()) {
+      if (s.status != 'completed') continue;
+      if (s.localDate.compareTo(fromDate) < 0 ||
+          s.localDate.compareTo(toDate) > 0) {
+        continue;
+      }
+      out.add((session: s, counted: await hasLoggedSets(s.id)));
+    }
+    return out;
+  }
+
+  /// The status of every date from [fromDate] to [toDate] (`YYYY-MM-DD`), keyed by date.
+  Future<Map<String, WorkoutCalendarDay>> calendarDays(
+    String fromDate,
+    String toDate,
+    String today,
+  ) async {
+    final entries = {
+      for (final e in await scheduleBetween(fromDate, toDate)) e.localDate: e,
+    };
+    final byDate = <String, List<({WorkoutSession session, bool counted})>>{};
+    for (final f in await finishedSessionsBetween(fromDate, toDate)) {
+      byDate.putIfAbsent(f.session.localDate, () => []).add(f);
+    }
+    final out = <String, WorkoutCalendarDay>{};
+    var d = DateTime.utc(
+      int.parse(fromDate.substring(0, 4)),
+      int.parse(fromDate.substring(5, 7)),
+      int.parse(fromDate.substring(8, 10)),
+    );
+    String two(int n) => n.toString().padLeft(2, '0');
+    while (true) {
+      final key = '${d.year.toString().padLeft(4, '0')}-${two(d.month)}-${two(d.day)}';
+      if (key.compareTo(toDate) > 0) break;
+      final sessions = byDate[key] ?? const [];
+      final counted = sessions.where((f) => f.counted).toList();
+      final entry = entries[key];
+      out[key] = WorkoutCalendarDay(
+        date: key,
+        entry: entry,
+        status: workoutDayStatus(
+          date: key,
+          today: today,
+          entry: entry,
+          hasCountedSession: counted.isNotEmpty,
+        ),
+        sessionId:
+            counted.isNotEmpty
+                ? counted.first.session.id
+                : (sessions.isEmpty ? null : sessions.first.session.id),
+      );
+      d = DateTime.utc(d.year, d.month, d.day + 1);
+    }
+    return out;
   }
 
   /// Finished workouts, newest first, each marked with whether it counts (it has logged working sets).

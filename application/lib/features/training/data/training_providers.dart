@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/db/local_store.dart';
 import '../../../core/sync/change_writer.dart';
 import '../../../core/sync/sync_status.dart';
+import '../../../core/time/local_stamp.dart';
 import 'training_management_service.dart';
 import 'training_models.dart';
 import 'training_repository.dart';
+import 'workout_calendar.dart';
 import 'workout_session_service.dart';
 
 final trainingRepositoryProvider = Provider<TrainingRepository>(
@@ -179,3 +181,20 @@ final exerciseLinksProvider =
 final splitDayLabelsProvider = FutureProvider<Map<String, String>>(
   (ref) => _reload(ref, (r) => r.splitDayLabels()),
 );
+
+/// Every date of one month (`YYYY-MM`) with its calendar status. Reloads after any local change, so a saved workout
+/// shows on the calendar straight away.
+final workoutCalendarProvider =
+    FutureProvider.family<Map<String, WorkoutCalendarDay>, String>((
+      ref,
+      month,
+    ) async {
+      ref.watch(dataRevisionProvider);
+      final repo = ref.watch(trainingRepositoryProvider);
+      final y = int.parse(month.substring(0, 4));
+      final m = int.parse(month.substring(5, 7));
+      String two(int n) => n.toString().padLeft(2, '0');
+      final last = DateTime.utc(y, m + 1, 0).day;
+      final today = localStampOf(DateTime.now()).localDate;
+      return repo.calendarDays('$y-${two(m)}-01', '$y-${two(m)}-${two(last)}', today);
+    });

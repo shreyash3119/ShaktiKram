@@ -13,6 +13,7 @@ import '../data/training_models.dart';
 import '../data/training_providers.dart';
 import '../data/training_repository.dart';
 import '../data/workout_session_service.dart';
+import 'training_format.dart' show dateText;
 
 /// Starts a workout (from [templateVersionId] when given) and opens the session screen. If one is already running
 /// the screen simply continues it. Used by the Training and Home start buttons.
@@ -48,12 +49,34 @@ Future<void> startOrContinueWorkout(
   router.push(AppRoutes.session);
 }
 
+/// How the logger is used. [live] is today's workout as it happens (the default). [create] and [edit] are for a day
+/// picked on the Workout Calendar: the same screen, dated to that day, with no running clock.
+enum WorkoutLogMode { live, create, edit }
+
+/// What the Workout Calendar passes to the logger: the picked day, whether a workout is being created or edited, and
+/// the session to show (created beforehand for [WorkoutLogMode.create]).
+class WorkoutLogArgs {
+  const WorkoutLogArgs({
+    required this.selectedDate,
+    required this.mode,
+    required this.sessionId,
+  });
+
+  /// `YYYY-MM-DD`.
+  final String selectedDate;
+  final WorkoutLogMode mode;
+  final String sessionId;
+}
+
 /// The active workout. Everything is read from and written to the phone through the training providers and
 /// [WorkoutSessionService]; the screen never talks to the backend. Sets are saved the moment they are confirmed,
 /// so leaving or restarting the app does not lose them. Suggested weights and PRs are not computed here: they come
 /// from the backend later (decision F5), so "Previous" shows only what was actually logged last time.
 class WorkoutSessionScreen extends ConsumerStatefulWidget {
-  const WorkoutSessionScreen({super.key});
+  const WorkoutSessionScreen({super.key, this.args});
+
+  /// Null for today's normal workout. Set when opened from the Workout Calendar.
+  final WorkoutLogArgs? args;
 
   @override
   ConsumerState<WorkoutSessionScreen> createState() =>
@@ -95,6 +118,10 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
   }
 
   WorkoutSessionService get _service => ref.read(workoutSessionServiceProvider);
+
+  /// Opened from the Workout Calendar for a chosen day (no clock, no pause, saved against that day).
+  bool get _historical =>
+      widget.args != null && widget.args!.mode != WorkoutLogMode.live;
 
   static String _clock(int seconds) {
     String two(int n) => n.toString().padLeft(2, '0');
@@ -209,7 +236,63 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     );
   }
 
+  /// Saves a calendar-day workout and leaves. Sets are already saved as they are confirmed; this notes the text, closes
+  /// a new workout (linking the day's schedule entry) and shows where it was saved. A new workout with nothing logged
+  /// is thrown away instead, so opening a day and backing out leaves nothing behind.
+  Future<void> _saveHistorical(SessionDetail detail) async {
+    final args = widget.args!;
+    final messenger = ScaffoldMessenger.of(context);
+    final id = detail.session.id;
+    final logged = detail.exercises.any((e) => e.sets.isNotEmpty);
+    if (!logged && args.mode == WorkoutLogMode.create) {
+      await _run(() => _service.discardSession(id));
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Nothing was logged, so nothing was saved.')),
+      );
+      if (mounted) _exit();
+      return;
+    }
+    var saved = false;
+    await _run(() async {
+      if (_workoutNote.trim().isNotEmpty) {
+        await _service.setNotes(id, _workoutNote);
+      }
+      if (args.mode == WorkoutLogMode.create) {
+        await _service.completeSession(id, endedAt: detail.session.startedAt);
+      }
+      saved = true;
+    });
+    if (!saved || !mounted) return;
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          'Workout saved for ${dateText(args.selectedDate)}. It will sync when online.',
+        ),
+      ),
+    );
+    _exit();
+  }
+
+  Future<void> _editSet(LoggedSet s) async {
+    final result = await showDialog<(String, String)>(
+      context: context,
+      builder: (_) => _EditSetDialog(
+        kg: s.weightKg == null ? '' : _kgText(s.weightKg!),
+        reps: s.reps == null ? '' : '${s.reps}',
+      ),
+    );
+    if (result == null || !mounted) return;
+    final kg = double.tryParse(result.$1.trim().replaceAll(',', '.'));
+    final reps = int.tryParse(result.$2.trim());
+    if (kg == null || reps == null) {
+      _toast('Enter weight and reps.');
+      return;
+    }
+    await _run(() => _service.editSet(s.id, weightKg: kg, reps: reps));
+  }
+
   Future<void> _leave(SessionDetail detail) async {
+    if (_historical) return _saveHistorical(detail);
     final sets = detail.exercises.fold<int>(0, (a, e) => a + e.sets.length);
     final choice = await _ask(
       title: 'Leave workout?',
@@ -354,7 +437,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
       );
       if (!mounted) return;
       setState(() {
-        _restLeft = restSeconds;
+        _restLeft = _historical ? 0 : restSeconds;
         _kg = _kgText(kg);
         _reps = '';
         _setKey = 'after-${DateTime.now().microsecondsSinceEpoch}';
@@ -364,6 +447,10 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final args = widget.args;
+    if (args != null && args.mode != WorkoutLogMode.live) {
+      return _historicalBuild(args);
+    }
     final finished = _finishedId;
     if (finished != null) return _finishedView(finished);
 
@@ -644,6 +731,89 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
         .join(' · ');
   }
 
+  // ---- A day picked on the Workout Calendar ----
+
+  Widget _historicalBuild(WorkoutLogArgs args) {
+    final detail = ref.watch(sessionDetailProvider(args.sessionId));
+    return detail.when(
+      loading:
+          () => const Scaffold(
+            body: SafeArea(child: Center(child: CircularProgressIndicator())),
+          ),
+      error:
+          (e, _) => _shell(null, [
+            const MutedText('This workout could not be read from the phone.'),
+          ]),
+      data:
+          (d) =>
+              d == null
+                  ? _shell(null, [
+                    const MutedText('This workout is not on this phone.'),
+                  ])
+                  : _historicalView(d, args),
+    );
+  }
+
+  Widget _historicalView(SessionDetail detail, WorkoutLogArgs args) {
+    final session = detail.session;
+    final names = _exerciseNames();
+    final exercises = detail.exercises;
+    if (_exercise >= exercises.length) {
+      _exercise = exercises.isEmpty ? 0 : exercises.length - 1;
+    }
+    final current = exercises.isEmpty ? null : exercises[_exercise];
+    final editing = args.mode == WorkoutLogMode.edit;
+    final day = dateText(args.selectedDate);
+    final subtitle =
+        exercises.isEmpty
+            ? '$day · ${editing ? 'editing' : 'new log'}'
+            : 'Exercise ${_exercise + 1} of ${exercises.length} · $day';
+
+    return _shell(
+      detail,
+      canPop: false,
+      title: session.name ?? 'Workout',
+      subtitle: subtitle,
+      [
+        if (current == null)
+          _addExerciseCard(session, names, empty: true)
+        else
+          ..._exerciseSection(detail, current, names),
+        const SizedBox(height: AppTheme.gap),
+        if (current != null) _addExerciseCard(session, names),
+        const SizedBox(height: AppTheme.gap),
+        TitledCard(
+          title: 'Workout note',
+          children: [
+            FieldBox(
+              key: ValueKey('note-${session.id}'),
+              initial: session.notes ?? '',
+              hint: 'How did it feel?',
+              onChanged: (v) => _workoutNote = v,
+            ),
+          ],
+        ),
+        const SizedBox(height: AppTheme.gap),
+        TitledCard(
+          title: editing ? 'Save changes' : 'Save workout',
+          children: [
+            AppButton.primary(
+              editing ? 'Save changes' : 'Save workout',
+              key: const Key('save-historical'),
+              height: 54,
+              onPressed: _busy ? null : () => _saveHistorical(detail),
+            ),
+            const SizedBox(height: 12),
+            MutedText(
+              'Saved against $day. Sets are saved as you confirm them.',
+              size: 14.5,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   // ---- Active workout ----
 
   Widget _activeView(SessionDetail detail) {
@@ -790,6 +960,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
             text:
                 '${s.weightKg == null ? '–' : _kgText(s.weightKg!)} kg × ${s.reps ?? '–'}${s.rir == null ? '' : ' · RIR ${s.rir}'}',
             onRemove: _busy ? null : () => _run(() => _service.deleteSet(s.id)),
+            onEdit: _historical && !_busy ? () => _editSet(s) : null,
           ),
         ),
     ];
@@ -1082,6 +1253,7 @@ class _DoneSetRow extends StatelessWidget {
     required this.number,
     required this.text,
     this.onRemove,
+    this.onEdit,
   });
 
   final String label;
@@ -1089,10 +1261,17 @@ class _DoneSetRow extends StatelessWidget {
   final String text;
   final VoidCallback? onRemove;
 
+  /// Tapping the row edits the set (only offered for a workout opened from the Workout Calendar).
+  final VoidCallback? onEdit;
+
   @override
   Widget build(BuildContext context) {
     final p = context.pal;
-    return Container(
+    return GestureDetector(
+      key: onEdit == null ? null : Key('edit-set-$number-$label'),
+      behavior: HitTestBehavior.opaque,
+      onTap: onEdit,
+      child: Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: p.tile,
@@ -1143,6 +1322,86 @@ class _DoneSetRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    ));
+  }
+}
+
+/// Weight and reps of one logged set, for correcting it.
+class _EditSetDialog extends StatefulWidget {
+  const _EditSetDialog({required this.kg, required this.reps});
+
+  final String kg;
+  final String reps;
+
+  @override
+  State<_EditSetDialog> createState() => _EditSetDialogState();
+}
+
+class _EditSetDialogState extends State<_EditSetDialog> {
+  late String _kg = widget.kg;
+  late String _reps = widget.reps;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.pal;
+    return Dialog(
+      backgroundColor: p.card,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.cardRadius),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.cardPadding),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Edit set',
+              style: TextStyle(color: p.text, fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: FieldBox(
+                    fieldKey: const Key('edit-kg-field'),
+                    initial: _kg,
+                    hint: 'kg',
+                    keyboard: const TextInputType.numberWithOptions(decimal: true),
+                    onChanged: (v) => _kg = v,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FieldBox(
+                    fieldKey: const Key('edit-reps-field'),
+                    initial: _reps,
+                    hint: 'reps',
+                    keyboard: TextInputType.number,
+                    onChanged: (v) => _reps = v,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: AppButton('Cancel', onPressed: () => Navigator.of(context).pop()),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppButton.primary(
+                    'Save',
+                    key: const Key('edit-set-save'),
+                    onPressed: () => Navigator.of(context).pop((_kg, _reps)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
