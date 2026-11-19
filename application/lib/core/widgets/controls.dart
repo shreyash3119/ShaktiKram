@@ -270,6 +270,7 @@ class FieldBox extends StatefulWidget {
     this.textAlign = TextAlign.center,
     this.suffix,
     this.multiline = false,
+    this.bordered = true,
   });
 
   final String initial;
@@ -289,6 +290,9 @@ class FieldBox extends StatefulWidget {
 
   /// A free-text box that grows with what is typed.
   final bool multiline;
+
+  /// Whether a form-style (left-aligned) box draws a thin outline. The newer designs have none.
+  final bool bordered;
 
   @override
   State<FieldBox> createState() => _FieldBoxState();
@@ -316,7 +320,7 @@ class _FieldBoxState extends State<FieldBox> {
       decoration: BoxDecoration(
         color: p.tile,
         borderRadius: BorderRadius.circular(AppTheme.radius),
-        border: start ? Border.all(color: p.divider) : null,
+        border: start && widget.bordered ? Border.all(color: p.divider) : null,
       ),
       alignment: widget.multiline ? Alignment.topLeft : Alignment.center,
       child: TextField(

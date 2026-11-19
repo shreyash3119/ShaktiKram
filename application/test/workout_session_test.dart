@@ -42,6 +42,16 @@ Future<void> _tapVisible(WidgetTester tester, Finder target) async {
   await tester.pumpAndSettle();
 }
 
+/// In a running workout: opens the exercise picker, adds the first exercise listed and presses Done.
+Future<void> _addFirstExercise(WidgetTester tester) async {
+  await tester.tap(find.byKey(const Key('open-picker-session')));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Add').first);
+  await tester.pumpAndSettle();
+  await tester.tap(find.byKey(const Key('picker-done')));
+  await tester.pumpAndSettle();
+}
+
 /// The session screen has a running clock, so end each test by removing the screen.
 Future<void> _close(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox.shrink());
@@ -53,7 +63,7 @@ void main() {
     (tester) async {
       await _openSession(tester);
 
-      expect(find.text('Start empty workout'), findsOneWidget);
+      expect(find.byKey(const Key('start-workout')), findsOneWidget);
       expect(find.byType(AppBottomBar), findsNothing);
       await _close(tester);
     },
@@ -64,15 +74,14 @@ void main() {
     (tester) async {
       final (h, _) = await _openSession(tester);
 
-      await tester.tap(find.text('Start empty workout'));
+      await tester.tap(find.byKey(const Key('start-workout')));
       await tester.pumpAndSettle();
       expect(
         (await h.local.list('workout_sessions')).single['status'],
         'in_progress',
       );
 
-      await tester.tap(find.text('Add ›').first);
-      await tester.pumpAndSettle();
+      await _addFirstExercise(tester);
       expect(find.text('Bench press'), findsWidgets);
 
       final confirm = find.byKey(const Key('confirm-set'));
@@ -100,7 +109,7 @@ void main() {
 
   testWidgets('leaving asks first and Keep going stays', (tester) async {
     await _openSession(tester);
-    await tester.tap(find.text('Start empty workout'));
+    await tester.tap(find.byKey(const Key('start-workout')));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('session-back')));
@@ -118,10 +127,9 @@ void main() {
     'finishing a workout with a logged set completes it and shows the summary',
     (tester) async {
       final (h, _) = await _openSession(tester);
-      await tester.tap(find.text('Start empty workout'));
+      await tester.tap(find.byKey(const Key('start-workout')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Add ›').first);
-      await tester.pumpAndSettle();
+      await _addFirstExercise(tester);
       await tester.enterText(find.byKey(const Key('kg-field')), '60');
       await tester.enterText(find.byKey(const Key('reps-field')), '8');
       await _tapVisible(tester, find.byKey(const Key('confirm-set')));
@@ -150,7 +158,7 @@ void main() {
     'finishing a workout with no sets offers Return or Discard and never completes it',
     (tester) async {
       final (h, _) = await _openSession(tester);
-      await tester.tap(find.text('Start empty workout'));
+      await tester.tap(find.byKey(const Key('start-workout')));
       await tester.pumpAndSettle();
 
       await _tapVisible(tester, find.text('Finish workout'));
@@ -176,7 +184,7 @@ void main() {
     'leaving while paused ends the pause and records the time paused',
     (tester) async {
       final (h, _) = await _openSession(tester);
-      await tester.tap(find.text('Start empty workout'));
+      await tester.tap(find.byKey(const Key('start-workout')));
       await tester.pumpAndSettle();
 
       await _tapVisible(tester, find.text('Pause workout'));

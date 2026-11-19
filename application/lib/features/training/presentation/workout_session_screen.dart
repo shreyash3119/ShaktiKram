@@ -13,6 +13,8 @@ import '../data/training_models.dart';
 import '../data/training_providers.dart';
 import '../data/training_repository.dart';
 import '../data/workout_session_service.dart';
+import 'exercise_picker_screen.dart';
+import 'workout_builder.dart';
 import 'training_format.dart' show dateText;
 
 /// Starts a workout (from [templateVersionId] when given) and opens the session screen. If one is already running
@@ -568,47 +570,28 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
   // ---- No workout running: choose how to start ----
 
   Widget _picker() {
-    final templates =
-        ref.watch(currentTemplatesProvider).valueOrNull ??
-        const <TemplateVersion>[];
-    return _shell(null, [
-      TitledCard(
-        title: 'Start a workout',
-        children: [
-          AppButton.primary(
-            'Start empty workout',
-            onPressed:
-                _busy
-                    ? null
-                    : () => _run(() async {
-                      await _service.startSession();
-                    }),
-          ),
-          if (templates.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            const MutedText('Or start from a template:'),
-            const SizedBox(height: 6),
-            RowList([
-              for (final t in templates)
-                RowItem(
-                  title: t.name,
-                  subtitle: 'Version ${t.version}',
-                  trailing: 'Start ›',
-                  onTap:
-                      _busy
-                          ? null
-                          : () => _run(() async {
-                            await _service.startSession(
-                              name: t.name,
-                              templateVersionId: t.id,
-                            );
-                          }),
-                ),
-            ]),
-          ],
-        ],
+    return PopScope(
+      canPop: true,
+      child: WorkoutBuilder(
+        subtitle: '${dateText(todayDate())} · new workout',
+        startLabel: 'Start workout',
+        onBack: _exit,
+        onStart:
+            (req) => _run(() async {
+              final id = await _service.startSessionWith(
+                req.exercises,
+                name: req.name,
+                scheduleEntryId: req.scheduleEntryId,
+                splitVersionId: req.splitVersionId,
+                splitDayId: req.splitDayId,
+                templateVersionId: req.templateVersionId,
+              );
+              if (req.note.trim().isNotEmpty) {
+                await _service.setNotes(id, req.note);
+              }
+            }),
       ),
-    ]);
+    );
   }
 
   // ---- Finished: summary ----
@@ -764,10 +747,30 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     final current = exercises.isEmpty ? null : exercises[_exercise];
     final editing = args.mode == WorkoutLogMode.edit;
     final day = dateText(args.selectedDate);
+    if (exercises.isEmpty) {
+      // Nothing in the workout yet: the same start page as today's workout, dated to the chosen day.
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (!didPop) _leave(detail);
+        },
+        child: WorkoutBuilder(
+          date: args.selectedDate,
+          subtitle: '$day · ${editing ? 'editing' : 'new log'}',
+          startLabel: 'Add to log',
+          onBack: () => _leave(detail),
+          onStart:
+              (req) => _run(() async {
+                await _service.addPlannedExercises(session.id, req.exercises);
+                if (req.note.trim().isNotEmpty) {
+                  await _service.setNotes(session.id, req.note);
+                }
+              }),
+        ),
+      );
+    }
     final subtitle =
-        exercises.isEmpty
-            ? '$day · ${editing ? 'editing' : 'new log'}'
-            : 'Exercise ${_exercise + 1} of ${exercises.length} · $day';
+        'Exercise ${_exercise + 1} of ${exercises.length} · $day';
 
     return _shell(
       detail,
@@ -1217,33 +1220,40 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     Map<String, String> names, {
     bool empty = false,
   }) {
-    final library =
-        ref.watch(exerciseLibraryProvider).valueOrNull ?? const <Exercise>[];
     return TitledCard(
       title: empty ? 'Add your first exercise' : 'Add exercise',
       children: [
-        if (library.isEmpty)
-          const MutedText(
-            'No exercises on this phone yet. They appear after the first sync, or you can add one in Training › Exercises.',
-          )
-        else
-          RowList([
-            for (final e in library.take(empty ? 12 : 6))
-              RowItem(
-                title: e.name,
-                subtitle: e.category,
-                trailing: 'Add ›',
-                onTap:
-                    _busy
-                        ? null
-                        : () => _run(() async {
-                          await _service.addExercise(session.id, e.id);
-                          if (mounted) setState(() => _resetDraft());
-                        }),
-              ),
-          ]),
+        AppButton(
+          'Search exercises',
+          key: const Key('open-picker-session'),
+          onPressed: _busy ? null : () => _addMore(session),
+        ),
       ],
     );
+  }
+
+  /// Opens the exercise picker and adds what was chosen to the end of this workout. Exercises already in the workout
+  /// are not removed here (use Remove exercise on its page).
+  Future<void> _addMore(WorkoutSession session) async {
+    final have = [
+      for (final e
+          in ref.read(sessionDetailProvider(session.id)).valueOrNull?.exercises ??
+              const <SessionExerciseDetail>[])
+        e.exercise.exerciseId,
+    ];
+    final result = await pickExercises(context, selected: have);
+    if (result == null || !mounted) return;
+    final added = [
+      for (final id in result)
+        if (!have.contains(id)) id,
+    ];
+    if (added.isEmpty) return;
+    await _run(() async {
+      for (final id in added) {
+        await _service.addExercise(session.id, id);
+      }
+      if (mounted) setState(() => _resetDraft());
+    });
   }
 }
 

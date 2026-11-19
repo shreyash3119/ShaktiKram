@@ -36,8 +36,18 @@ List<String> orderedGroups(Iterable<MuscleRef> muscles) {
 
 /// A bordered panel that sits inside a sheet or page.
 class EditorPanel extends StatelessWidget {
-  const EditorPanel({super.key, required this.child, this.padding, this.onTap});
+  const EditorPanel({
+    super.key,
+    required this.child,
+    this.padding,
+    this.onTap,
+    this.color,
+    this.bordered = true,
+  });
 
+  /// Surface colour; the tile colour by default. Forms on a page background use the card colour, like other screens.
+  final Color? color;
+  final bool bordered;
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final VoidCallback? onTap;
@@ -49,9 +59,9 @@ class EditorPanel extends StatelessWidget {
       width: double.infinity,
       padding: padding ?? const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: p.tile,
+        color: color ?? p.tile,
         borderRadius: BorderRadius.circular(AppTheme.cardRadius),
-        border: Border.all(color: p.divider),
+        border: bordered ? Border.all(color: p.divider) : null,
       ),
       child: child,
     );

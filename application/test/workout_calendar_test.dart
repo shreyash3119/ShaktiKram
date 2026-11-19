@@ -141,9 +141,17 @@ void main() {
     await tester.pumpAndSettle();
 
     // The same workout screen, dated to the chosen day, with nothing saved yet.
-    expect(find.byKey(const Key('save-historical')), findsOneWidget);
-    await tester.tap(find.text('Add ›').first);
+    // Nothing in it yet, so the Workout start page shows; add an exercise to it.
+    expect(find.byKey(const Key('start-workout')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('open-picker')));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Add').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('picker-done')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('start-workout')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('save-historical')), findsOneWidget);
     await tester.enterText(find.byKey(const Key('kg-field')), '60');
     await tester.enterText(find.byKey(const Key('reps-field')), '8');
     await tester.tap(find.byKey(const Key('confirm-set')));

@@ -9,12 +9,13 @@ Future<T?> showEditorSheet<T>(
   BuildContext context, {
   required String title,
   required WidgetBuilder builder,
+  Color? background,
 }) {
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    backgroundColor: context.pal.card,
+    backgroundColor: background ?? context.pal.card,
     builder: (sheet) {
       final p = sheet.pal;
       return Padding(

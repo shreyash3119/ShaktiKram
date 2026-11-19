@@ -18,6 +18,8 @@ Future<void> showExerciseEditor(BuildContext context, {Exercise? exercise}) {
     return showEditorSheet<void>(
       context,
       title: 'Add exercise',
+      // The same page colour as every other screen and the Edit page; panels are cards on it.
+      background: context.pal.bg,
       builder: (_) => const _ExerciseForm(),
     );
   }
@@ -253,7 +255,7 @@ class _ExerciseFormState extends ConsumerState<_ExerciseForm> {
         style: TextStyle(
           color: p.muted,
           fontSize: 15,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );
@@ -262,6 +264,7 @@ class _ExerciseFormState extends ConsumerState<_ExerciseForm> {
       initial: _name,
       hint: 'e.g. Incline dumbbell press',
       fieldKey: const Key('exercise-name'),
+      bordered: false,
       textAlign: TextAlign.start,
       onChanged: (v) => _name = v,
     );
@@ -271,6 +274,7 @@ class _ExerciseFormState extends ConsumerState<_ExerciseForm> {
       height: 104,
       multiline: true,
       fieldKey: const Key('exercise-notes'),
+      bordered: false,
       onChanged: (v) => _notes = v,
     );
     final save = Column(
@@ -347,6 +351,8 @@ class _ExerciseFormState extends ConsumerState<_ExerciseForm> {
           ),
           const SizedBox(height: 8),
           EditorPanel(
+            color: p.card,
+            bordered: false,
             child: Column(
               children: [
                 roleRow('Primary', true),
@@ -358,6 +364,8 @@ class _ExerciseFormState extends ConsumerState<_ExerciseForm> {
           const SizedBox(height: 18),
           heading('Equipment'),
           EditorPanel(
+            color: p.card,
+            bordered: false,
             key: const Key('equipment-row'),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             onTap: () => _pickEquipment(equipment),
@@ -377,7 +385,7 @@ class _ExerciseFormState extends ConsumerState<_ExerciseForm> {
                     style: TextStyle(
                       color: equipmentName == null ? p.muted : p.text,
                       fontSize: 18,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -400,10 +408,10 @@ class _ExerciseFormState extends ConsumerState<_ExerciseForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const FieldLabel('Name'),
+        heading('Name'),
         nameField,
         const SizedBox(height: 16),
-        const FieldLabel('Category'),
+        heading('Category'),
         PillTabs(
           labels: const ['Not set', 'Compound', 'Isolation'],
           index: _category == null ? 0 : (_category == 'compound' ? 1 : 2),
@@ -417,6 +425,8 @@ class _ExerciseFormState extends ConsumerState<_ExerciseForm> {
         ),
         const SizedBox(height: 18),
         EditorPanel(
+            color: p.card,
+            bordered: false,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -428,7 +438,7 @@ class _ExerciseFormState extends ConsumerState<_ExerciseForm> {
                       style: TextStyle(
                         color: p.text,
                         fontSize: 18,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
@@ -463,6 +473,8 @@ class _ExerciseFormState extends ConsumerState<_ExerciseForm> {
         ),
         const SizedBox(height: 14),
         EditorPanel(
+            color: p.card,
+            bordered: false,
           key: const Key('helping-muscles-row'),
           onTap: () => _editRole(primary: false, muscles: muscles),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
@@ -477,7 +489,7 @@ class _ExerciseFormState extends ConsumerState<_ExerciseForm> {
                       style: TextStyle(
                         color: p.text,
                         fontSize: 18,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -497,6 +509,8 @@ class _ExerciseFormState extends ConsumerState<_ExerciseForm> {
         if (equipment.isNotEmpty) ...[
           const SizedBox(height: 14),
           EditorPanel(
+            color: p.card,
+            bordered: false,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -508,7 +522,7 @@ class _ExerciseFormState extends ConsumerState<_ExerciseForm> {
                         style: TextStyle(
                           color: p.text,
                           fontSize: 18,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
@@ -542,7 +556,7 @@ class _ExerciseFormState extends ConsumerState<_ExerciseForm> {
           ),
         ],
         const SizedBox(height: 18),
-        const FieldLabel('Notes · optional'),
+        heading('Notes · optional'),
         notesField,
         const SizedBox(height: 18),
         save,

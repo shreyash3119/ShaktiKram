@@ -12,6 +12,15 @@ class SessionAlreadyActive implements Exception {
   String toString() => 'A workout is already in progress.';
 }
 
+/// One exercise of a workout that is being put together before it starts: the exercise, and the template line it came
+/// from (kept so its sets and reps targets show during the workout).
+class PlannedExercise {
+  const PlannedExercise(this.exerciseId, {this.templateExerciseId});
+
+  final String exerciseId;
+  final String? templateExerciseId;
+}
+
 /// Everything a workout needs to write: start, add and skip exercises, log, correct and remove sets, complete or
 /// discard. Every call is one atomic local step queued through the outbox, so it works offline and survives a restart.
 /// Values are checked here against the same limits as the database, so the server never has to refuse a normal entry.
@@ -70,6 +79,66 @@ class WorkoutSessionService {
     await writer.apply(changes);
     return session.id;
   }
+
+  /// Starts a workout with exactly [exercises], in that order (the workout builder). Same rules and writes as
+  /// [startSession]; each exercise that came from a template line keeps that link. Throws [SessionAlreadyActive] when
+  /// another workout is in progress.
+  Future<String> startSessionWith(
+    List<PlannedExercise> exercises, {
+    String? name,
+    String? scheduleEntryId,
+    String? splitVersionId,
+    String? splitDayId,
+    String? templateVersionId,
+  }) async {
+    final active = await repository.activeSession();
+    if (active != null) throw SessionAlreadyActive(active.id);
+    final stamp = localStampOf(_clock());
+    final session = PendingChange.upsert(_session, {
+      ...stamp.toPayload(),
+      'status': 'in_progress',
+      'paused_seconds': 0,
+      if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
+      if (scheduleEntryId != null) 'schedule_entry_id': scheduleEntryId,
+      if (splitVersionId != null) 'split_version_id': splitVersionId,
+      if (splitDayId != null) 'split_day_id': splitDayId,
+      if (templateVersionId != null) 'template_version_id': templateVersionId,
+    });
+    await writer.apply([session, ..._plannedRows(session.id, exercises, 1)]);
+    return session.id;
+  }
+
+  /// Adds [exercises] to the end of a workout that already exists (a day opened from the Workout Calendar).
+  Future<void> addPlannedExercises(
+    String sessionId,
+    List<PlannedExercise> exercises,
+  ) async {
+    if (exercises.isEmpty) return;
+    final existing = await repository.sessionExercises(sessionId);
+    final next =
+        existing.isEmpty
+            ? 1
+            : existing.map((e) => e.position).reduce((a, b) => a > b ? a : b) +
+                1;
+    await writer.apply(_plannedRows(sessionId, exercises, next));
+  }
+
+  List<PendingChange> _plannedRows(
+    String sessionId,
+    List<PlannedExercise> exercises,
+    int firstPosition,
+  ) => [
+    for (var i = 0; i < exercises.length; i++)
+      PendingChange.upsert(_exercise, {
+        'session_id': sessionId,
+        'exercise_id': exercises[i].exerciseId,
+        'position': firstPosition + i,
+        // Same values as before: a template line is "done" (planned), anything else is "added".
+        'status': exercises[i].templateExerciseId == null ? 'added' : 'done',
+        if (exercises[i].templateExerciseId != null)
+          'template_exercise_id': exercises[i].templateExerciseId,
+      }),
+  ];
 
   /// Creates a finished workout dated [localDate] (`YYYY-MM-DD`, today or earlier) for the Workout Calendar. The session is
   /// stamped at noon of that day (or now, for today before noon) so its date can never slip to a neighbouring day, and it
