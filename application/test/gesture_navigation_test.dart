@@ -166,4 +166,69 @@ void main() {
     expect(find.text('About these numbers'), findsNothing);
     expect(_main(tester), 2);
   });
+
+  testWidgets('sub-tabs slide with the finger: both pages are side by side until you let go', (tester) async {
+    await _open(tester);
+    await _tapNav(tester, 'Training');
+    final size = tester.view.physicalSize / tester.view.devicePixelRatio;
+    final neighbor = find.byKey(const ValueKey('tab-slider-neighbor'));
+    expect(neighbor, findsNothing);
+
+    final g = await tester.startGesture(Offset(size.width / 2, size.height / 2));
+    await g.moveBy(const Offset(-60, 0)); // past the touch slop
+    await tester.pump();
+    await g.moveBy(const Offset(-150, 0));
+    await tester.pump();
+    expect(neighbor, findsOneWidget);
+    final first = tester.getRect(neighbor).left;
+    expect(first, greaterThan(0));
+    expect(first, lessThan(size.width)); // the next tab is partly on screen, to the right
+    await g.moveBy(const Offset(-150, 0));
+    await tester.pump();
+    expect(tester.getRect(neighbor).left, lessThan(first)); // it follows the finger
+    expect(_sub(tester), 0); // the tab row changes once the swipe settles
+
+    await g.up();
+    await tester.pumpAndSettle();
+    expect(neighbor, findsNothing);
+    expect(_sub(tester), 1);
+    expect(_main(tester), 1);
+  });
+
+  testWidgets('letting go early slides back to the same tab', (tester) async {
+    await _open(tester);
+    await _tapNav(tester, 'Training');
+    final size = tester.view.physicalSize / tester.view.devicePixelRatio;
+    final g = await tester.startGesture(Offset(size.width / 2, size.height / 2));
+    await g.moveBy(const Offset(-60, 0));
+    await tester.pump();
+    await g.moveBy(const Offset(-40, 0));
+    await tester.pump();
+    await g.up();
+    await tester.pumpAndSettle();
+    expect(_sub(tester), 0);
+  });
+
+  testWidgets('main tabs slide too: Home and Training sit side by side during the swipe', (tester) async {
+    await _open(tester);
+    await _tapNav(tester, 'Training'); // make sure Training has been opened once
+    await _tapNav(tester, 'Home');
+    final size = tester.view.physicalSize / tester.view.devicePixelRatio;
+    Offstage branch(int i) =>
+        tester.widget<Offstage>(find.byKey(ValueKey('branch-$i'), skipOffstage: false));
+    expect(branch(1).offstage, isTrue);
+
+    final g = await tester.startGesture(Offset(size.width / 2, size.height / 2));
+    await g.moveBy(const Offset(-60, 0));
+    await tester.pump();
+    await g.moveBy(const Offset(-200, 0));
+    await tester.pump();
+    expect(branch(0).offstage, isFalse);
+    expect(branch(1).offstage, isFalse);
+    expect(_main(tester), 0); // the bottom bar follows once the swipe settles
+    await g.up();
+    await tester.pumpAndSettle();
+    expect(_main(tester), 1);
+    expect(branch(0).offstage, isTrue);
+  });
 }

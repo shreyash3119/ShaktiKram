@@ -10,6 +10,7 @@ import '../../../core/widgets/cards.dart';
 import '../../../core/widgets/controls.dart';
 import '../../../core/widgets/insight_status.dart' show ageText;
 import '../../../core/widgets/section_widgets.dart';
+import '../../../core/widgets/tab_slider.dart';
 import '../../training/presentation/training_dialogs.dart' show ModalCard;
 import '../data/report_period.dart';
 import '../data/report_repository.dart';
@@ -84,7 +85,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   Widget build(BuildContext context) {
     final query = ref.watch(reportQueryProvider);
     final request = ref.watch(reportRequestProvider);
-    final isExport = _tab == reportTabs.length - 1;
+    final compare = ref.watch(reportCompareProvider);
 
     // "Updated 2 min ago" once a report is on the phone; otherwise the screen's purpose.
     final configured = ref.watch(reportingConfiguredProvider);
@@ -98,6 +99,40 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         snap != null && snap.hasData
             ? 'Updated ${ageText(snap.fetchedAt)}'
             : 'Analyze history and export';
+
+    // Everything under the tab row, for tab [tab]. The slider asks for the neighbouring tab too while a swipe is in
+    // progress, so this only creates widgets.
+    List<Widget> items(int tab) => [
+        const SizedBox(height: 14),
+        PillTabs(
+          labels: [for (final k in ReportKind.values) k.label],
+          index: ReportKind.values.indexOf(query.kind),
+          layout: PillLayout.scroll,
+          container: true,
+          onChanged: _selectKind,
+        ),
+        const SizedBox(height: 10),
+        _PeriodBar(
+          query: query,
+          onPickRange: () => _pickRange(query),
+          onChanged: (q) => ref.read(reportQueryProvider.notifier).state = q,
+        ),
+        if (tab == 0)
+          ToggleRow(
+            title: 'Compare with the previous period',
+            subtitle: 'Adds change figures to the Overview',
+            value: compare,
+            onChanged:
+                (v) => ref.read(reportCompareProvider.notifier).state = v,
+          ),
+        const _UnsyncedNotice(),
+        const SizedBox(height: 4),
+        if (tab == reportTabs.length - 1)
+          ExportTab(request: request)
+        else
+          _ReportBody(request: request, tab: tab),
+        const SizedBox(height: 8),
+    ];
 
     return ScreenFrame(
       title: 'Reports',
@@ -118,35 +153,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           index: _tab,
           onChanged: (i) => setState(() => _tab = i),
         ),
-        const SizedBox(height: 14),
-        PillTabs(
-          labels: [for (final k in ReportKind.values) k.label],
-          index: ReportKind.values.indexOf(query.kind),
-          layout: PillLayout.scroll,
-          container: true,
-          onChanged: _selectKind,
+        TabSlider(
+          index: _tab,
+          count: reportTabs.length,
+          onChanged: (i) => setState(() => _tab = i),
+          builder: (i) => TabSlider.page(items(i)),
         ),
-        const SizedBox(height: 10),
-        _PeriodBar(
-          query: query,
-          onPickRange: () => _pickRange(query),
-          onChanged: (q) => ref.read(reportQueryProvider.notifier).state = q,
-        ),
-        if (_tab == 0)
-          ToggleRow(
-            title: 'Compare with the previous period',
-            subtitle: 'Adds change figures to the Overview',
-            value: ref.watch(reportCompareProvider),
-            onChanged:
-                (v) => ref.read(reportCompareProvider.notifier).state = v,
-          ),
-        const _UnsyncedNotice(),
-        const SizedBox(height: 4),
-        if (isExport)
-          ExportTab(request: request)
-        else
-          _ReportBody(request: request, tab: _tab),
-        const SizedBox(height: 8),
       ],
     );
   }

@@ -12,6 +12,7 @@ import '../../../core/widgets/controls.dart';
 import '../../../core/widgets/insight_status.dart';
 import '../../../core/widgets/meters.dart';
 import '../../../core/widgets/section_widgets.dart';
+import '../../../core/widgets/tab_slider.dart';
 import '../../home/presentation/home_screen.dart' show showLogWeight;
 import '../../lifestyle/data/lifestyle_models.dart';
 import '../../training/presentation/training_dialogs.dart' show ModalCard;
@@ -40,8 +41,8 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
 
   void _goTo(int tab) => setState(() => _tab = tab);
 
-  List<Widget> _content() {
-    switch (_tab) {
+  List<Widget> _content(int tab) {
+    switch (tab) {
       case 1:
         return const [_StrengthTab()];
       case 2:
@@ -90,7 +91,12 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
           index: _tab,
           onChanged: (i) => setState(() => _tab = i),
         ),
-        ..._content(),
+        TabSlider(
+          index: _tab,
+          count: _tabs.length,
+          onChanged: _goTo,
+          builder: (i) => TabSlider.page(_content(i)),
+        ),
       ],
     );
   }

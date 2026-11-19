@@ -20,6 +20,7 @@ import '../../features/training/presentation/training_screen.dart';
 import '../../features/training/presentation/workout_calendar_screen.dart';
 import '../auth/session_controller.dart';
 import 'app_shell.dart';
+import 'branch_pager.dart';
 
 /// Route paths in one place. Feature screens add nested routes under their own branch later.
 class AppRoutes {
@@ -106,7 +107,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             (context, state) =>
                 WorkoutSessionScreen(args: state.extra as WorkoutLogArgs?),
       ),
-      StatefulShellRoute.indexedStack(
+      StatefulShellRoute(
+        // Like an indexed stack, but the sections can slide side by side during a swipe (see BranchPager).
+        navigatorContainerBuilder:
+            (context, shell, children) =>
+                BranchPager(shell: shell, children: children),
         builder:
             (
               BuildContext context,

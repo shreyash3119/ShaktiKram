@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 
-/// One row of sub-tabs on screen (the shared [UnderlineTabs]). It reports its selected tab and how to change it, so the
-/// app shell can move between sub-tabs on a horizontal swipe and on the Back button.
+/// One row of sub-tabs whose pages slide ([TabSlider]). It reports its selected tab and how to change it, and takes the
+/// drag the app shell forwards, so a horizontal swipe moves the pages with the finger and Back can return to the first.
 class SubTabHandle {
   SubTabHandle();
 
@@ -11,6 +11,10 @@ class SubTabHandle {
 
   /// False while the section is hidden behind another main tab (its widgets stay alive but are off screen).
   bool active = false;
+
+  VoidCallback? dragStart;
+  ValueChanged<double>? dragUpdate; // finger movement in pixels
+  ValueChanged<double>? dragEnd; // finger speed in pixels per second
 
   static void _ignore(int _) {}
 
@@ -33,16 +37,6 @@ class SubTabRegistry {
     return null;
   }
 
-  /// Moves one sub-tab left (-1) or right (+1). Does nothing past the first or last tab.
-  bool step(int direction) {
-    final h = active;
-    if (h == null) return false;
-    final next = h.index + direction;
-    if (next < 0 || next >= h.count) return true; // the swipe belongs to the sub-tabs even at their ends
-    h.onChanged(next);
-    return true;
-  }
-
   /// Back from a sub-tab other than the first returns to the first. False when already there (or none).
   bool backToDefault() {
     final h = active;
@@ -52,7 +46,7 @@ class SubTabRegistry {
   }
 }
 
-/// Gives [UnderlineTabs] below it the shell's registry. Without one (tests, other screens) they simply do not register.
+/// Gives [TabSlider] below it the shell's registry. Without one (tests, other screens) it simply does not register.
 class SubTabScope extends InheritedWidget {
   const SubTabScope({super.key, required this.registry, required super.child});
 

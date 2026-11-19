@@ -10,6 +10,7 @@ import '../../../core/widgets/controls.dart';
 import '../../../core/widgets/insight_status.dart';
 import '../../../core/widgets/meters.dart';
 import '../../../core/widgets/section_widgets.dart';
+import '../../../core/widgets/tab_slider.dart';
 import '../../progress/data/progress_insights.dart';
 import '../../progress/data/progress_providers.dart';
 import '../../training/presentation/training_dialogs.dart' show ModalCard;
@@ -41,8 +42,8 @@ class _LifestyleScreenState extends State<LifestyleScreen> {
 
   void _go(int i) => setState(() => _tab = i);
 
-  List<Widget> _content() {
-    switch (_tab) {
+  List<Widget> _content(int tab) {
+    switch (tab) {
       case 1:
         return const [
           _SleepCard(),
@@ -98,7 +99,12 @@ class _LifestyleScreenState extends State<LifestyleScreen> {
       ),
       children: [
         UnderlineTabs(labels: _tabs, index: _tab, onChanged: _go),
-        ..._content(),
+        TabSlider(
+          index: _tab,
+          count: _tabs.length,
+          onChanged: _go,
+          builder: (i) => TabSlider.page(_content(i)),
+        ),
       ],
     );
   }

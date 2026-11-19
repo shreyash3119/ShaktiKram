@@ -10,6 +10,7 @@ import '../../../core/widgets/cards.dart';
 import '../../../core/widgets/controls.dart';
 import '../../../core/widgets/section_widgets.dart';
 import '../../../core/widgets/editor_sheet.dart';
+import '../../../core/widgets/tab_slider.dart';
 import '../../../core/widgets/insight_status.dart' show ageText;
 import '../../progress/data/progress_insights.dart';
 import '../../progress/data/progress_providers.dart';
@@ -46,8 +47,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
   void _goTo(int tab) => setState(() => _tab = tab);
 
-  List<Widget> _content() {
-    switch (_tab) {
+  List<Widget> _content(int tab) {
+    switch (tab) {
       case 1:
         return const [_YourSplits(), _Templates()];
       case 2:
@@ -91,7 +92,12 @@ class _TrainingScreenState extends State<TrainingScreen> {
               : null,
       children: [
         UnderlineTabs(labels: _tabs, index: _tab, onChanged: _goTo),
-        ..._content(),
+        TabSlider(
+          index: _tab,
+          count: _tabs.length,
+          onChanged: _goTo,
+          builder: (i) => TabSlider.page(_content(i)),
+        ),
       ],
     );
   }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
-import 'sub_tab_registry.dart';
 
 /// Small building blocks shared by the Progress and Lifestyle tabs.
 
@@ -25,31 +24,11 @@ class UnderlineTabs extends StatefulWidget {
 class _UnderlineTabsState extends State<UnderlineTabs> {
   late List<GlobalKey> _spots;
 
-  /// Lets the app shell swipe between these tabs and send Back to the first one.
-  final SubTabHandle _handle = SubTabHandle();
-  SubTabRegistry? _registry;
-
   @override
   void initState() {
     super.initState();
     _spots = [for (final _ in widget.labels) GlobalKey()];
     _reveal();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final registry = SubTabScope.maybeOf(context);
-    if (!identical(registry, _registry)) {
-      _registry?.remove(_handle);
-      _registry = registry?..add(_handle);
-    }
-  }
-
-  @override
-  void dispose() {
-    _registry?.remove(_handle);
-    super.dispose();
   }
 
   @override
@@ -81,11 +60,6 @@ class _UnderlineTabsState extends State<UnderlineTabs> {
     final p = context.pal;
     final labels = widget.labels;
     final index = widget.index;
-    _handle
-      ..index = index
-      ..count = labels.length
-      ..onChanged = widget.onChanged
-      ..active = TickerMode.of(context);
     return Container(
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: p.divider)),
