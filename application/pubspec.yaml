@@ -7,7 +7,7 @@ environment:
   sdk: ^3.7.0
 
 # Version numbers are minimum floors: run `flutter pub upgrade` for the newest compatible ones.
-# Later steps add: local_auth, flutter_local_notifications.
+# Later steps add: local_auth.
 dependencies:
   flutter:
     sdk: flutter
@@ -24,6 +24,10 @@ dependencies:
   file_picker: ^8.1.6
   # Phone and watch steps from Android Health Connect (read only). See docs/FLUTTER_STEPS_HEALTH_CONNECT.md.
   health: ^13.3.1
+  # Reminders: notifications scheduled on the phone (work with the app closed). See docs/FLUTTER_NOTIFICATIONS.md.
+  flutter_local_notifications: ^19.5.0
+  timezone: ^0.10.0
+  flutter_timezone: ^5.0.1
 
 dev_dependencies:
   flutter_test:

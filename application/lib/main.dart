@@ -15,6 +15,9 @@ import 'core/backend/supabase_backend_gateway.dart';
 import 'core/config/app_config.dart';
 import 'core/db/local_store.dart';
 import 'core/db/sqflite_local_store.dart';
+import 'core/notifications/notification_gateway.dart';
+import 'core/notifications/reminder_runner.dart';
+import 'core/notifications/reminder_settings.dart';
 import 'core/sync/sync_runner.dart';
 import 'features/auth/presentation/startup_problem_app.dart';
 import 'features/lifestyle/data/health_connect_step_source.dart';
@@ -80,6 +83,8 @@ class _LaunchState extends State<_Launch> {
           ),
           deviceStoreProvider.overrideWithValue(SharedPrefsDeviceStore(prefs)),
           localStoreProvider.overrideWithValue(localStore),
+          reminderStoreProvider.overrideWithValue(SharedPrefsReminderStore(prefs)),
+          notificationGatewayProvider.overrideWithValue(LocalNotificationGateway()),
           stepSourceProvider.overrideWithValue(HealthConnectStepSource()),
         ];
       });
@@ -99,7 +104,9 @@ class _LaunchState extends State<_Launch> {
     return ProviderScope(
       overrides: overrides,
       child: const _LaunchCover(
-        child: SyncRunner(child: StepImportRunner(child: ShaktiKramApp())),
+        child: SyncRunner(
+          child: ReminderRunner(child: StepImportRunner(child: ShaktiKramApp())),
+        ),
       ),
     );
   }

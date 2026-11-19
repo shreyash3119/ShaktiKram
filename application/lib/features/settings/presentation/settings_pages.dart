@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/auth/session_controller.dart';
+import '../../../core/notifications/notification_gateway.dart';
+import '../../../core/notifications/reminder_planner.dart';
+import '../../../core/notifications/reminder_settings.dart';
 import '../../../core/routing/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/cards.dart';
@@ -131,38 +134,115 @@ class _SectionLabel extends StatelessWidget {
 }
 
 /// Notifications and the rest timer. Only changes the screen until the settings table is synced locally.
-class NotificationsPage extends StatelessWidget {
+class NotificationsPage extends ConsumerWidget {
   const NotificationsPage({super.key});
 
+  Future<void> _pickTime(
+    BuildContext context,
+    int minutes,
+    void Function(int) save,
+  ) async {
+    final t = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: minutes ~/ 60, minute: minutes % 60),
+    );
+    if (t != null) save(t.hour * 60 + t.minute);
+  }
+
+  Future<void> _test(BuildContext context, WidgetRef ref) async {
+    final gateway = ref.read(notificationGatewayProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    final allowed = await gateway.requestPermission();
+    await gateway.showNow('ShaktiKram', 'Reminders are working.');
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          allowed
+              ? 'Test notification sent.'
+              : 'Notifications are blocked. Allow them for ShaktiKram in the phone\'s Settings > Apps > Notifications.',
+        ),
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
-    return const SettingsPage(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(reminderSettingsProvider);
+    final n = ref.read(reminderSettingsProvider.notifier);
+    return SettingsPage(
       title: 'Notifications',
       subtitle: 'Reminders and timers',
       children: [
         SettingsCard(
           children: [
             RowList([
-              PrefToggle(
-                'Workout reminders',
+              ToggleRow(
+                key: const Key('toggle-Workout reminders'),
                 title: 'Workout reminders',
-                sub: 'On your training days',
+                subtitle: 'On your planned training days',
+                value: s.workout,
+                onChanged: n.setWorkout,
               ),
-              PrefToggle(
-                'Leave for gym',
+              ToggleRow(
+                key: const Key('toggle-Leave for gym'),
                 title: 'Leave for gym',
-                sub: 'Nudge before you need to go',
+                subtitle: 'Nudge $leaveBeforeMinutes minutes before',
+                value: s.leaveForGym,
+                onChanged: n.setLeaveForGym,
               ),
-              PrefToggle(
-                'Supplements',
+              ToggleRow(
+                key: const Key('toggle-Supplements'),
                 title: 'Supplements',
-                sub: 'When a dose is due',
+                subtitle: 'Every day at ${reminderClock(s.supplementMinutes)}',
+                value: s.supplements,
+                onChanged: n.setSupplements,
               ),
-              PrefToggle('Water', title: 'Water', sub: 'Hydration reminders'),
-              PrefToggle(
-                'Reassessment',
+              ToggleRow(
+                key: const Key('toggle-Water'),
+                title: 'Water',
+                subtitle: 'Every 2 hours, 9 am to 9 pm',
+                value: s.water,
+                onChanged: n.setWater,
+              ),
+              ToggleRow(
+                key: const Key('toggle-Reassessment'),
                 title: 'Reassessment',
-                sub: 'Periodic progress check-in',
+                subtitle: 'Sundays at 10:00 am',
+                value: s.reassessment,
+                onChanged: n.setReassessment,
+              ),
+            ]),
+          ],
+        ),
+        SettingsCard(
+          title: 'Times',
+          children: [
+            RowList([
+              PlainRow(
+                'Workout time',
+                sub: 'When your training day reminder arrives',
+                value: reminderClock(s.workoutMinutes),
+                chevron: true,
+                onTap:
+                    () => _pickTime(context, s.workoutMinutes, n.setWorkoutMinutes),
+              ),
+              PlainRow(
+                'Supplement time',
+                sub: 'Daily supplement reminder',
+                value: reminderClock(s.supplementMinutes),
+                chevron: true,
+                onTap:
+                    () => _pickTime(
+                      context,
+                      s.supplementMinutes,
+                      n.setSupplementMinutes,
+                    ),
+              ),
+              PlainRow(
+                'Send a test notification',
+                sub: 'Check that sound and pop-ups work on this phone',
+                chevron: true,
+                onTap: () => _test(context, ref),
               ),
             ]),
           ],
