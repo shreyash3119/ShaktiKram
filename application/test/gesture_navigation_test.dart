@@ -215,7 +215,13 @@ void main() {
     await _tapNav(tester, 'Home');
     final size = tester.view.physicalSize / tester.view.devicePixelRatio;
     Offstage branch(int i) =>
-        tester.widget<Offstage>(find.byKey(ValueKey('branch-$i'), skipOffstage: false));
+        tester.widget<Offstage>(
+          find.descendant(
+            of: find.byKey(ValueKey('branch-$i'), skipOffstage: false),
+            matching: find.byType(Offstage),
+            skipOffstage: false,
+          ).first,
+        );
     expect(branch(1).offstage, isTrue);
 
     final g = await tester.startGesture(Offset(size.width / 2, size.height / 2));

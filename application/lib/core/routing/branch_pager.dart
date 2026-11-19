@@ -30,30 +30,55 @@ class BranchPager extends StatelessWidget {
   Widget build(BuildContext context) {
     final driver = MainSlideScope.of(context);
     driver.count = children.length;
+    return LayoutBuilder(
+      builder: (context, c) {
+        final extent = c.maxWidth + SlideDriver.gap;
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            for (var i = 0; i < children.length; i++)
+              _BranchSlot(
+                key: ValueKey('branch-$i'),
+                driver: driver,
+                index: i,
+                extent: extent,
+                active: i == shell.currentIndex,
+                child: children[i],
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// One section. Moving it is paint-only (it sits in its own layer), so a swipe does not repaint the section's content.
+class _BranchSlot extends StatelessWidget {
+  const _BranchSlot({
+    super.key,
+    required this.driver,
+    required this.index,
+    required this.extent,
+    required this.active,
+    required this.child,
+  });
+
+  final SlideDriver driver;
+  final int index;
+  final double extent;
+  final bool active;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: driver,
-      builder: (context, _) {
-        final pos = driver.pos;
-        return LayoutBuilder(
-          builder: (context, c) {
-            return Stack(
-              fit: StackFit.expand,
-              children: [
-                for (var i = 0; i < children.length; i++)
-                  Offstage(
-                    key: ValueKey('branch-$i'),
-                    offstage: (i - pos).abs() >= 1,
-                    child: TickerMode(
-                      enabled: i == shell.currentIndex,
-                      child: Transform.translate(
-                        offset: Offset((i - pos) * c.maxWidth, 0),
-                        child: children[i],
-                      ),
-                    ),
-                  ),
-              ],
-            );
-          },
+      child: TickerMode(enabled: active, child: RepaintBoundary(child: child)),
+      builder: (context, child) {
+        final d = index - driver.pos;
+        return Offstage(
+          offstage: d.abs() >= 1,
+          child: Transform.translate(offset: Offset(d * extent, 0), child: child),
         );
       },
     );

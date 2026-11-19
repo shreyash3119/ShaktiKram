@@ -99,39 +99,56 @@ class _TabSliderState extends State<TabSlider>
       ..active = TickerMode.of(context);
     // Fresh widgets for the tabs whenever the screen rebuilds; reused while only the position changes.
     _pages.clear();
-    return AnimatedBuilder(
-      animation: _driver,
-      builder: (context, _) {
-        final base = _driver.base;
-        final pos = _driver.pos;
-        final other = pos > base ? base + 1 : (pos < base ? base - 1 : null);
-        return LayoutBuilder(
-          builder: (context, c) {
-            final w = c.maxWidth;
-            _width = w;
+    return LayoutBuilder(
+      builder: (context, c) {
+        final w = c.maxWidth;
+        _width = w + SlideDriver.gap;
+        // Rebuilt only when the pair of pages changes. Moving the pages is paint-only (a layer offset), so a swipe
+        // does not re-layout or repaint the tab content frame after frame.
+        return ListenableBuilder(
+          listenable: _driver.layout,
+          builder: (context, _) {
+            final base = _driver.layout.base;
+            final other = _driver.layout.other;
             return Stack(
               clipBehavior: Clip.none,
               children: [
-                Transform.translate(
-                  offset: Offset((base - pos) * w, 0),
-                  child: _page(base),
-                ),
+                _Slide(driver: _driver, index: base, extent: _width, child: _page(base)),
                 if (other != null)
                   Positioned(
                     key: const ValueKey('tab-slider-neighbor'),
                     left: 0,
                     top: 0,
                     width: w,
-                    child: Transform.translate(
-                      offset: Offset((other - pos) * w, 0),
-                      child: _page(other),
-                    ),
+                    child: _Slide(driver: _driver, index: other, extent: _width, child: _page(other)),
                   ),
               ],
             );
           },
         );
       },
+    );
+  }
+}
+
+/// Draws page [index] at `(index - pos) * extent`. Listens to the driver itself, so only this transform updates.
+class _Slide extends StatelessWidget {
+  const _Slide({required this.driver, required this.index, required this.extent, required this.child});
+
+  final SlideDriver driver;
+  final int index;
+  final double extent;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: driver,
+      child: RepaintBoundary(child: child),
+      builder: (context, child) => Transform.translate(
+        offset: Offset((index - driver.pos) * extent, 0),
+        child: child,
+      ),
     );
   }
 }

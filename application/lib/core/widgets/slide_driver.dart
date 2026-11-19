@@ -8,6 +8,22 @@ import 'package:flutter/scheduler.dart';
 /// `PageView`). [pos] is 2.0 when page 2 fills the view and 2.4 when the drag has moved 40% of the way to page 3.
 /// Pages sit side by side, so page `i` is drawn at `(i - pos) * width`: the page being left slides out while the next
 /// one slides in from the opposite side, following the finger. On release it settles on the nearest page.
+/// Which pages are laid out: the one the drag started from and, while dragging, its neighbour. It notifies only when
+/// that changes, so the page widgets are not rebuilt on every frame of a swipe.
+class SlideLayout extends ChangeNotifier {
+  SlideLayout(this.base, this.other);
+
+  int base;
+  int? other;
+
+  void update(int newBase, int? newOther, {required bool notify}) {
+    if (newBase == base && newOther == other) return;
+    base = newBase;
+    other = newOther;
+    if (notify) notifyListeners();
+  }
+}
+
 class SlideDriver extends ChangeNotifier {
   SlideDriver({
     required TickerProvider vsync,
@@ -23,6 +39,9 @@ class SlideDriver extends ChangeNotifier {
           ..addStatusListener(_status);
   }
 
+  /// The space between neighbouring pages while they slide (logical pixels).
+  static const gap = 20.0;
+
   /// Called once a settle onto a different page has finished, with that page's index.
   final ValueChanged<int> onSettled;
 
@@ -33,6 +52,7 @@ class SlideDriver extends ChangeNotifier {
   static const flingDistance = 40.0;
 
   late final AnimationController _controller;
+  late final SlideLayout layout = SlideLayout(_base, _other);
   int _base;
   double _pos;
   int _count;
@@ -41,6 +61,7 @@ class SlideDriver extends ChangeNotifier {
   int _target = 0;
 
   /// The page the drag started from (the page that is laid out normally).
+  int? get _other => _pos > _base ? _base + 1 : (_pos < _base ? _base - 1 : null);
   int get base => _base;
   double get pos => _pos;
   int get count => _count;
@@ -57,6 +78,7 @@ class SlideDriver extends ChangeNotifier {
     _controller.stop();
     _base = index;
     _pos = index.toDouble();
+    layout.update(_base, _other, notify: true);
     notifyListeners();
   }
 
@@ -65,6 +87,7 @@ class SlideDriver extends ChangeNotifier {
     _controller.stop();
     _base = index;
     _pos = index.toDouble();
+    layout.update(_base, _other, notify: false);
   }
 
   void dragStart() => _controller.stop();
@@ -77,6 +100,7 @@ class SlideDriver extends ChangeNotifier {
     final next = (_pos - dx / width).clamp(lo, hi);
     if (next == _pos) return;
     _pos = next;
+    layout.update(_base, _other, notify: true);
     notifyListeners();
   }
 
@@ -111,6 +135,7 @@ class SlideDriver extends ChangeNotifier {
 
   void _tick() {
     _pos = _from + (_to - _from) * Curves.easeOutCubic.transform(_controller.value);
+    layout.update(_base, _other, notify: true);
     notifyListeners();
   }
 
@@ -122,12 +147,14 @@ class SlideDriver extends ChangeNotifier {
     _pos = _to;
     final changed = _target != _base;
     _base = _target;
+    layout.update(_base, _other, notify: true);
     notifyListeners();
     if (changed) onSettled(_target);
   }
 
   @override
   void dispose() {
+    layout.dispose();
     _controller.dispose();
     super.dispose();
   }
